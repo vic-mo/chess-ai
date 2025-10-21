@@ -103,8 +103,11 @@ impl Square {
     pub const G8: Square = Square(62);
     pub const H8: Square = Square(63);
 
+    pub const E2: Square = Square(12);
+    pub const E3: Square = Square(20);
     pub const E4: Square = Square(28);
     pub const E5: Square = Square(36);
+    pub const E7: Square = Square(52);
     pub const D4: Square = Square(27);
 }
 
