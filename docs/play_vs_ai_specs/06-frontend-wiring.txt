@@ -1,0 +1,54 @@
+PLAY VS AI — FRONTEND WIRING
+============================
+
+1) CONTEXT
+----------
+Integrate play APIs into the React app with minimal disruption to analysis features.
+
+2) API CLIENT
+-------------
+- createGame(opts): POST /game → { gameId, side, fenStart }
+- submitMove(gameId, { ply, move }): POST /game/{id}/move
+- connectStream(gameId, onEvent): WS /game/stream/{id}
+- getSnapshot(gameId): GET /game/{id}
+
+3) STORE SHAPE
+--------------
+game: {
+  id: string | null,
+  side: "white"|"black" | null,
+  fen: string,
+  moves: string[],
+  ply: number,
+  clocks: { wMs: number, bMs: number } | null,
+  status: "idle"|"playing"|"over",
+  result?: { score: string, reason: string },
+  analyzing: boolean,
+  showEval: boolean
+}
+
+4) COMPONENTS
+-------------
+- NewGameDialog: collects options and calls createGame()
+- PlayView:
+  - Board: drag/drop, highlights, premove
+  - Controls: resign, offer draw, new game
+  - Clocks: renders wMs/bMs; animates between ticks
+  - EvalPanel: optional, shows depth/score/PV during engine turn
+  - Log: append-only log (bounded)
+
+5) RENDER/STATE PERF
+--------------------
+- Throttle log updates to 60–120 ms
+- Memoize derived props; avoid large arrays as deps
+- Cancel inflight submitMove when game ends
+
+6) ERROR UX
+-----------
+- Toast on illegal move; rollback board to server state
+- Reconnect banner; auto-hydrate snapshot on WS reconnect
+
+7) DOD
+------
+- Smooth play loop with no UI freezes
+- Clean teardown on route change (WS close, timers cleared)

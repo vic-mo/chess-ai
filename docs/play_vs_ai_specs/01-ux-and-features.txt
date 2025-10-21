@@ -1,0 +1,56 @@
+PLAY VS AI — UX & FEATURE SET
+=============================
+
+1) CONTEXT
+----------
+Provide a complete player-vs-engine experience in the React frontend while keeping the server authoritative for rules, clocks, and game results. The UI must support remote engine (server-first) and optional WASM fallback.
+
+2) FUNCTIONAL SCOPE
+-------------------
+- New Game dialog:
+  - Side: {white|black|random}
+  - Time control: presets (10|0, 5|3, 3|2), custom {initialMs, incrementMs}, or "analysis" (no clocks)
+  - Skill level: 0–20 (maps to engine params)
+  - Options: showEval (bool), ponder (bool, optional), chess960 (bool, optional)
+- Gameplay:
+  - Interactive board: drag/drop, tap-to-move, legal-move highlighting, last-move highlight
+  - Optional premove (client-side, validated and confirmed by server)
+  - Clocks with increments, ticking in real-time
+  - Action buttons: New Game, Resign, Offer Draw (optional), Undo (optional, casual mode)
+  - Evaluation panel (toggle): eval bar, PV, depth
+- End of game:
+  - Result banner with reason
+  - Export PGN, copy FEN, "Rematch" with same settings
+
+3) NON-FUNCTIONAL REQUIREMENTS
+------------------------------
+- Latency: input-to-ACK < 150 ms on LAN; UI remains responsive under loss
+- Accessibility: keyboard navigation & ARIA labels for board squares/pieces
+- Mobile: touch input reliable at small widths
+- Stability: graceful reconnection; no fatal errors on stream drops
+- Security: untrusted client; server validates all moves
+
+4) TECHNICAL DESIGN (SUMMARY)
+-----------------------------
+- Client renders board optimistically, then awaits server ACK
+- Server is source of truth; sends authoritative state and clocks via WS
+- Client displays eval only if showEval = true (to reduce noise during play)
+
+5) RISKS & MITIGATIONS
+----------------------
+- Desync between client and server → include ply index in every move; rollback on mismatch
+- UI jank from frequent WS updates → throttle render/log updates; batch state writes
+- Accessibility gaps → automated a11y tests and keyboard shortcuts (arrow keys for square nav)
+
+6) TESTING PLAN
+---------------
+- Unit: board component events (drag/drop, tap), dialog validation
+- Integration: submit move → receive ACK; inject out-of-order events; verify rollback
+- E2E: full games vs engine at multiple time controls; reconnect scenario
+
+7) DEFINITION OF DONE (DOD)
+---------------------------
+- Users can start a game, make moves, see engine replies, and finish games
+- Clocks work with increments; eval display toggle works
+- Reconnection restores state within one WS reconnect cycle
+- PGN export matches moves and result

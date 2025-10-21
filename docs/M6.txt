@@ -1,0 +1,131 @@
+M6 — Frontend React MVP
+=======================
+
+1. Context
+----------
+This milestone delivers the first usable frontend for the Chess AI system.
+It provides a user interface that communicates with the engine server
+and displays analysis results in real time.
+
+The UI is implemented using React + TypeScript and consumes the
+protocol defined in M1. It must support both the remote server
+and optional WASM modes transparently.
+
+The goal is to enable a functional analysis panel that can:
+- Display a board and FEN input.
+- Send analysis requests.
+- Display best moves, principal variations, and evaluations.
+
+2. Functional Scope
+-------------------
+- Core UI components:
+  * Chessboard display (interactive, legal move highlighting).
+  * Input controls for FEN and depth.
+  * Buttons: Analyze, Stop, Reset.
+  * Search log viewer (depth, score, PV).
+- Integration with engine modes:
+  * fake (local mock)
+  * wasm (optional local engine)
+  * remote (server-first)
+- State management:
+  * Zustand or React context for engine state.
+  * Persist last FEN and settings in localStorage.
+- Error handling:
+  * Connection or protocol errors displayed in UI.
+- Responsive design for mobile and desktop.
+
+3. Non-Functional Requirements
+------------------------------
+- Load time: < 2 seconds on modern hardware.
+- Responsiveness: UI remains responsive during search (no freezes).
+- Accessibility: keyboard navigation and screen reader labels.
+- Stability: gracefully recover from lost connections.
+- Maintainability: component-level separation, typed props.
+
+4. Technical Design
+-------------------
+Main modules:
+- src/App.tsx               → root layout, connects UI to engine client.
+- src/engine/engineClient.ts → abstracts fake/wasm/remote modes.
+- src/components/Board.tsx  → interactive board view.
+- src/components/Controls.tsx → FEN input, buttons, settings.
+- src/components/Log.tsx    → displays search info events.
+
+Data flow:
+  User inputs FEN → clicks Analyze
+       ↓
+  engineClient.analyze(request, callback)
+       ↓
+  onEvent → updates state (search info, best move)
+       ↓
+  components display data reactively
+
+Engine modes:
+- fake: simulated stream for local testing.
+- wasm: calls into engine-bridge-wasm worker.
+- remote: uses HTTP + WebSocket via engine-server (M7).
+
+UI state:
+  {
+    fen: string,
+    depth: number,
+    logs: string[],
+    bestMove: string | null,
+    analyzing: boolean
+  }
+
+Styling:
+- Tailwind CSS or simple CSS modules.
+- Dark theme default; mobile layout with vertical stacking.
+
+5. Risks and Mitigations
+------------------------
+Risk: State synchronization issues (multiple async modes)
+Mitigation: Central store; cancel previous analyze requests.
+
+Risk: Network disconnects or stale WebSocket
+Mitigation: Automatic reconnect logic and UI retry option.
+
+Risk: Excessive rerenders under high event volume
+Mitigation: Batched state updates and throttled logging.
+
+Risk: Browser incompatibility
+Mitigation: Test on Chrome, Firefox, and Safari before release.
+
+6. Testing Plan
+---------------
+Unit tests:
+- Component rendering under different engine modes.
+- FEN input validation and persistence.
+- Log updates correctly under search events.
+
+Integration tests:
+- Simulate WebSocket stream using mock server.
+- Verify Analyze → SearchInfo → BestMove flow.
+
+End-to-end tests:
+- Playwright or Cypress tests:
+  1. Load page
+  2. Enter FEN
+  3. Click Analyze
+  4. Observe log updates
+
+Performance tests:
+- Check UI FPS during fake analyze (≥ 55 FPS).
+
+Accessibility tests:
+- Screen reader label coverage and keyboard control.
+
+7. Definition of Done (DoD)
+---------------------------
+- Functional UI capable of starting and stopping analysis.
+- Displays search info and best move from engine.
+- Works with fake, wasm, and remote engine modes.
+- No blocking or lag during long analysis.
+- CI smoke and E2E tests pass on all major browsers.
+
+8. Next Step
+------------
+Proceed to M7 — Server Mode to implement the engine backend
+service that responds to /analyze and /streams/{id} endpoints
+used by this frontend.

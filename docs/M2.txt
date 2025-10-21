@@ -1,0 +1,105 @@
+M2 — Engine Core: Rules and Move Generation
+===========================================
+
+1. Context
+----------
+This milestone introduces the core of the Rust engine — the representation of the chessboard,
+move generation, and position validation. It forms the backbone for later features:
+search (M3), evaluation (M4), and server integration (M7).
+
+The implementation must be deterministic, fully testable via perft, and performant enough
+to support deep iterative search.
+
+2. Functional Scope
+-------------------
+- Implement board representation using bitboards (64-bit per piece type).
+- Implement move generation:
+  * Pseudo-legal moves for all pieces.
+  * Legality filter (no self-checks).
+  * Special moves (castling, en passant, promotions).
+- Support position I/O:
+  * FEN parsing/serialization.
+  * UCI move parsing (e2e4, a7a8q, etc.).
+- Add state tracking:
+  * Side to move, castling rights, en passant square.
+  * Halfmove/fullmove counters.
+  * 50-move rule and threefold repetition detection.
+- Build perft harness for correctness testing.
+
+3. Non-Functional Requirements
+------------------------------
+Performance: ≥ 3 million nodes/s single-threaded.
+Determinism: identical move ordering and perft counts.
+Correctness: perft matches canonical results up to depth 6.
+Safety: no panics or undefined behavior under fuzz inputs.
+Maintainability: modular structure (board.rs, movegen.rs, state.rs).
+
+4. Technical Design
+-------------------
+Core modules (see crates/engine/src):
+- board.rs  : bitboards, side-to-move, Zobrist hash.
+- move.rs   : compact Move struct (from, to, flags, promotion).
+- state.rs  : repetition table and clocks.
+- fen.rs    : parse and format FEN.
+- movelist.rs: small fixed-capacity vector.
+
+Algorithms:
+- Move generation: bitboard-based, lookup tables for sliders.
+- Legality check: simulate move → verify king not attacked.
+- Zobrist hashing: incremental per move (used by transposition table).
+- Perft: recursive legal move counter.
+
+API summary:
+  Board::from_fen(fen) -> Result<Board>
+  Board::to_fen() -> String
+  Board::generate_moves(&mut MoveList)
+  Board::make_move(move)
+  Board::unmake_move(move)
+
+Optimization considerations:
+- Precompute slider attacks.
+- Inline hot paths.
+- Avoid heap allocations; prefer stack or SmallVec.
+
+5. Risks and Mitigations
+------------------------
+Risk: Incorrect movegen (e.g., self-checks)
+Mitigation: Compare perft counts to reference positions.
+
+Risk: Memory pressure under repetition tracking
+Mitigation: Rolling Zobrist hash keys, bounded table.
+
+Risk: Slow FEN parsing
+Mitigation: Precomputed piece lookup tables.
+
+Risk: Bit errors in attack masks
+Mitigation: Unit-test each direction per piece type.
+
+6. Testing Plan
+---------------
+Unit tests:
+- FEN parse → serialize → parse roundtrip.
+- Each piece’s move count from known positions.
+
+Perft tests:
+- Validate startpos to depth 6.
+- Validate 10 canonical perft positions (e.g., Kiwipete).
+
+Fuzz tests:
+- Random FEN inputs through parser, must not panic.
+
+Benchmarks:
+- Criterion benchmark: nodes/s for perft depth 5.
+
+7. Definition of Done (DoD)
+---------------------------
+- Perft d1–d6 match canonical values.
+- No panics under fuzz testing.
+- cargo test --workspace passes.
+- Nodes/s ≥ 3M single-threaded.
+- Board, movegen, and state modules documented and lint-clean.
+
+8. Next Step
+------------
+Proceed to M3 — Search v1 (Playable Engine) to implement iterative deepening and
+alpha-beta search using this core.

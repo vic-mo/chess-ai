@@ -1,0 +1,25 @@
+PLAY VS AI — DEFINITION OF DONE
+===============================
+
+FUNCTIONAL
+----------
+- Start new game with options (side, TC, skill) and play to completion
+- Server authoritative: legality, clocks, result
+- Engine replies within time budget; optional ponder
+- Eval panel toggle works; PGN export available
+
+RESILIENCE
+----------
+- Reconnect restores state; desyncs resolved via server snapshot
+- Resource caps enforced; idle games expire cleanly
+
+QUALITY
+-------
+- CI: unit + integration + E2E green
+- Load: 100 concurrent games for 60s; no leaks; stable latency
+- Accessibility: keyboard nav and ARIA labels for board controls
+
+DELIVERABLES
+------------
+- TXT specs (this set) added to docs/
+- Implementation tickets derived per module

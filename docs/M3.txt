@@ -1,0 +1,124 @@
+M3 — Search v1 (Playable Engine)
+================================
+
+1. Context
+----------
+This milestone introduces the first playable version of the engine.
+Building on the board representation and move generation from M2,
+it implements a basic but complete search algorithm capable of
+selecting a move for any legal position.
+
+The engine will use iterative deepening, alpha-beta pruning, and
+quiescence search to provide stable evaluations and move choices.
+This milestone enables the server (M7) to respond to /analyze requests
+with meaningful search data.
+
+2. Functional Scope
+-------------------
+Core functionalities:
+- Iterative deepening driver: progressively increase search depth.
+- Alpha-beta pruning (negamax formulation).
+- Quiescence search to stabilize tactical evaluations.
+- Move ordering using heuristics (transposition table, captures, killers).
+- Transposition table (hash table) for node reuse.
+- Search limits:
+  * Depth
+  * Nodes
+  * Move time
+  * Infinite (manual stop)
+- Time management and stop signal handling.
+- Reporting of search info (depth, nodes, score, pv) via callback.
+
+3. Non-Functional Requirements
+------------------------------
+Performance: must reach at least 500k nodes/s per thread.
+Correctness: no illegal moves, consistent scores, deterministic output.
+Thread safety: safe single-engine instance (multi-threading optional).
+Stability: handle stop requests cleanly within <50 ms.
+Maintainability: modular structure for search, eval, and timing.
+
+4. Technical Design
+-------------------
+Core modules (in crates/engine/src):
+- search.rs : main alpha-beta + iterative deepening loop.
+- eval.rs   : simple evaluation function (material + PST).
+- tt.rs     : transposition table (Zobrist hash key, entry type).
+- time.rs   : time control and stop logic.
+
+Algorithm overview:
+1. iterative_deepening():
+   For depth = 1..limit:
+     run alpha_beta(root, depth)
+     emit SearchInfo { depth, score, pv, nodes, nps }
+     break if time limit reached or stop requested.
+
+2. alpha_beta(node, depth, α, β):
+   - If depth == 0 → quiescence().
+   - For each move (ordered):
+       make_move, recurse, unmake_move
+       update best score, PV, cutoff, etc.
+
+3. quiescence(node, α, β):
+   - Only captures (and possibly checks).
+   - Prevent horizon effect.
+
+4. Transposition table:
+   - Fixed-size hash table (entries: key, depth, flag, score, move).
+   - Lookup before search to get bounds.
+   - Store after search.
+
+Data flow summary:
+  EngineImpl::analyze(limit, callback)
+      → iterative_deepening()
+      → alpha_beta()
+      → callback(SearchInfo)
+
+Time manager:
+  start_time = now
+  remaining = limit.move_time_ms
+  periodically check elapsed and stop if exceeded.
+
+5. Risks and Mitigations
+------------------------
+Risk: Infinite recursion in quiescence.
+Mitigation: Limit recursion depth and stand-pat pruning.
+
+Risk: Memory leaks in transposition table.
+Mitigation: Fixed capacity; overwrite oldest entries.
+
+Risk: Nondeterministic results due to timing race.
+Mitigation: Deterministic order; single-thread execution at this stage.
+
+Risk: Cutoff instability.
+Mitigation: Proper α/β updates; verified via regression tests.
+
+6. Testing Plan
+---------------
+Unit tests:
+- Validate alpha-beta node counts on known small trees.
+- Quiescence does not crash on checkmate positions.
+
+Integration tests:
+- Perft-derived positions tested for stable search output.
+- Fixed FEN positions with known mate scores.
+
+Benchmark tests:
+- Measure nodes/s for depth 6 on startpos.
+- Measure average search latency under 3 s move time.
+
+End-to-end:
+- EngineImpl::analyze() returns BestMove with plausible score.
+
+7. Definition of Done (DoD)
+---------------------------
+- Search produces valid move and consistent score.
+- No panics or invalid PV lines.
+- Stop request works immediately.
+- Nodes/s ≥ 500k single-threaded.
+- All tests and benches pass in CI.
+- Integration verified with mock server (M7).
+
+8. Next Step
+------------
+Proceed to M4 — Evaluation v1 (Classical Heuristic Evaluation)
+to replace the simple material-only evaluation with a full heuristic model.

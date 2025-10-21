@@ -1,0 +1,28 @@
+{
+  "name": "chess-ai-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "pnpm -r --workspace-root=false run build",
+    "lint": "node ./scripts/run-eslint.mjs",
+    "lint:fix": "pnpm lint -- --fix",
+    "fmt": "prettier -w .",
+    "fmt:check": "prettier -c .",
+    "lint:rust": "cargo fmt -- --check && cargo clippy --workspace --all-targets -- -D warnings",
+    "test": "pnpm -r --workspace-root=false test",
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-react": "^7.34.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^3.2.5",
+    "husky": "^9.0.11"
+  },
+  "packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d"
+}

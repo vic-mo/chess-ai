@@ -1,0 +1,112 @@
+M5 — WASM Bridge and Worker (Optional Local Engine)
+===================================================
+
+1. Context
+----------
+Although the server-first architecture runs the engine as a remote Rust
+service, it is still valuable to support a local WebAssembly (WASM) build.
+This enables offline use, local testing, and client-side analysis
+without depending on a backend connection.
+
+This milestone adds a WebAssembly bridge around the Rust engine using
+`wasm-bindgen` and integrates it with the frontend via a Web Worker.
+
+For the server-first flow, this is considered optional but important for
+feature parity and offline robustness.
+
+2. Functional Scope
+-------------------
+- Build a WebAssembly package from `crates/engine`:
+  * Target: `wasm32-unknown-unknown`
+  * Wrapper: `engine-bridge-wasm`
+- Export engine API to JavaScript via `wasm-bindgen`:
+  * new(options)
+  * position(fen, moves)
+  * analyze(limit, callback)
+  * stop()
+- Add a Web Worker in `apps/web/src/workers/engine.worker.ts` to offload
+  compute work from the UI thread.
+- Message protocol between main thread and worker:
+  * postMessage({ type: "analyze", req })
+  * worker posts back `searchInfo`, `bestMove`, `error`
+- Ensure parity with remote server JSON protocol.
+- Add fallback logic:
+  * `VITE_ENGINE_MODE=fake | wasm | remote`
+
+3. Non-Functional Requirements
+------------------------------
+- Build size: < 2.5 MB optimized WASM file.
+- Runtime speed: within 1.5× of native perft speed on Chrome.
+- Compatibility: modern browsers (Chrome, Edge, Firefox, Safari).
+- Responsiveness: no UI lag during local analysis.
+- Graceful fallback: errors handled without crashing the page.
+
+4. Technical Design
+-------------------
+Modules:
+- crates/engine-bridge-wasm/
+  * lib.rs — wasm_bindgen interface.
+- apps/web/src/workers/engine.worker.ts — worker entry point.
+- apps/web/src/engine/engineClient.ts — high-level mode selector.
+
+wasm-bindgen exports:
+  new(opts_js)
+  position(fen, moves)
+  analyze(limit, callback)
+  stop()
+
+Worker lifecycle:
+  1. Main thread posts {type: "analyze", req}
+  2. Worker loads WASM (import engine.wasm)
+  3. Worker calls wasmEngine.analyze()
+  4. For each searchInfo callback, worker posts to main thread.
+  5. On stop or bestMove, worker terminates engine task.
+
+Build process:
+  cargo build --target wasm32-unknown-unknown --release
+  wasm-bindgen --target web --out-dir pkg
+
+Frontend integration:
+  - Lazy-load WASM file.
+  - Abstract interface identical to remote engine client.
+
+5. Risks and Mitigations
+------------------------
+Risk: Large WASM binary size.
+Mitigation: Use LTO and wasm-opt; strip debug symbols.
+
+Risk: Browser thread blocking.
+Mitigation: Run all compute in Worker; never in UI thread.
+
+Risk: Serialization overhead (JSON <-> JS bindings).
+Mitigation: Use `serde_wasm_bindgen` for efficient conversion.
+
+Risk: Different behavior from server engine.
+Mitigation: Unit tests comparing WASM vs native results on same FEN set.
+
+6. Testing Plan
+---------------
+Unit tests:
+- Run wasm-bindgen test harness (`wasm-pack test --headless`).
+- Validate FEN and perft consistency with native build.
+
+Integration tests:
+- Frontend toggles between wasm and fake mode.
+- Analyze depth=3 on startpos; logs identical info events.
+
+Performance tests:
+- Measure analyze(Depth=5) runtime vs native build.
+- Confirm no significant UI frame drops (≥ 55 FPS during analysis).
+
+7. Definition of Done (DoD)
+---------------------------
+- WASM build compiles and exports engine API.
+- Worker integration functional in frontend.
+- Parity confirmed with server JSON protocol.
+- Fallback between fake/wasm/remote modes works.
+- Browser smoke test passes on at least 2 major browsers.
+
+8. Next Step
+------------
+Proceed to M6 — Frontend React MVP to build the complete user interface
+for interacting with the engine, visualizing searches, and managing sessions.

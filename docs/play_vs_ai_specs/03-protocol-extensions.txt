@@ -1,0 +1,60 @@
+PLAY VS AI — PROTOCOL EXTENSIONS
+================================
+
+1) CONTEXT
+----------
+Extend the protocol (M1) with play-specific endpoints and WS events. Keep analysis protocol intact and versioned.
+
+2) HTTP ENDPOINTS
+-----------------
+- POST /game
+  Body: { side: "white"|"black"|"random", tc?: { initialMs: number, incrementMs: number } | null, options?: EngineOptions, chess960?: boolean }
+  Resp: { gameId: string, side: "white"|"black", fenStart: string, createdAt: string }
+
+- POST /game/{id}/move
+  Body: { ply: number, move: UciMove }
+  Resp:
+    { ok: true, newPly: number }
+    or
+    { ok: false, reason: "illegal"|"outOfTurn"|"desync", serverPly: number, serverFen: string, moves: UciMove[] }
+
+- POST /game/{id}/resign
+  Body: {}
+  Resp: { ok: true }
+
+- POST /game/{id}/offer-draw (optional)
+  Body: {}
+  Resp: { ok: true } | { ok: false }
+
+- GET /game/{id}
+  Resp: { fen: string, moves: UciMove[], ply: number, status: "playing"|"over", clocks?: { wMs: number, bMs: number }, result?: { score: "1-0"|"0-1"|"1/2-1/2", reason: string } }
+
+3) WEBSOCKET EVENTS (/game/stream/{id})
+---------------------------------------
+- { type: "state", payload: { fen, moves, ply, clocks? } }
+- { type: "engineMove", payload: { move, ply, info? } }
+- { type: "illegal", payload: { clientPly, reason, fen, ply, moves } }
+- { type: "gameOver", payload: { result, reason } }
+- { type: "clock", payload: { wMs, bMs } }
+- { type: "error", payload: { message } }
+
+4) WIRE FORMAT
+--------------
+- JSON UTF-8; camelCase; all numeric times in milliseconds
+- Every event tied to a gameId via WS path; include ply in move events
+
+5) VERSIONING
+-------------
+- PROTOCOL_VERSION remains 1.x; additions are optional fields
+- Server exposes /health with { version: "1.0.0" }
+
+6) VALIDATION
+-------------
+- TS: Zod schemas for new endpoints and events
+- Rust: serde structs + schema tests; reject unknown required fields
+
+7) DOD
+------
+- Round-trip tests for all messages
+- Client runtime validation passes on all WS streams
+- Backwards compatibility with analysis-only clients

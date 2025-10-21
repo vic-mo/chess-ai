@@ -1,0 +1,62 @@
+PLAY VS AI — FRONTEND STATE MACHINE
+===================================
+
+1) CONTEXT
+----------
+Deterministic client state transitions for a server-authoritative game. The store (Zustand/Redux) coordinates UI, WS events, and HTTP calls.
+
+2) STATES
+---------
+- Idle
+- Creating (awaiting /game response)
+- PlayerTurn (human to move)
+- EngineTurn (engine to move)
+- AwaitAck (client move sent, awaiting server ACK)
+- Paused (temporary network loss / reconnection)
+- GameOver (terminal state with result & reason)
+
+3) EVENTS
+---------
+- newGameRequested(opts)
+- gameCreated({gameId, side, fenStart})
+- submitMove({ply, move})
+- ack({newPly})
+- illegal({serverPly, serverFen, moves[]})
+- engineMove({ply, move, info?})
+- clock({wMs, bMs})
+- state({fen, moves, ply})
+- gameOver({result, reason})
+- connectionLost / connectionRestored
+
+4) TRANSITIONS
+--------------
+- Idle → Creating on newGameRequested
+- Creating → (PlayerTurn | EngineTurn) on gameCreated (depends on side)
+- PlayerTurn → AwaitAck on submitMove
+- AwaitAck → EngineTurn on ack
+- AwaitAck → PlayerTurn on illegal (rollback + resync)
+- EngineTurn → PlayerTurn on engineMove
+- Any → Paused on connectionLost; Paused → (previous state) on connectionRestored (after snapshot sync)
+- Any → GameOver on gameOver
+
+5) INVARIANTS
+-------------
+- Local ply must match server ply before sending submitMove
+- A single inflight submitMove is allowed (debounce others)
+- State updates from WS with lower ply are ignored (idempotent)
+
+6) NON-FUNCTIONAL
+-----------------
+- Render throttling: batch WS events at 60–120 ms
+- Memory: fixed-size logs buffer; avoid leaks on reconnection
+
+7) TESTING
+----------
+- State transition table tests (deterministic sequences)
+- Fuzz: random event sequences including out-of-order delivery
+- E2E: reconnect path rehydrates to correct state
+
+8) DOD
+------
+- All transitions covered by unit tests
+- No double-apply or missed ACKs under normal and loss conditions

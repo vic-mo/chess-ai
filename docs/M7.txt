@@ -1,0 +1,142 @@
+M7 — Server Mode (Native Engine Service)
+=======================================
+
+1. Context
+----------
+This milestone introduces the Rust-based engine server responsible for
+running analysis sessions and streaming search information to clients.
+
+It is the cornerstone of the server-first architecture. The engine runs
+natively in the backend process and exposes an HTTP + WebSocket API
+that the React frontend consumes.
+
+This service is also used for integration and performance testing
+before introducing any distributed or multi-instance scaling.
+
+2. Functional Scope
+-------------------
+Core features:
+- HTTP endpoints:
+  * POST /analyze — start a new search session.
+  * POST /stop — stop a running session.
+  * GET  /health — service health check.
+- WebSocket endpoint:
+  * /streams/{id} — stream SearchInfo and BestMove events.
+- Session management:
+  * Unique session IDs (UUIDv4).
+  * Broadcast channel per session.
+  * Timeout and cleanup.
+- Engine integration:
+  * Each session owns its own EngineImpl instance.
+  * Runs search in background Tokio task.
+- Configuration:
+  * Max concurrent sessions.
+  * Thread and hash size limits.
+  * Logging and metrics endpoints.
+
+3. Non-Functional Requirements
+------------------------------
+Performance: ≥ 100 concurrent sessions with stable latency < 100 ms/event.
+Scalability: horizontal scaling possible via container replication.
+Reliability: no crashes or memory leaks under load.
+Observability: structured logs and Prometheus metrics.
+Security: input validation and origin restrictions.
+
+4. Technical Design
+-------------------
+Primary modules:
+- services/engine-server/src/main.rs        → entry point
+- services/engine-server/src/routes.rs      → API routes
+- services/engine-server/src/session.rs     → session tracking
+- services/engine-server/src/stream.rs      → WebSocket handling
+- crates/engine                             → reused engine core
+
+Architecture:
+  Client (React)
+      ↓
+  HTTP POST /analyze
+      ↓
+  Server spawns Engine task
+      ↓
+  Task sends SearchInfo via broadcast
+      ↓
+  WebSocket /streams/{id} forwards events
+      ↓
+  Client UI displays updates
+
+Concurrency model:
+- Each session = one EngineImpl in a Tokio task.
+- Broadcast::channel used to send messages to all WS subscribers.
+- Engine task terminates after BestMove or Stop.
+
+Message schema:
+  JSON lines matching protocol (from M1):
+  { "type": "searchInfo", "payload": { depth: 3, score: {...}, ... } }
+  { "type": "bestMove", "payload": { best: "e2e4", ponder: "e7e5" } }
+
+Configuration file (optional):
+  [server]
+  host = "127.0.0.1"
+  port = 8080
+  max_sessions = 128
+
+Logging:
+- Structured log per session: id, depth, nodes, score, nps.
+- Error logs on panic or channel closure.
+
+Deployment:
+- Dockerfile for containerization.
+- Expose port 8080.
+- Health probe endpoint.
+
+5. Risks and Mitigations
+------------------------
+Risk: Memory leak from abandoned sessions.
+Mitigation: Idle timeout cleanup and weak references in session map.
+
+Risk: Engine tasks blocking runtime.
+Mitigation: Use async channels and yield points (tokio::time::sleep).
+
+Risk: Protocol drift from frontend.
+Mitigation: Reuse shared protocol crate and schema tests.
+
+Risk: High CPU usage per session.
+Mitigation: Limit threads per session; monitor CPU via metrics.
+
+Risk: WS connection instability.
+Mitigation: Heartbeat ping/pong every 15s; reconnect logic on client.
+
+6. Testing Plan
+---------------
+Unit tests:
+- /analyze returns valid session ID.
+- /stop terminates session cleanly.
+- /health returns 200 OK.
+
+Integration tests:
+- Start session → connect WS → receive SearchInfo → receive BestMove.
+- Stop session mid-search and verify graceful shutdown.
+
+Load tests:
+- 100 sessions × 30 seconds each → no panics, no memory growth.
+
+Security tests:
+- Fuzz invalid JSON and verify 400 response.
+- CORS check and origin enforcement.
+
+Benchmark:
+- Measure latency per event under concurrent load.
+
+7. Definition of Done (DoD)
+---------------------------
+- Engine server runs and serves real analysis data.
+- Supports /analyze, /stop, and /streams/{id} endpoints.
+- Handles 100+ concurrent sessions with no errors.
+- Produces structured logs and metrics.
+- Docker container builds successfully and passes health checks.
+- Fully integrated with frontend via VITE_ENGINE_MODE=remote.
+
+8. Next Step
+------------
+Proceed to M8 — Testing, Benchmarks, CI/CD and Release to integrate
+performance validation and automated deployment pipelines.

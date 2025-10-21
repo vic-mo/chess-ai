@@ -1,0 +1,45 @@
+PLAY VS AI — EDGE CASES & POLICIES
+==================================
+
+1) UNDO / TAKEBACKS (OPTIONAL)
+------------------------------
+- Policy: disabled by default; if enabled:
+  - POST /game/{id}/takeback → removes last ply if both sides agree (or single-player mode)
+  - On takeback, cancel engine search; broadcast new state
+
+2) DRAW OFFERS
+--------------
+- POST /game/{id}/offer-draw
+- Server may auto-accept in dead positions (insufficient material, 3-fold, 50-move)
+- Otherwise, store pending offer and let engine accept/reject based on eval threshold
+
+3) RESIGNATION
+--------------
+- POST /game/{id}/resign → immediate GameOver { resign }
+
+4) DESYNC HANDLING
+------------------
+- If client ply != server ply:
+  - Reject move with { ok:false, reason:"desync", serverFen, serverPly, moves }
+  - Client replaces local state and resumes
+
+5) RATE LIMITS
+--------------
+- Throttle /game creation and /move submission (e.g., 10/min per IP)
+- Backoff and 429 responses when exceeded
+
+6) SECURITY
+-----------
+- Validate all JSON inputs; reject unknown required fields
+- Enforce CORS origins; auth tokens if exposing publicly
+- Limit per-game resources (threads, hashSizeMB, depth, moveTime)
+
+7) PERSISTENCE (OPTIONAL)
+-------------------------
+- Ephemeral by default; optional DB to store game history & PGNs
+- Only server writes results; client cannot spoof outcomes
+
+8) DOD
+------
+- Edge flows tested and deterministic (accept/reject with clear reason)
+- No server crashes on malformed inputs or churn

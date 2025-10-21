@@ -1,0 +1,26 @@
+
+# Node
+node_modules/
+pnpm-lock.yaml
+npm-debug.log*
+dist/
+coverage/
+
+# Rust
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# Build artefacts
+*.wasm
+*.wasm.map
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/

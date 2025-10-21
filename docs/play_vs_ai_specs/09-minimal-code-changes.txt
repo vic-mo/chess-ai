@@ -1,0 +1,31 @@
+PLAY VS AI — MINIMAL CODE CHANGES
+=================================
+
+SERVER (M7)
+-----------
+- Add GameService:
+  - POST /game, POST /game/{id}/move, POST /game/{id}/resign, GET /game/{id}
+  - WS /game/stream/{id}
+- Game state struct; session map; TTL eviction
+- Reuse EngineImpl; spawn per-game analysis task; cancel & restart on each move
+- Clock ticker task; broadcast clock events
+
+FRONTEND (M6)
+-------------
+- Extend engineClient with createGame / submitMove / connectStream / getSnapshot
+- New Play view; wire store and components
+- Reuse existing protocol validators; add new schemas
+
+ENGINE (M3/M4)
+--------------
+- Expose stop() responsiveness; ensure analyze(limit) respects moveTimeMs
+- Optional: expose incremental make/unmake for performance (or accept position(moves))
+
+CI / TESTS (M8)
+---------------
+- Add e2e and load test workflows
+- Contract tests for new endpoints/events
+
+DOD
+---
+- Code compiles; endpoints reachable; basic play loop verified manually & via tests

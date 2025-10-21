@@ -1,0 +1,65 @@
+PLAY VS AI — SERVER GAME ORCHESTRATOR
+=====================================
+
+1) CONTEXT
+----------
+Authoritative server component that tracks rules state, handles clocks, and coordinates the engine to produce replies.
+
+2) DATA MODEL
+-------------
+Game {
+  id: String
+  rules: { fenStart: String, chess960?: bool }
+  moves: Vec<UciMove>
+  ply: u32
+  sideHuman: Color
+  status: Playing | GameOver { result, reason }
+  clocks?: { wMs: i64, bMs: i64, incrementMs: i64, lastTick: Instant, active: Color }
+  engine: EngineHandle { cmdTx, infoRx }
+  hub: Broadcast<GameEvent>
+}
+
+3) CORE FLOWS
+-------------
+- Create:
+  - init Board from fenStart
+  - decide sideHuman; if engine starts → kick analysis immediately
+  - open WS hub; return gameId
+
+- Human Move:
+  - validate ply and legality
+  - apply move, update clocks (stop human, add increment)
+  - broadcast state; cancel engine if running
+  - start engine search for new position
+
+- Engine Move:
+  - on BestMove → apply to state, update clocks (stop engine, add increment)
+  - broadcast engineMove + state
+  - if terminal → broadcast gameOver
+
+- Ponder (optional):
+  - during PlayerTurn, run low-cost analysis on predicted reply
+  - cancel/restart if human move differs
+
+4) CLOCKS
+---------
+- interval tick (200–1000 ms) updates active side's time
+- timeout triggers gameOver { time }
+- include small server clock skew compensation
+
+5) CONCURRENCY
+--------------
+- One tokio task per game; bounded channels for engine info
+- Broadcast hub for WS clients (support reconnects)
+
+6) ERROR HANDLING
+-----------------
+- Illegal move → POST returns { ok:false } + WS "illegal"
+- Engine panics → convert to "error" + end game (internal error reason)
+- Idle games → auto-terminate after TTL
+
+7) DOD
+------
+- Authoritative application of moves with consistent ply
+- Stable clocks and timeouts; engine replies streamed
+- Resource caps respected; no memory leaks in soak tests

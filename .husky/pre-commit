@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -eu
+
+HUSKY_DIR="$(dirname "$0")/_"
+if [ -f "$HUSKY_DIR/husky.sh" ]; then
+  . "$HUSKY_DIR/husky.sh"
+fi
+
+pnpm fmt:check
+pnpm lint
+pnpm lint:rust

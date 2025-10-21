@@ -1,0 +1,28 @@
+PLAY VS AI — ROLLOUT PLAN
+=========================
+
+PHASE A — Core Play (No Clocks)
+-------------------------------
+- Implement /game, /move, /stream; no time control
+- Verify end-to-end: human vs engine with stable moves & results
+
+PHASE B — Clocks & TC
+---------------------
+- Add time controls, increments, timeouts; integrate time manager mapping
+- Add reconnect snapshot; polish WS throttling
+
+PHASE C — UX Polish
+-------------------
+- Premove, draw/resign, PGN export, eval toggle polish, accessibility
+- Error UX & toasts; mobile layout optimization
+
+PHASE D — Scale & Hardening
+---------------------------
+- Load test, leaks, CPU budgets, rate limiting
+- Dockerization, health checks, metrics dashboards
+- Optional persistence (store game history)
+
+DOD
+---
+- Each phase ships independently with feature flags
+- Metrics confirm stability and user-perceived latency targets

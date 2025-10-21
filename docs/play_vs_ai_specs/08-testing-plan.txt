@@ -1,0 +1,47 @@
+PLAY VS AI — TESTING PLAN
+=========================
+
+1) UNIT TESTS
+-------------
+- Rules:
+  - Legality for en passant, castling (all variants), promotions
+- Clocks:
+  - Increment application; timeout detection; side switching
+- Protocol:
+  - Zod/serde schema validation for all messages & endpoints
+- Engine:
+  - Stop responsiveness under move time; deterministic output for fixed seed
+
+2) INTEGRATION TESTS
+--------------------
+- Create game → first engine move when sideHuman=Black
+- Submit legal move → ACK; illegal move → rejection with resync
+- ShowEval on/off toggles streaming cadence and panel rendering
+- Reconnect: drop WS; GET snapshot; resume stream
+
+3) LOAD/CONCURRENCY
+-------------------
+- 100 concurrent games for 60s; memory flat; engine tasks cleaned up
+- Measure event latency < 100 ms p50; no panics
+
+4) E2E (PLAYWRIGHT/CYPRESS)
+---------------------------
+- New game (5|3) → play 20 plies → clocks behave → no desync
+- Resign and draw-offer flows (if enabled)
+- Mobile viewport: touch drag/drop reliable
+
+5) BENCHMARKS
+-------------
+- Engine nodes/s under server task orchestration
+- WS throughput per game; server CPU usage
+
+6) CI GATES
+-----------
+- Perft (M2) & search suites (M3) must pass
+- API contract tests (M1 + this extension) must pass
+- E2E smoke must pass (headless)
+
+7) DOD
+------
+- Green CI under full pipeline
+- Load test demonstrates stability and bounded resources

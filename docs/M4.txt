@@ -1,0 +1,113 @@
+M4 — Evaluation v1 (Classical Evaluation Function)
+==================================================
+
+1. Context
+----------
+The evaluation function transforms board positions into numeric scores,
+representing the side-to-move’s advantage. It is the core heuristic that
+drives the search from M3.
+
+This milestone expands the simple material-count evaluation into a
+classical heuristic model considering piece activity, pawn structure,
+king safety, and game phase.
+
+Evaluation accuracy directly impacts engine strength. A well-balanced,
+tuned heuristic should yield stable scores and improve move ordering.
+
+2. Functional Scope
+-------------------
+Core functionality:
+- Implement evaluation function `evaluate(&Board) -> i32` returning
+  centipawn score from the perspective of the side to move.
+- Features:
+  * Material balance (weighted piece values)
+  * Piece-square tables (PST)
+  * Mobility (legal moves per side)
+  * Pawn structure (doubled, isolated, passed)
+  * King safety (pawn shield, open files)
+  * Space and tempo bonuses
+  * Game-phase interpolation (midgame vs. endgame)
+- Integration:
+  * Called by `search.rs` at leaf and quiescence nodes.
+  * Scores cached in transposition table (TT).
+
+3. Non-Functional Requirements
+------------------------------
+- Performance: evaluation < 20 µs per call.
+- Determinism: identical results per position.
+- Tunability: coefficients easily adjusted and versioned.
+- Safety: never panics; handles invalid or incomplete positions gracefully.
+- Maintainability: each feature in its own function or module.
+
+4. Technical Design
+-------------------
+Modules:
+- eval.rs         → main `evaluate()` function.
+- eval/material.rs → base piece values.
+- eval/pst.rs      → PST lookup tables (MG/EG).
+- eval/pawns.rs    → pawn hash table and structure analysis.
+- eval/king.rs     → king safety and attack evaluation.
+
+Formula overview:
+  Score = Material + PST + Mobility + PawnStructure + KingSafety + Space + Tempo
+  Final = (mg * phase + eg * (256 - phase)) / 256
+
+Piece values (centipawns):
+  Pawn=100, Knight=320, Bishop=330, Rook=500, Queen=900, King=0.
+
+Piece-square tables: 64-element arrays per piece and color.
+Game phase: based on total non-pawn material.
+
+Implementation details:
+- Evaluate from side-to-move’s perspective.
+- Use incremental evaluation for make/unmake move (future).
+- Use lazy evaluation cutoff if absolute score > mate threshold.
+
+Data flow:
+  alpha_beta() → evaluate(board)
+                    ↓
+           compute feature contributions
+                    ↓
+            return i32 score (centipawns)
+
+5. Risks and Mitigations
+------------------------
+Risk: Overcounting features (double reward for same aspect)
+Mitigation: Central coefficient registry and linear combination check.
+
+Risk: King safety too heavy causes instability
+Mitigation: Normalize contributions with tuning positions.
+
+Risk: Pawn structure too slow
+Mitigation: Cache via pawn hash table keyed by pawn bitboards.
+
+Risk: Asymmetric scores between sides
+Mitigation: Mirror-board test in CI to ensure f(x) = -f(x_mirrored).
+
+6. Testing Plan
+---------------
+Unit tests:
+- Mirror-board symmetry test (white vs. black).
+- Known positions with expected eval range.
+- Piece-square value sanity checks.
+
+Integration tests:
+- Run search depth=4 before/after adding evaluation — must improve score stability.
+
+Benchmark:
+- Criterion benchmark for evaluate() runtime per call.
+- Measure total time per node in search.
+
+7. Definition of Done (DoD)
+---------------------------
+- evaluate() stable and deterministic.
+- All feature contributions integrated and unit-tested.
+- Mirror symmetry validated.
+- Average eval time < 20 µs per call.
+- Engine produces consistent scores and stronger play (qualitative check).
+- CI green with performance benchmarks.
+
+8. Next Step
+------------
+Proceed to M5 — WASM Bridge and Worker (optional)
+or directly to M6 — Frontend React MVP if following the server-first path.

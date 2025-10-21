@@ -1,0 +1,43 @@
+PLAY VS AI — ENGINE INTEGRATION DETAILS
+=======================================
+
+1) CONTEXT
+----------
+Reuse EngineImpl from M3/M4 with time management mapping and optional pondering.
+
+2) POSITION MANAGEMENT
+----------------------
+- On game create: EngineImpl.position(fenStart, [])
+- After each legal move: prefer incremental make_move; otherwise EngineImpl.position(fenStart, moves[])
+- Maintain Zobrist repetition table for draw checks
+
+3) TIME MANAGEMENT
+------------------
+- Compute moveTimeMs per difficulty and time control
+  Example heuristic:
+    reserve = max(5% of remaining, 1_500 ms)
+    budget = min(remaining - reserve,  (remaining / 20) + incrementMs * 0.7)
+    moveTimeMs = clamp(budget, 150 ms, 10_000 ms)
+
+4) SKILL LEVEL MAPPING
+----------------------
+- Level 0–5: depth cap 3–6; higher pruning; randomize equal PV by ±15 cp
+- Level 6–12: depth 7–12; moderate pruning; occasional early cutoff
+- Level 13–20: depth open; full pruning; no randomization
+
+5) MULTI-PV & INFO STREAM
+-------------------------
+- For live play: single PV preferred for throughput
+- If showEval enabled: stream SearchInfo at 100–200 ms cadence
+
+6) PONDERING (OPTIONAL)
+-----------------------
+- When waiting for human:
+  - Start analyze(infinite) on best predicted reply
+  - Cancel immediately on human move; reuse hash/TT warm cache
+
+7) DOD
+------
+- Engine responds within computed moveTimeMs ± small variance
+- Streamed info (if enabled) does not starve search
+- No stale searches after move or stop
