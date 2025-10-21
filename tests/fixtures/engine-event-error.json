@@ -1,0 +1,7 @@
+{
+  "type": "error",
+  "payload": {
+    "id": "fixture-evt-3",
+    "message": "Invalid FEN string provided"
+  }
+}

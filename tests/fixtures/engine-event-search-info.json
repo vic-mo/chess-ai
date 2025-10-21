@@ -1,0 +1,15 @@
+{
+  "type": "searchInfo",
+  "payload": {
+    "id": "fixture-evt-1",
+    "depth": 10,
+    "nodes": 750000,
+    "nps": 500000,
+    "timeMs": 1500,
+    "score": {
+      "kind": "mate",
+      "plies": 5
+    },
+    "pv": ["d8h4", "g2g3", "h4f2"]
+  }
+}

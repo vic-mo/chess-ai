@@ -1,5 +1,8 @@
+pub mod bitboard;
 pub mod board;
 pub mod io;
+pub mod piece;
+pub mod square;
 pub mod types;
 
 use types::*;

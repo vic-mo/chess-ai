@@ -1,0 +1,8 @@
+{
+  "type": "bestMove",
+  "payload": {
+    "id": "fixture-evt-2",
+    "best": "d2d4",
+    "ponder": "d7d5"
+  }
+}

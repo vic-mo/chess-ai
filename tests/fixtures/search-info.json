@@ -1,0 +1,15 @@
+{
+  "id": "fixture-info-1",
+  "depth": 15,
+  "seldepth": 20,
+  "nodes": 5000000,
+  "nps": 1250000,
+  "timeMs": 4000,
+  "score": {
+    "kind": "cp",
+    "value": 87
+  },
+  "pv": ["e2e4", "c7c5", "g1f3", "d7d6", "d2d4", "c5d4", "f3d4"],
+  "hashfull": 650,
+  "tbHits": 25
+}
