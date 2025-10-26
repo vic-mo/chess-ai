@@ -25,7 +25,7 @@ pub struct ZobristKeys {
 /// Generate pseudorandom 64-bit numbers using a simple LCG.
 const fn prng(mut seed: u64) -> u64 {
     // LCG parameters from Numerical Recipes
-    seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
+    seed = seed.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
     seed
 }
 
@@ -39,7 +39,7 @@ const fn generate_zobrist_keys() -> ZobristKeys {
     };
 
     // Start with a fixed seed for reproducibility
-    let mut seed: u64 = 0x123456789ABCDEF0;
+    let mut seed: u64 = 0x1234_5678_9ABC_DEF0;
 
     // Generate piece keys
     let mut piece_type = 0;

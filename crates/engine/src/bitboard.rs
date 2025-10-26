@@ -1,3 +1,29 @@
+//! Bitboard representation for efficient chess board operations.
+//!
+//! A bitboard uses a single 64-bit integer to represent a set of squares on the chessboard.
+//! Each bit corresponds to a square (bit 0 = a1, bit 63 = h8), allowing for efficient
+//! set operations using bitwise operations.
+//!
+//! ## Performance Benefits
+//!
+//! - Set operations (union, intersection, difference) in O(1) time
+//! - Iteration over set bits using CPU instructions (trailing_zeros)
+//! - Compact representation (8 bytes per set of squares)
+//!
+//! ## Example
+//!
+//! ```
+//! use engine::bitboard::Bitboard;
+//! use engine::square::Square;
+//!
+//! let mut bb = Bitboard::EMPTY;
+//! bb = bb.set(Square::E4);
+//! bb = bb.set(Square::E5);
+//!
+//! assert_eq!(bb.count(), 2);
+//! assert!(bb.contains(Square::E4));
+//! ```
+
 use crate::square::Square;
 
 /// A bitboard representing a set of squares on the chessboard
@@ -236,13 +262,13 @@ impl IntoIterator for Bitboard {
 }
 
 // File and rank constants
-const FILE_A: u64 = 0x0101010101010101;
-const FILE_H: u64 = 0x8080808080808080;
+const FILE_A: u64 = 0x0101_0101_0101_0101;
+const FILE_H: u64 = 0x8080_8080_8080_8080;
 
 #[allow(dead_code)]
-const RANK_1: u64 = 0x00000000000000FF;
+const RANK_1: u64 = 0x0000_0000_0000_00FF;
 #[allow(dead_code)]
-const RANK_8: u64 = 0xFF00000000000000;
+const RANK_8: u64 = 0xFF00_0000_0000_0000;
 
 impl std::fmt::Display for Bitboard {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
