@@ -55,6 +55,7 @@ pub mod square;
 pub mod time;
 pub mod tt;
 pub mod types;
+pub mod uci;
 pub mod zobrist;
 
 use types::*;
