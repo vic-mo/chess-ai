@@ -4,9 +4,11 @@
 //! Positive scores favor the side to move, negative scores favor the opponent.
 
 mod material;
+mod positional;
 mod pst;
 
 pub use material::*;
+pub use positional::*;
 pub use pst::*;
 
 use crate::board::Board;
@@ -47,8 +49,26 @@ impl Evaluator {
         // Material + PST
         score += self.evaluate_material_and_pst(board);
 
+        // Positional factors
+        score += self.evaluate_positional_factors(board);
+
         // Return score from side to move's perspective
         score
+    }
+
+    /// Evaluate positional factors.
+    fn evaluate_positional_factors(&self, board: &Board) -> i32 {
+        let white_pos = evaluate_positional(board, Color::White);
+        let black_pos = evaluate_positional(board, Color::Black);
+
+        let score = white_pos - black_pos;
+
+        // Flip if black to move
+        if board.side_to_move() == Color::Black {
+            -score
+        } else {
+            score
+        }
     }
 
     /// Evaluate material and piece-square tables.
