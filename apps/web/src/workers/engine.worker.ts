@@ -96,22 +96,9 @@ function handleAnalyze(req: AnalyzeRequest): void {
     // Set position
     wasmEngine.position(req.fen, req.moves || []);
 
-    // Convert search limit to WASM format
-    let limit: unknown;
-    switch (req.limit.kind) {
-      case 'depth':
-        limit = { depth: req.limit.depth };
-        break;
-      case 'nodes':
-        limit = { nodes: req.limit.nodes };
-        break;
-      case 'time':
-        limit = { moveTimeMs: req.limit.moveTimeMs };
-        break;
-      case 'infinite':
-        limit = { infinite: true };
-        break;
-    }
+    // Search limit already has the correct format with 'kind' field
+    // Just pass it through as-is
+    const limit = req.limit;
 
     // Callback for search info
     const callback = (info: unknown) => {
@@ -121,8 +108,12 @@ function handleAnalyze(req: AnalyzeRequest): void {
       });
     };
 
+    console.log('[Worker] Starting search with limit:', limit);
+
     // Start analysis
     const result = wasmEngine.analyze(limit, callback);
+
+    console.log('[Worker] Search completed, result:', result);
 
     // Send best move
     const bestMoveEvent: EngineEvent = {
