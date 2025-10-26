@@ -79,10 +79,93 @@ function remoteAnalyze(req: AnalyzeRequest, onEvent: EventHandler): StopHandler 
   return cleanup;
 }
 
+// Web Worker instance for WASM engine
+let wasmWorker: Worker | null = null;
+let wasmInitialized = false;
+const wasmEventHandlers = new Map<string, EventHandler>();
+
+/**
+ * Initialize WASM worker
+ */
+function initWasmWorker(): Promise<void> {
+  if (wasmInitialized) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve, reject) => {
+    try {
+      // Create worker
+      wasmWorker = new Worker(new URL('../workers/engine.worker.ts', import.meta.url), {
+        type: 'module',
+      });
+
+      // Set up message handler
+      wasmWorker.onmessage = (ev: MessageEvent) => {
+        const msg = ev.data;
+
+        // Handle initialization
+        if (msg.type === 'initialized') {
+          wasmInitialized = true;
+          resolve();
+          return;
+        }
+
+        // Handle engine events
+        if (msg.type === 'searchInfo' || msg.type === 'bestMove' || msg.type === 'error') {
+          const payload = msg.payload as { id: string };
+          const handler = wasmEventHandlers.get(payload.id);
+          if (handler) {
+            handler(msg as EngineEvent);
+
+            // Clean up handler on bestMove or error
+            if (msg.type === 'bestMove' || msg.type === 'error') {
+              wasmEventHandlers.delete(payload.id);
+            }
+          }
+        }
+      };
+
+      // Set up error handler
+      wasmWorker.onerror = (error) => {
+        console.error('WASM worker error:', error);
+        reject(error);
+      };
+
+      // Send init message
+      wasmWorker.postMessage({ type: 'init' });
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
 function wasmAnalyze(req: AnalyzeRequest, onEvent: EventHandler): StopHandler {
-  // Placeholder: you will import your wasm pkg and use it here.
-  // For now, route to fake until wasm is wired.
-  return fakeAnalyze(req, onEvent);
+  // Register event handler
+  wasmEventHandlers.set(req.id, onEvent);
+
+  // Initialize worker if needed
+  if (!wasmInitialized) {
+    initWasmWorker()
+      .then(() => {
+        // Send analyze request
+        wasmWorker?.postMessage({ type: 'analyze', payload: req });
+      })
+      .catch((error) => {
+        // Fall back to fake on error
+        console.error('Failed to initialize WASM worker, falling back to fake:', error);
+        wasmEventHandlers.delete(req.id);
+        return fakeAnalyze(req, onEvent);
+      });
+  } else {
+    // Send analyze request
+    wasmWorker?.postMessage({ type: 'analyze', payload: req });
+  }
+
+  // Return stop handler
+  return () => {
+    wasmWorker?.postMessage({ type: 'stop', id: req.id });
+    wasmEventHandlers.delete(req.id);
+  };
 }
 
 function stopRemote(id: string) {
