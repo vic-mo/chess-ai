@@ -15,6 +15,13 @@ pub const MATE_SCORE: i32 = 30_000;
 /// Infinity (larger than any possible score).
 pub const INFINITY: i32 = 32_000;
 
+/// Principal variation line (for multi-PV search).
+#[derive(Debug, Clone)]
+pub struct PVLine {
+    pub score: i32,
+    pub pv: Vec<Move>,
+}
+
 /// Search result containing the best move and score.
 #[derive(Debug, Clone)]
 pub struct SearchResult {
@@ -23,6 +30,8 @@ pub struct SearchResult {
     pub depth: u32,
     pub nodes: u64,
     pub pv: Vec<Move>,
+    /// Multi-PV results (when using search_multi_pv)
+    pub multi_pv: Vec<PVLine>,
 }
 
 /// Main search engine.
@@ -130,7 +139,163 @@ impl Searcher {
             depth: max_depth,
             nodes: self.nodes,
             pv,
+            multi_pv: Vec::new(), // Empty for single-PV search
         }
+    }
+
+    /// Multi-PV search: find top N best moves.
+    ///
+    /// Searches the position N times, excluding previously found best moves
+    /// each iteration. Useful for analysis mode.
+    ///
+    /// # Arguments
+    /// * `board` - The position to search
+    /// * `max_depth` - Maximum search depth in plies
+    /// * `num_pv` - Number of principal variations to find
+    ///
+    /// # Returns
+    /// SearchResult with best move and multi_pv containing all PV lines
+    pub fn search_multi_pv(
+        &mut self,
+        board: &Board,
+        max_depth: u32,
+        num_pv: usize,
+    ) -> SearchResult {
+        if num_pv <= 1 {
+            // Single PV: use regular search
+            return self.search(board, max_depth);
+        }
+
+        self.nodes = 0;
+        self.tt.new_search();
+        self.move_order.clear();
+
+        let mut multi_pv = Vec::new();
+        let mut excluded_moves = Vec::new();
+
+        for _pv_num in 0..num_pv {
+            // Search with excluded moves
+            let result = self.search_excluding(board, max_depth, &excluded_moves);
+
+            if result.pv.is_empty() {
+                // No more legal moves
+                break;
+            }
+
+            multi_pv.push(PVLine {
+                score: result.score,
+                pv: result.pv.clone(),
+            });
+
+            // Exclude this PV's first move from next iteration
+            if let Some(&first_move) = result.pv.first() {
+                excluded_moves.push(first_move);
+            }
+        }
+
+        // Return best as primary result
+        let best = &multi_pv[0];
+
+        SearchResult {
+            best_move: best.pv[0],
+            score: best.score,
+            depth: max_depth,
+            nodes: self.nodes,
+            pv: best.pv.clone(),
+            multi_pv,
+        }
+    }
+
+    /// Search with a set of excluded moves (for multi-PV).
+    fn search_excluding(
+        &mut self,
+        board: &Board,
+        max_depth: u32,
+        excluded: &[Move],
+    ) -> SearchResult {
+        let mut best_move = Move::new(
+            crate::square::Square::A1,
+            crate::square::Square::A1,
+            crate::r#move::MoveFlags::QUIET,
+        );
+        let mut best_score = 0;
+
+        // Iterative deepening (simplified - no aspiration windows for multi-PV)
+        for depth in 1..=max_depth {
+            let score = self.search_root_excluding(board, depth, excluded);
+
+            best_score = score;
+
+            // Extract PV from TT
+            let pv = self.extract_pv(board, depth);
+
+            if let Some(&first_move) = pv.first() {
+                best_move = first_move;
+            }
+        }
+
+        let pv = self.extract_pv(board, max_depth);
+
+        SearchResult {
+            best_move,
+            score: best_score,
+            depth: max_depth,
+            nodes: self.nodes,
+            pv,
+            multi_pv: Vec::new(),
+        }
+    }
+
+    /// Search at the root with excluded moves (for multi-PV).
+    fn search_root_excluding(&mut self, board: &Board, depth: u32, excluded: &[Move]) -> i32 {
+        let all_moves = board.generate_legal_moves();
+
+        // Filter out excluded moves
+        let mut legal_moves = crate::movelist::MoveList::new();
+        for m in all_moves.iter() {
+            if !excluded.contains(m) {
+                legal_moves.push(*m);
+            }
+        }
+
+        if legal_moves.is_empty() {
+            return if board.is_in_check() { -MATE_SCORE } else { 0 };
+        }
+
+        // Order moves (using TT move from previous iteration if available)
+        let tt_move = self.tt.probe(board.hash()).map(|e| e.best_move);
+        self.move_order
+            .order_moves(board, &mut legal_moves, 0, tt_move);
+
+        let mut best_score = -INFINITY;
+        let mut best_move = legal_moves[0];
+        let mut alpha = -INFINITY;
+        let beta = INFINITY;
+
+        for m in legal_moves.iter() {
+            let mut new_board = board.clone();
+            new_board.make_move(*m);
+
+            let score = -self.negamax(&new_board, depth as i32 - 1, -beta, -alpha, 1);
+
+            if score > best_score {
+                best_score = score;
+                best_move = *m;
+            }
+
+            alpha = alpha.max(score);
+        }
+
+        // Store best move in TT
+        self.tt.store(
+            board.hash(),
+            best_move,
+            best_score,
+            depth as u8,
+            Bound::Exact,
+        );
+
+        best_score
     }
 
     /// Search at the root (find best move at current depth).
@@ -773,5 +938,103 @@ mod tests {
             result.score,
             result.best_move.to_uci()
         );
+    }
+
+    #[test]
+    fn test_multi_pv_basic() {
+        // Test Multi-PV finds multiple best moves
+        let board = Board::startpos();
+
+        let mut searcher = Searcher::new();
+        let result = searcher.search_multi_pv(&board, 4, 3);
+
+        // Should find 3 PV lines
+        assert_eq!(result.multi_pv.len(), 3);
+
+        // All moves should be legal
+        for pv_line in &result.multi_pv {
+            assert!(!pv_line.pv.is_empty());
+            assert!(board.is_legal(pv_line.pv[0]));
+        }
+
+        // Scores should be ordered (PV1 >= PV2 >= PV3)
+        assert!(result.multi_pv[0].score >= result.multi_pv[1].score);
+        assert!(result.multi_pv[1].score >= result.multi_pv[2].score);
+
+        println!("Multi-PV results:");
+        for (i, pv_line) in result.multi_pv.iter().enumerate() {
+            println!(
+                "  PV{}: {} (score: {})",
+                i + 1,
+                pv_line.pv[0].to_uci(),
+                pv_line.score
+            );
+        }
+    }
+
+    #[test]
+    fn test_multi_pv_no_duplicates() {
+        // Test that Multi-PV doesn't return duplicate moves
+        let board = Board::startpos();
+
+        let mut searcher = Searcher::new();
+        let result = searcher.search_multi_pv(&board, 4, 5);
+
+        // Collect first moves from each PV
+        let first_moves: Vec<Move> = result.multi_pv.iter().map(|pv| pv.pv[0]).collect();
+
+        // Check for duplicates
+        for i in 0..first_moves.len() {
+            for j in (i + 1)..first_moves.len() {
+                assert_ne!(
+                    first_moves[i], first_moves[j],
+                    "Found duplicate moves in multi-PV"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_multi_pv_tactical_position() {
+        // Test Multi-PV on a position with clear alternatives
+        let fen = "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4";
+        let board = parse_fen(fen).unwrap();
+
+        let mut searcher = Searcher::new();
+        let result = searcher.search_multi_pv(&board, 4, 3);
+
+        // Should find multiple PV lines
+        assert!(result.multi_pv.len() >= 2);
+
+        // All should be legal
+        for pv_line in &result.multi_pv {
+            assert!(board.is_legal(pv_line.pv[0]));
+        }
+
+        println!("Tactical position Multi-PV:");
+        for (i, pv_line) in result.multi_pv.iter().enumerate() {
+            println!(
+                "  PV{}: {} (score: {})",
+                i + 1,
+                pv_line.pv[0].to_uci(),
+                pv_line.score
+            );
+        }
+    }
+
+    #[test]
+    fn test_multi_pv_single_pv_fallback() {
+        // Test that requesting 1 PV falls back to regular search
+        let board = Board::startpos();
+
+        let mut searcher1 = Searcher::new();
+        let result1 = searcher1.search(&board, 4);
+
+        let mut searcher2 = Searcher::new();
+        let result2 = searcher2.search_multi_pv(&board, 4, 1);
+
+        // Should get same result (same best move)
+        assert_eq!(result1.best_move, result2.best_move);
+        assert_eq!(result1.score, result2.score);
     }
 }
