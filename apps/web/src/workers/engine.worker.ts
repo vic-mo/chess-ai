@@ -38,7 +38,10 @@ async function initWasm(wasmPath?: string): Promise<void> {
     // Load WASM module as ES module using dynamic import with base URL
     const basePath = wasmPath || '/wasm/engine_bridge_wasm.js';
     const baseUrl = self.location.origin;
-    const fullUrl = new URL(basePath, baseUrl).href;
+
+    // Add cache-busting timestamp to force reload
+    const cacheBuster = `?v=${Date.now()}`;
+    const fullUrl = new URL(basePath + cacheBuster, baseUrl).href;
 
     console.log('[Worker] Loading WASM from:', fullUrl);
 
@@ -47,9 +50,10 @@ async function initWasm(wasmPath?: string): Promise<void> {
 
     console.log('[Worker] WASM module loaded, initializing...');
 
-    // Initialize with explicit WASM binary path
-    const wasmBinaryPath = new URL('/wasm/engine_bridge_wasm_bg.wasm', baseUrl).href;
-    await wasmModule.default(wasmBinaryPath);
+    // Initialize with explicit WASM binary path (also with cache buster)
+    // Use new object-based initialization to avoid deprecation warning
+    const wasmBinaryPath = new URL('/wasm/engine_bridge_wasm_bg.wasm' + cacheBuster, baseUrl).href;
+    await wasmModule.default({ module_or_path: wasmBinaryPath });
 
     console.log('[Worker] WASM initialized, creating engine instance...');
 
@@ -100,19 +104,11 @@ function handleAnalyze(req: AnalyzeRequest): void {
     // Just pass it through as-is
     const limit = req.limit;
 
-    // Callback for search info
-    const callback = (info: unknown) => {
-      console.log('[Worker] Search info callback:', info);
-      self.postMessage({
-        type: 'searchInfo',
-        payload: info,
-      });
-    };
-
     console.log('[Worker] Starting search with limit:', limit);
 
-    // Start analysis
-    const result = wasmEngine.analyze(limit, callback);
+    // Start analysis (no callback - WASM doesn't support SearchInfo streaming)
+    // The analyze method will return when search is complete
+    const result = wasmEngine.analyze(limit);
 
     console.log('[Worker] Search completed, raw result:', result);
     console.log('[Worker] Result type:', typeof result);

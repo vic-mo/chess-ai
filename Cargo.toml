@@ -3,7 +3,8 @@
 members = [
   "crates/engine",
   "crates/engine-bridge-wasm",
-  "services/engine-server"
+  "services/engine-server",
+  "apps/uci-server"
 ]
 resolver = "2"
 

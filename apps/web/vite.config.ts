@@ -8,6 +8,9 @@ export default defineConfig(({ mode }) => {
     define: {
       __ENGINE_MODE__: JSON.stringify(env.VITE_ENGINE_MODE || 'fake'),
     },
+    optimizeDeps: {
+      exclude: ['@chess-ai/engine-wasm'],
+    },
     test: {
       globals: true,
       environment: 'jsdom',

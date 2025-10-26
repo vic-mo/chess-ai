@@ -1,4 +1,54 @@
+// Time types - use dummy implementations for WASM
+#[cfg(not(target_arch = "wasm32"))]
 use std::time::{Duration, Instant};
+
+#[cfg(target_arch = "wasm32")]
+use std::time::Duration;
+
+#[cfg(target_arch = "wasm32")]
+#[derive(Debug, Clone, Copy, Eq)]
+struct Instant;
+
+#[cfg(target_arch = "wasm32")]
+impl Instant {
+    fn now() -> Self {
+        Instant
+    }
+
+    fn elapsed(&self) -> Duration {
+        Duration::from_millis(0)
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+impl std::ops::Add<Duration> for Instant {
+    type Output = Instant;
+    fn add(self, _: Duration) -> Self {
+        Instant
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+impl PartialOrd for Instant {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+impl Ord for Instant {
+    fn cmp(&self, _: &Self) -> std::cmp::Ordering {
+        // Always return Less so time checks always return false
+        std::cmp::Ordering::Less
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+impl PartialEq for Instant {
+    fn eq(&self, _: &Self) -> bool {
+        true
+    }
+}
 
 /// Time control mode for a search
 #[derive(Debug, Clone, PartialEq, Default)]

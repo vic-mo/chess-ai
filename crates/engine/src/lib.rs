@@ -58,46 +58,72 @@ pub mod types;
 pub mod uci;
 pub mod zobrist;
 
+use board::Board;
+use io::{parse_fen, ToFen};
+use r#move::Move;
+use search::Searcher;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use time::TimeControl;
 use types::*;
 
 pub struct EngineImpl {
     pub opts: EngineOptions,
     pub current_fen: String,
-    stopped: bool,
+    pub current_board: Option<Board>,
+    stopped: Arc<AtomicBool>,
+    searcher: Searcher,
 }
 
 impl Default for EngineImpl {
     fn default() -> Self {
+        let opts = EngineOptions {
+            hash_size_mb: 64,
+            threads: 1,
+            contempt: None,
+            skill_level: None,
+            multi_pv: Some(1),
+            use_tablebases: None,
+        };
+        let tt_size = opts.hash_size_mb as usize;
+        let stopped = Arc::new(AtomicBool::new(false));
         Self {
-            opts: EngineOptions {
-                hash_size_mb: 64,
-                threads: 1,
-                contempt: None,
-                skill_level: None,
-                multi_pv: Some(1),
-                use_tablebases: None,
-            },
+            opts,
             current_fen: "startpos".to_string(),
-            stopped: false,
+            current_board: None,
+            stopped: Arc::clone(&stopped),
+            searcher: Searcher::with_tt_size_and_stop_flag(tt_size, stopped),
         }
     }
 }
 
 impl EngineImpl {
     pub fn new_with(opts: EngineOptions) -> Self {
+        let tt_size = opts.hash_size_mb as usize;
+        let stopped = Arc::new(AtomicBool::new(false));
         Self {
             opts,
-            ..Default::default()
+            current_fen: "startpos".to_string(),
+            current_board: None,
+            stopped: Arc::clone(&stopped),
+            searcher: Searcher::with_tt_size_and_stop_flag(tt_size, stopped),
         }
     }
 
     pub fn new_game(&mut self) {
         self.current_fen = "startpos".to_string();
-        self.stopped = false;
+        self.stopped.store(false, Ordering::Relaxed);
     }
 
     pub fn position(&mut self, fen: &str, _moves: &[String]) {
         self.current_fen = fen.to_string();
+        // Handle "startpos" keyword or parse FEN
+        self.current_board = if fen == "startpos" {
+            Some(Board::startpos())
+        } else {
+            parse_fen(fen).ok()
+        };
+        // TODO: apply moves if provided
     }
 
     pub fn set_option(&mut self, _key: &str, _value: &str) {
@@ -108,41 +134,132 @@ impl EngineImpl {
     where
         F: FnMut(SearchInfo),
     {
-        self.stopped = false;
-        // Dummy iterative deepening loop for scaffold
-        let mut nodes = 0u64;
-        for depth in 1..=match limit {
-            SearchLimit::Depth { depth } => depth,
-            _ => 6,
-        } {
-            if self.stopped {
-                break;
+        self.stopped.store(false, Ordering::Relaxed);
+
+        // Parse board from FEN
+        let board = match &self.current_board {
+            Some(b) => b.clone(),
+            None => {
+                // Handle "startpos" keyword or parse FEN
+                if self.current_fen == "startpos" {
+                    Board::startpos()
+                } else {
+                    match parse_fen(&self.current_fen) {
+                        Ok(b) => b,
+                        Err(_e) => {
+                            return BestMove {
+                                id: String::new(),
+                                best: "0000".to_string(), // Invalid move to signal error
+                                ponder: None,
+                            };
+                        }
+                    }
+                }
             }
-            nodes += (depth as u64) * 1000;
-            let info = SearchInfo {
-                id: "scaffold".into(),
-                depth,
-                seldepth: Some(depth + 2),
-                nodes,
-                nps: 1_200_000,
-                time_ms: depth as u64 * 50,
-                score: Score::Cp {
-                    value: depth as i32 * 10,
-                },
-                pv: vec!["e2e4".into(), "e7e5".into()],
-                hashfull: Some(10 * depth),
-                tb_hits: None,
-            };
-            info_sink(info);
-        }
+        };
+
+        // Convert SearchLimit to (max_depth, TimeControl)
+        let (max_depth, time_control) = match limit {
+            SearchLimit::Depth { depth } => (depth, TimeControl::Depth { depth }),
+            SearchLimit::Nodes { nodes } => (search::MAX_DEPTH, TimeControl::Nodes { nodes }),
+            SearchLimit::Time { move_time_ms } => {
+                (search::MAX_DEPTH, TimeControl::MoveTime { millis: move_time_ms })
+            }
+            SearchLimit::Infinite => (search::MAX_DEPTH, TimeControl::Infinite),
+        };
+
+        // Call the real search engine with callback
+        let result = self.searcher.search_with_limit_callback(
+            &board,
+            max_depth,
+            time_control,
+            |mut info| {
+                // ID will be set by caller if needed, leave empty here
+                info.id = String::new();
+                info_sink(info);
+            },
+        );
+
+        // Convert result to BestMove
+        let best_move_str = Self::move_to_string(&result.best_move);
+        let ponder_move_str = result.pv.get(1).map(|m| Self::move_to_string(m));
+
         BestMove {
-            id: "scaffold".into(),
-            best: "e2e4".into(),
-            ponder: Some("e7e5".into()),
+            id: String::new(), // ID is added by the caller (WASM bridge, server, etc.)
+            best: best_move_str,
+            ponder: ponder_move_str,
         }
     }
 
-    pub fn stop(&mut self) {
-        self.stopped = true;
+    /// Convert Move to UCI string (e.g., "e2e4", "e7e8q")
+    fn move_to_string(mv: &Move) -> String {
+        format!("{}", mv)
+    }
+
+    pub fn stop(&self) {
+        self.stopped.store(true, Ordering::Relaxed);
+        self.searcher.stop();
+    }
+
+    /// Get a clone of the stop flag for external control.
+    pub fn stop_flag(&self) -> Arc<AtomicBool> {
+        Arc::clone(&self.stopped)
+    }
+
+    /// Validate if a UCI move is legal in the given position
+    pub fn is_move_legal(&self, fen: &str, uci_move: &str) -> bool {
+        let board = match parse_fen(fen) {
+            Ok(b) => b,
+            Err(_) => return false,
+        };
+
+        let legal_moves = board.generate_legal_moves();
+        let result = legal_moves.iter().any(|m| m.to_uci() == uci_move);
+        result
+    }
+
+    /// Apply a UCI move and return the new FEN
+    pub fn make_move(&mut self, fen: &str, uci_move: &str) -> Result<String, String> {
+        let mut board = parse_fen(fen).map_err(|e| format!("Invalid FEN: {:?}", e))?;
+
+        let legal_moves = board.generate_legal_moves();
+        let mv = legal_moves
+            .iter()
+            .find(|m| m.to_uci() == uci_move)
+            .ok_or_else(|| format!("Illegal move: {}", uci_move))?;
+
+        board.make_move(*mv);
+        Ok(board.to_fen())
+    }
+
+    /// Get all legal moves for a position as UCI strings
+    pub fn legal_moves(&self, fen: &str) -> Vec<String> {
+        match parse_fen(fen) {
+            Ok(board) => board
+                .generate_legal_moves()
+                .iter()
+                .map(|m| m.to_uci())
+                .collect(),
+            Err(_) => vec![],
+        }
+    }
+
+    /// Check if position is game over (checkmate, stalemate)
+    pub fn is_game_over(&self, fen: &str) -> (bool, Option<String>) {
+        match parse_fen(fen) {
+            Ok(board) => {
+                let legal_moves = board.generate_legal_moves();
+                if legal_moves.len() == 0 {
+                    if board.is_in_check() {
+                        (true, Some("checkmate".to_string()))
+                    } else {
+                        (true, Some("stalemate".to_string()))
+                    }
+                } else {
+                    (false, None)
+                }
+            }
+            Err(_) => (false, None),
+        }
     }
 }

@@ -1,0 +1,148 @@
+<!doctype html>
+<html>
+  <head>
+    <title>WebSocket Chess Engine Test</title>
+    <style>
+      body {
+        font-family: monospace;
+        padding: 20px;
+      }
+      #log {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 15px;
+        border-radius: 5px;
+        max-height: 500px;
+        overflow-y: auto;
+        margin-top: 20px;
+      }
+      .info {
+        color: #4ec9b0;
+      }
+      .bestmove {
+        color: #ce9178;
+        font-weight: bold;
+      }
+      .error {
+        color: #f48771;
+      }
+      button {
+        padding: 10px 20px;
+        margin: 5px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      input {
+        padding: 8px;
+        font-family: monospace;
+        width: 400px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>♟️ WebSocket Chess Engine Test</h1>
+
+    <div>
+      <label>FEN: <input type="text" id="fen" value="startpos" /></label><br />
+      <label>Depth: <input type="number" id="depth" value="5" min="1" max="20" /></label><br />
+      <button onclick="analyze()">Analyze</button>
+      <button onclick="stop()">Stop</button>
+      <button onclick="clearLog()">Clear Log</button>
+    </div>
+
+    <div id="log"></div>
+
+    <script>
+      let ws = null;
+      let currentId = null;
+
+      function log(message, className = '') {
+        const logDiv = document.getElementById('log');
+        const entry = document.createElement('div');
+        entry.className = className;
+        entry.textContent = new Date().toLocaleTimeString() + ' - ' + message;
+        logDiv.appendChild(entry);
+        logDiv.scrollTop = logDiv.scrollHeight;
+      }
+
+      function clearLog() {
+        document.getElementById('log').innerHTML = '';
+      }
+
+      function connect() {
+        ws = new WebSocket('ws://127.0.0.1:8080');
+
+        ws.onopen = () => {
+          log('✅ Connected to WebSocket server');
+        };
+
+        ws.onmessage = (event) => {
+          const msg = JSON.parse(event.data);
+
+          if (msg.type === 'searchInfo') {
+            const info = msg.payload;
+            const scoreStr =
+              info.score.kind === 'cp' ? `${info.score.value}cp` : `mate ${info.score.plies}`;
+            log(
+              `📊 depth ${info.depth} | score ${scoreStr} | nodes ${info.nodes} | nps ${info.nps} | pv ${info.pv.slice(0, 3).join(' ')}`,
+              'info',
+            );
+          } else if (msg.type === 'bestMove') {
+            log(
+              `✅ Best Move: ${msg.payload.best}${msg.payload.ponder ? ' ponder ' + msg.payload.ponder : ''}`,
+              'bestmove',
+            );
+          }
+        };
+
+        ws.onerror = (error) => {
+          log('❌ WebSocket error: ' + error, 'error');
+        };
+
+        ws.onclose = () => {
+          log('Connection closed');
+          setTimeout(connect, 1000);
+        };
+      }
+
+      function analyze() {
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          log('❌ Not connected to server', 'error');
+          return;
+        }
+
+        currentId = 'test-' + Date.now();
+        const fen = document.getElementById('fen').value;
+        const depth = parseInt(document.getElementById('depth').value);
+
+        const request = {
+          type: 'analyze',
+          id: currentId,
+          fen: fen,
+          limit: { kind: 'depth', depth: depth },
+        };
+
+        log(`📤 Sending analyze request (depth ${depth})`);
+        ws.send(JSON.stringify(request));
+      }
+
+      function stop() {
+        if (!ws || ws.readyState !== WebSocket.OPEN || !currentId) {
+          log('❌ No active analysis', 'error');
+          return;
+        }
+
+        const request = {
+          type: 'stop',
+          id: currentId,
+        };
+
+        log('🛑 Sending stop request');
+        ws.send(JSON.stringify(request));
+      }
+
+      // Connect on load
+      connect();
+    </script>
+  </body>
+</html>

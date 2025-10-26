@@ -1,0 +1,21 @@
+[package]
+name = "uci-server"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "uci-server"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+tokio-tungstenite = "0.21"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+futures = "0.3"
+
+# Local dependencies
+engine = { path = "../../crates/engine" }

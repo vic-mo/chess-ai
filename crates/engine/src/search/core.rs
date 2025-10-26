@@ -6,6 +6,9 @@ use crate::move_order::MoveOrder;
 use crate::r#move::Move;
 use crate::time::{TimeControl, TimeManager};
 use crate::tt::{Bound, TranspositionTable};
+use crate::types::{Score, SearchInfo};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 /// Maximum search depth.
 pub const MAX_DEPTH: u32 = 64;
@@ -42,7 +45,7 @@ pub struct Searcher {
     move_order: MoveOrder,
     nodes: u64,
     time_manager: Option<TimeManager>,
-    stopped: bool,
+    stopped: Arc<AtomicBool>,
 }
 
 impl Searcher {
@@ -53,13 +56,44 @@ impl Searcher {
 
     /// Create a new searcher with custom TT size in MB.
     pub fn with_tt_size(size_mb: usize) -> Self {
+        Self::with_tt_size_and_stop_flag(size_mb, Arc::new(AtomicBool::new(false)))
+    }
+
+    /// Create a new searcher with custom TT size and shared stop flag.
+    pub fn with_tt_size_and_stop_flag(size_mb: usize, stopped: Arc<AtomicBool>) -> Self {
         Self {
             evaluator: Evaluator::new(),
             tt: TranspositionTable::new(size_mb),
             move_order: MoveOrder::new(),
             nodes: 0,
             time_manager: None,
-            stopped: false,
+            stopped,
+        }
+    }
+
+    /// Stop the search.
+    pub fn stop(&self) {
+        self.stopped.store(true, Ordering::Relaxed);
+    }
+
+    /// Convert internal score to Score enum (Cp or Mate).
+    fn score_to_protocol(&self, score: i32) -> Score {
+        // Check if this is a mate score
+        if score.abs() >= MATE_SCORE - MAX_DEPTH as i32 {
+            // Mate score: convert to plies until mate
+            let plies_to_mate = if score > 0 {
+                // We're mating: (MATE_SCORE - score) plies
+                MATE_SCORE - score
+            } else {
+                // We're being mated: -(MATE_SCORE + score) plies
+                -(MATE_SCORE + score)
+            };
+            Score::Mate {
+                plies: plies_to_mate,
+            }
+        } else {
+            // Regular centipawn score
+            Score::Cp { value: score }
         }
     }
 
@@ -72,19 +106,24 @@ impl Searcher {
     /// * `board` - The position to search
     /// * `max_depth` - Maximum search depth in plies
     /// * `time_control` - Time control for the search (defaults to Infinite)
+    /// * `callback` - Optional callback to receive SearchInfo after each depth
     ///
     /// # Returns
     /// SearchResult containing best move, score, PV, and statistics
-    pub fn search_with_limit(
+    pub fn search_with_limit_callback<F>(
         &mut self,
         board: &Board,
         max_depth: u32,
         time_control: TimeControl,
-    ) -> SearchResult {
+        mut callback: F,
+    ) -> SearchResult
+    where
+        F: FnMut(SearchInfo),
+    {
         self.nodes = 0;
         self.tt.new_search();
         self.move_order.clear();
-        self.stopped = false;
+        self.stopped.store(false, Ordering::Relaxed);
 
         // Initialize time manager
         let is_white = board.side_to_move() == crate::piece::Color::White;
@@ -97,6 +136,12 @@ impl Searcher {
         );
         let mut best_score = 0;
         let mut completed_depth = 0;
+
+        // Track start time for NPS calculation (not available in WASM)
+        #[cfg(not(target_arch = "wasm32"))]
+        let start_time = std::time::Instant::now();
+        #[cfg(target_arch = "wasm32")]
+        let start_nodes = self.nodes;
 
         // Iterative deepening with aspiration windows
         for depth in 1..=max_depth {
@@ -150,8 +195,49 @@ impl Searcher {
                 best_move = first_move;
             }
 
-            // Could print UCI info here in the future
-            // println!("info depth {} score cp {} nodes {} pv ...", depth, score, self.nodes);
+            // Calculate time and NPS (platform-specific)
+            #[cfg(not(target_arch = "wasm32"))]
+            let (time_ms, nps) = {
+                let elapsed = start_time.elapsed();
+                let time_ms = elapsed.as_millis() as u64;
+                let nps = if time_ms > 0 {
+                    (self.nodes as u128 * 1000 / time_ms as u128) as u64
+                } else {
+                    self.nodes
+                };
+                (time_ms, nps)
+            };
+
+            // WASM: approximate timing based on nodes
+            #[cfg(target_arch = "wasm32")]
+            let (time_ms, nps) = {
+                let nodes_searched = self.nodes - start_nodes;
+                // Estimate ~1M nodes per second
+                let time_ms = (nodes_searched / 1000).max(1);
+                let nps = if time_ms > 0 {
+                    nodes_searched * 1000 / time_ms
+                } else {
+                    nodes_searched
+                };
+                (time_ms, nps)
+            };
+
+            // Convert PV to UCI strings
+            let pv_strings: Vec<String> = pv.iter().map(|m| format!("{}", m)).collect();
+
+            // Call callback with SearchInfo
+            callback(SearchInfo {
+                id: String::new(), // ID will be set by EngineImpl
+                depth,
+                seldepth: Some(depth), // TODO: track actual selective depth
+                nodes: self.nodes,
+                nps,
+                time_ms,
+                score: self.score_to_protocol(score),
+                pv: pv_strings,
+                hashfull: Some(self.tt.hashfull() as u32),
+                tb_hits: None, // TODO: add when tablebases are implemented
+            });
         }
 
         let pv = self.extract_pv(board, completed_depth);
@@ -166,6 +252,17 @@ impl Searcher {
         }
     }
 
+    /// Convenience method without callback (backward compatibility).
+    pub fn search_with_limit(
+        &mut self,
+        board: &Board,
+        max_depth: u32,
+        time_control: TimeControl,
+    ) -> SearchResult {
+        // Call the callback version with a no-op callback
+        self.search_with_limit_callback(board, max_depth, time_control, |_| {})
+    }
+
     /// Convenience method for unlimited search (backward compatibility).
     pub fn search(&mut self, board: &Board, max_depth: u32) -> SearchResult {
         self.search_with_limit(board, max_depth, TimeControl::Infinite)
@@ -173,7 +270,7 @@ impl Searcher {
 
     /// Check if search should stop due to time/depth/node limits.
     fn should_stop(&self, current_depth: u32) -> bool {
-        if self.stopped {
+        if self.stopped.load(Ordering::Relaxed) {
             return true;
         }
 
@@ -473,14 +570,14 @@ impl Searcher {
         if self.nodes.is_multiple_of(1024) {
             if let Some(tm) = &self.time_manager {
                 if tm.must_stop() {
-                    self.stopped = true;
+                    self.stopped.store(true, Ordering::Relaxed);
                     return 0; // Return early with neutral score
                 }
             }
         }
 
         // If we've been stopped, return immediately
-        if self.stopped {
+        if self.stopped.load(Ordering::Relaxed) {
             return 0;
         }
 
@@ -784,7 +881,7 @@ impl Searcher {
         self.nodes += 1;
 
         // If we've been stopped, return immediately
-        if self.stopped {
+        if self.stopped.load(Ordering::Relaxed) {
             return 0;
         }
 

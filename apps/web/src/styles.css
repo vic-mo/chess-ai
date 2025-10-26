@@ -54,3 +54,121 @@ body {
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
     monospace;
 }
+
+/* Game styles */
+.game-container {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.game-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.game {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.chessboard {
+  width: 600px;
+  height: 600px;
+  max-width: 100%;
+}
+
+.game-controls,
+.game-status,
+.move-history {
+  background: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+
+.game-controls h3,
+.game-status h3,
+.move-history h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  color: #e2e8f0;
+}
+
+.control-group {
+  margin-bottom: 1rem;
+}
+
+.control-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #94a3b8;
+}
+
+.control-group select,
+.control-group input[type='range'] {
+  width: 100%;
+  padding: 0.5rem;
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  color: #e2e8f0;
+}
+
+.difficulty-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.difficulty-value {
+  font-weight: bold;
+  color: #60a5fa;
+}
+
+.move-history-list {
+  max-height: 400px;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.status-message {
+  padding: 0.75rem;
+  background: #1f2937;
+  border-radius: 6px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.status-thinking {
+  color: #fbbf24;
+}
+
+.status-check {
+  color: #ef4444;
+}
+
+.status-game-over {
+  color: #10b981;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .game-container {
+    grid-template-columns: 1fr;
+  }
+
+  .chessboard {
+    width: min(600px, 100vw - 4rem);
+    height: min(600px, 100vw - 4rem);
+  }
+}
