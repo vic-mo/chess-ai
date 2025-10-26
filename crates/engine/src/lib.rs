@@ -4,6 +4,7 @@ pub mod board;
 pub mod io;
 #[allow(clippy::module_inception)]
 pub mod r#move;
+pub mod movegen;
 pub mod movelist;
 pub mod piece;
 pub mod square;
