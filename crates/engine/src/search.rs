@@ -254,9 +254,10 @@ impl Searcher {
 
             // Beta cutoff (opponent has a better option earlier)
             if alpha >= beta {
-                // Store killer move if it's a quiet move
+                // Store killer move and update history if it's a quiet move
                 if !m.is_capture() {
                     self.move_order.store_killer(*m, ply as usize);
+                    self.move_order.update_history(*m, depth);
                 }
                 break;
             }

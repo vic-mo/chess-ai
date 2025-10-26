@@ -73,6 +73,55 @@ impl MoveOrder {
         self.killers[ply][0] == Some(m) || self.killers[ply][1] == Some(m)
     }
 
+    /// Update history score for a move that caused a beta cutoff.
+    ///
+    /// The bonus is proportional to depth squared, giving more weight to
+    /// moves that work well at higher depths.
+    ///
+    /// # Arguments
+    /// * `m` - Move that caused the cutoff (must be a quiet move)
+    /// * `depth` - Depth at which the cutoff occurred
+    pub fn update_history(&mut self, m: Move, depth: i32) {
+        if m.is_capture() {
+            return; // Only track quiet moves
+        }
+
+        let from = m.from().index() as usize;
+        let to = m.to().index() as usize;
+
+        // Bonus proportional to depth squared
+        // Deeper searches are more valuable
+        let bonus = depth * depth;
+
+        self.history[from][to] += bonus;
+
+        // Prevent overflow - scale down all history scores if any get too large
+        if self.history[from][to] > 100_000 {
+            for i in 0..64 {
+                for j in 0..64 {
+                    self.history[i][j] /= 2;
+                }
+            }
+        }
+    }
+
+    /// Get history score for a move.
+    ///
+    /// # Arguments
+    /// * `m` - Move to score
+    ///
+    /// # Returns
+    /// History score (0-100k range), or 0 if it's a capture
+    fn history_score(&self, m: Move) -> i32 {
+        if m.is_capture() {
+            return 0;
+        }
+
+        let from = m.from().index() as usize;
+        let to = m.to().index() as usize;
+        self.history[from][to]
+    }
+
     /// MVV-LVA (Most Valuable Victim - Least Valuable Attacker) score for a capture.
     ///
     /// Prioritizes capturing high-value pieces with low-value pieces.
@@ -124,11 +173,11 @@ impl MoveOrder {
     /// Higher scores are searched first.
     ///
     /// # Ordering Priority
-    /// 1. TT move (from transposition table) - ~10M
-    /// 2. Captures (MVV-LVA) - ~1M
-    /// 3. Killer moves - ~900k
+    /// 1. TT move (from transposition table) - 10M
+    /// 2. Captures (MVV-LVA) - 1M + (100-8,900)
+    /// 3. Killer moves - 900k
     /// 4. History heuristic - 0-100k
-    /// 5. Quiet moves - 0
+    /// 5. Other quiet moves - 0
     ///
     /// # Arguments
     /// * `board` - Current board position
@@ -151,9 +200,12 @@ impl MoveOrder {
             return 900_000;
         }
 
-        // 4. History heuristic (will add in Sessions 6-7)
+        // 4. History heuristic (quiet moves with good track record)
+        if !m.is_capture() {
+            return self.history_score(m);
+        }
 
-        // 5. Quiet moves get lowest priority
+        // 5. Other quiet moves get lowest priority
         0
     }
 
@@ -505,6 +557,179 @@ mod tests {
             capture_score,
             killer_score
         );
+    }
+
+    #[test]
+    fn test_history_update() {
+        use crate::r#move::MoveFlags;
+
+        let mut move_order = MoveOrder::new();
+
+        let mv = Move::new(Square::E2, Square::E4, MoveFlags::QUIET);
+
+        // Initially, history should be 0
+        assert_eq!(move_order.history_score(mv), 0);
+
+        // Update with depth 3: bonus = 3 * 3 = 9
+        move_order.update_history(mv, 3);
+        assert_eq!(move_order.history_score(mv), 9);
+
+        // Update again with depth 5: bonus = 5 * 5 = 25
+        move_order.update_history(mv, 5);
+        assert_eq!(move_order.history_score(mv), 9 + 25);
+    }
+
+    #[test]
+    fn test_history_depth_squared() {
+        use crate::r#move::MoveFlags;
+
+        let mut move_order = MoveOrder::new();
+
+        let mv1 = Move::new(Square::E2, Square::E4, MoveFlags::QUIET);
+        let mv2 = Move::new(Square::D2, Square::D4, MoveFlags::QUIET);
+
+        // Update mv1 at depth 2: bonus = 4
+        move_order.update_history(mv1, 2);
+
+        // Update mv2 at depth 4: bonus = 16
+        move_order.update_history(mv2, 4);
+
+        // Deeper cutoffs should have higher scores
+        assert!(move_order.history_score(mv2) > move_order.history_score(mv1));
+        assert_eq!(move_order.history_score(mv1), 4);
+        assert_eq!(move_order.history_score(mv2), 16);
+    }
+
+    #[test]
+    fn test_history_only_quiet_moves() {
+        use crate::r#move::MoveFlags;
+
+        let mut move_order = MoveOrder::new();
+
+        let quiet = Move::new(Square::E2, Square::E4, MoveFlags::QUIET);
+        let capture = Move::new(Square::E4, Square::D5, MoveFlags::CAPTURE);
+
+        // Update both moves
+        move_order.update_history(quiet, 5);
+        move_order.update_history(capture, 5);
+
+        // Only quiet move should have history
+        assert_eq!(move_order.history_score(quiet), 25);
+        assert_eq!(move_order.history_score(capture), 0);
+    }
+
+    #[test]
+    fn test_history_scaling() {
+        use crate::r#move::MoveFlags;
+
+        let mut move_order = MoveOrder::new();
+
+        let mv = Move::new(Square::E2, Square::E4, MoveFlags::QUIET);
+
+        // Force history to exceed 100,000 by updating many times
+        for _ in 0..400 {
+            move_order.update_history(mv, 10); // bonus = 100 each time
+        }
+
+        // History should be scaled down (all divided by 2)
+        let score = move_order.history_score(mv);
+        assert!(
+            score <= 100_000,
+            "History score should be scaled: {}",
+            score
+        );
+        assert!(score > 0, "History should still be positive after scaling");
+    }
+
+    #[test]
+    fn test_history_ordering() {
+        use crate::r#move::MoveFlags;
+
+        let board = Board::startpos();
+        let mut move_order = MoveOrder::new();
+
+        let mv1 = Move::new(Square::E2, Square::E4, MoveFlags::QUIET);
+        let mv2 = Move::new(Square::D2, Square::D4, MoveFlags::QUIET);
+
+        // Update mv1 with higher history
+        move_order.update_history(mv1, 8); // bonus = 64
+
+        // Update mv2 with lower history
+        move_order.update_history(mv2, 2); // bonus = 4
+
+        let score1 = move_order.score_move(&board, mv1, 0, None);
+        let score2 = move_order.score_move(&board, mv2, 0, None);
+
+        // mv1 should score higher due to better history
+        assert!(score1 > score2);
+        assert_eq!(score1, 64);
+        assert_eq!(score2, 4);
+    }
+
+    #[test]
+    fn test_history_below_killers() {
+        use crate::r#move::MoveFlags;
+
+        let board = Board::startpos();
+        let mut move_order = MoveOrder::new();
+
+        let killer = Move::new(Square::E2, Square::E4, MoveFlags::QUIET);
+        let history_move = Move::new(Square::D2, Square::D4, MoveFlags::QUIET);
+
+        // Make killer a killer move
+        move_order.store_killer(killer, 0);
+
+        // Give history_move a high history score
+        move_order.update_history(history_move, 300); // bonus = 90,000
+
+        let killer_score = move_order.score_move(&board, killer, 0, None);
+        let history_score = move_order.score_move(&board, history_move, 0, None);
+
+        // Killer should still score higher than history
+        assert_eq!(killer_score, 900_000);
+        assert_eq!(history_score, 90_000);
+        assert!(killer_score > history_score);
+    }
+
+    #[test]
+    fn test_complete_move_ordering() {
+        use crate::r#move::MoveFlags;
+
+        let fen = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 1";
+        let board = parse_fen(fen).unwrap();
+
+        let mut move_order = MoveOrder::new();
+
+        // Create different types of moves
+        let tt_move = Move::new(Square::E4, Square::D5, MoveFlags::CAPTURE);
+        let capture = Move::new(Square::E4, Square::D5, MoveFlags::CAPTURE);
+        let killer = Move::new(Square::E2, Square::E3, MoveFlags::QUIET);
+        let history_move = Move::new(Square::D2, Square::D4, MoveFlags::QUIET);
+        let quiet = Move::new(Square::E1, Square::E2, MoveFlags::QUIET);
+
+        // Set up move order state
+        move_order.store_killer(killer, 0);
+        move_order.update_history(history_move, 5); // bonus = 25
+
+        // Score all moves
+        let tt_score = move_order.score_move(&board, tt_move, 0, Some(tt_move));
+        let capture_score = move_order.score_move(&board, capture, 0, None);
+        let killer_score = move_order.score_move(&board, killer, 0, None);
+        let history_score = move_order.score_move(&board, history_move, 0, None);
+        let quiet_score = move_order.score_move(&board, quiet, 0, None);
+
+        // Verify ordering: TT > Capture > Killer > History > Quiet
+        assert!(tt_score > capture_score, "TT move should score highest");
+        assert!(capture_score > killer_score, "Captures should beat killers");
+        assert!(killer_score > history_score, "Killers should beat history");
+        assert!(history_score > quiet_score, "History should beat quiet");
+
+        // Verify specific values
+        assert_eq!(tt_score, 10_000_000);
+        assert!(capture_score >= 1_000_000);
+        assert_eq!(killer_score, 900_000);
+        assert_eq!(history_score, 25);
+        assert_eq!(quiet_score, 0);
     }
 
     #[test]
