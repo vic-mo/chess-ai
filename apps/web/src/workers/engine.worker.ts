@@ -5,14 +5,14 @@
  * Handles engine initialization, position setup, and search execution.
  */
 
+/// <reference lib="webworker" />
+
 import type { AnalyzeRequest, EngineEvent } from '@chess-ai/protocol';
 
-// WASM module imports
-// Note: The actual imports will be resolved by the build system
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let wasmModule: any = null;
+// WASM module and engine instance
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let wasmEngine: any = null;
+let wasmInitialized = false;
 
 /**
  * Worker message types
@@ -27,33 +27,36 @@ type WorkerMessage =
  * Initialize the WASM engine
  */
 async function initWasm(wasmPath?: string): Promise<void> {
+  if (wasmInitialized) {
+    self.postMessage({ type: 'initialized' });
+    return;
+  }
+
   try {
-    // Import WASM module from public directory
+    // Import WASM module from public directory using importScripts
     const basePath = wasmPath || '/wasm/engine_bridge_wasm.js';
 
-    // Fetch and execute the WASM glue code
-    const response = await fetch(basePath);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch WASM module: ${response.statusText}`);
+    // Use importScripts to load the WASM glue code
+    // This is the proper way to load external scripts in Web Workers
+    importScripts(basePath);
+
+    // The WASM module is now available in global scope
+    // TypeScript doesn't know about the dynamically loaded module, so we use any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const initWasm = (self as any).default;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const WasmEngine = (self as any).WasmEngine;
+
+    if (!initWasm || !WasmEngine) {
+      throw new Error('WASM module did not export expected functions');
     }
 
-    const scriptText = await response.text();
-
-    // Create a blob URL for the script
-    const blob = new Blob([scriptText], { type: 'application/javascript' });
-    const scriptUrl = URL.createObjectURL(blob);
-
-    // Import the module from the blob URL
-    wasmModule = await import(/* @vite-ignore */ scriptUrl);
-
-    // Clean up blob URL
-    URL.revokeObjectURL(scriptUrl);
-
     // Initialize the WASM module
-    await wasmModule.default();
+    // Pass the WASM file path explicitly
+    await initWasm('/wasm/engine_bridge_wasm_bg.wasm');
 
     // Create engine instance with default options
-    wasmEngine = new wasmModule.WasmEngine({
+    wasmEngine = new WasmEngine({
       hashSizeMB: 128,
       threads: 1,
       contempt: 0,
@@ -61,6 +64,8 @@ async function initWasm(wasmPath?: string): Promise<void> {
       multiPV: 1,
       useTablebases: false,
     });
+
+    wasmInitialized = true;
 
     // Send success message back to main thread
     self.postMessage({ type: 'initialized' });
