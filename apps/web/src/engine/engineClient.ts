@@ -1,5 +1,6 @@
 import type { AnalyzeRequest, EngineEvent, SearchInfo, BestMove } from '@chess-ai/protocol';
 import { Schema } from '@chess-ai/protocol';
+import { performanceMonitor } from '../utils/performance';
 
 type EngineMode = 'fake' | 'remote' | 'wasm';
 interface EngineGlobals {
@@ -94,10 +95,16 @@ function initWasmWorker(): Promise<void> {
 
   return new Promise((resolve, reject) => {
     try {
+      // Start performance monitoring
+      performanceMonitor.startWorkerCreate();
+      performanceMonitor.startWasmLoad();
+
       // Create worker
       wasmWorker = new Worker(new URL('../workers/engine.worker.ts', import.meta.url), {
         type: 'module',
       });
+
+      performanceMonitor.endWorkerCreate();
 
       // Set up message handler
       wasmWorker.onmessage = (ev: MessageEvent) => {
@@ -106,6 +113,8 @@ function initWasmWorker(): Promise<void> {
         // Handle initialization
         if (msg.type === 'initialized') {
           wasmInitialized = true;
+          performanceMonitor.endWasmLoad();
+          console.debug('[Performance] WASM initialized:', performanceMonitor.getMetrics());
           resolve();
           return;
         }
@@ -120,6 +129,7 @@ function initWasmWorker(): Promise<void> {
             // Clean up handler on bestMove or error
             if (msg.type === 'bestMove' || msg.type === 'error') {
               wasmEventHandlers.delete(payload.id);
+              performanceMonitor.endSearch();
             }
           }
         }
@@ -143,6 +153,9 @@ function wasmAnalyze(req: AnalyzeRequest, onEvent: EventHandler): StopHandler {
   // Register event handler
   wasmEventHandlers.set(req.id, onEvent);
 
+  // Start search performance monitoring
+  performanceMonitor.startSearch();
+
   // Initialize worker if needed
   if (!wasmInitialized) {
     initWasmWorker()
@@ -154,6 +167,7 @@ function wasmAnalyze(req: AnalyzeRequest, onEvent: EventHandler): StopHandler {
         // Fall back to fake on error
         console.error('Failed to initialize WASM worker, falling back to fake:', error);
         wasmEventHandlers.delete(req.id);
+        performanceMonitor.endSearch();
         return fakeAnalyze(req, onEvent);
       });
   } else {
@@ -165,6 +179,7 @@ function wasmAnalyze(req: AnalyzeRequest, onEvent: EventHandler): StopHandler {
   return () => {
     wasmWorker?.postMessage({ type: 'stop', id: req.id });
     wasmEventHandlers.delete(req.id);
+    performanceMonitor.endSearch();
   };
 }
 
@@ -238,4 +253,25 @@ export function useEngine() {
       // fake mode: no-op
     },
   };
+}
+
+/**
+ * Get performance metrics
+ */
+export function getPerformanceMetrics() {
+  return performanceMonitor.getMetrics();
+}
+
+/**
+ * Get performance report
+ */
+export function getPerformanceReport(): string {
+  return performanceMonitor.getReport();
+}
+
+/**
+ * Reset performance metrics
+ */
+export function resetPerformanceMetrics(): void {
+  performanceMonitor.reset();
 }

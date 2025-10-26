@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnalyzeRequest, SearchInfo, BestMove } from '@chess-ai/protocol';
-import { useEngine, getEngineMode, setEngineMode, preloadWasm } from './engine/engineClient';
+import {
+  useEngine,
+  getEngineMode,
+  setEngineMode,
+  preloadWasm,
+  getPerformanceReport,
+  resetPerformanceMetrics,
+} from './engine/engineClient';
 import './styles.css';
 
 type EngineMode = 'fake' | 'remote' | 'wasm';
@@ -13,8 +20,11 @@ export default function App() {
   const [mode, setMode] = useState<EngineMode>(getEngineMode());
   const [wasmStatus, setWasmStatus] = useState<string>('uninitialized');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showPerformance, setShowPerformance] = useState(false);
+  const [performanceReport, setPerformanceReport] = useState<string>('');
   const idRef = useRef<string>('');
   const stopHandlerRef = useRef<(() => void) | null>(null);
+  const perfIntervalRef = useRef<number | null>(null);
 
   function log(line: string) {
     setLogs((prev) => [line, ...prev].slice(0, 200));
@@ -82,6 +92,28 @@ export default function App() {
     log('Analysis stopped');
   };
 
+  // Update performance metrics periodically
+  useEffect(() => {
+    if (showPerformance) {
+      const updateMetrics = () => {
+        setPerformanceReport(getPerformanceReport());
+      };
+
+      // Update immediately
+      updateMetrics();
+
+      // Update every second
+      perfIntervalRef.current = window.setInterval(updateMetrics, 1000);
+
+      return () => {
+        if (perfIntervalRef.current) {
+          clearInterval(perfIntervalRef.current);
+          perfIntervalRef.current = null;
+        }
+      };
+    }
+  }, [showPerformance, isAnalyzing]);
+
   useEffect(() => {
     log(`Engine mode: ${getEngineMode()}`);
   }, []);
@@ -147,7 +179,21 @@ export default function App() {
       </div>
 
       <div className="card" style={{ marginTop: '1rem' }}>
-        <h3>Search Log</h3>
+        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <h3>Search Log</h3>
+          <div>
+            <button
+              className="btn"
+              onClick={() => setShowPerformance(!showPerformance)}
+              style={{ marginRight: '0.5rem' }}
+            >
+              {showPerformance ? 'Hide' : 'Show'} Performance
+            </button>
+            <button className="btn" onClick={() => resetPerformanceMetrics()}>
+              Reset Metrics
+            </button>
+          </div>
+        </div>
         <pre
           className="mono"
           style={{ whiteSpace: 'pre-wrap', maxHeight: '400px', overflow: 'auto' }}
@@ -155,6 +201,15 @@ export default function App() {
           {logs.join('\n')}
         </pre>
       </div>
+
+      {showPerformance && (
+        <div className="card" style={{ marginTop: '1rem' }}>
+          <h3>Performance Metrics</h3>
+          <pre className="mono" style={{ whiteSpace: 'pre-wrap' }}>
+            {performanceReport || 'No metrics available yet'}
+          </pre>
+        </div>
+      )}
     </div>
   );
 }
