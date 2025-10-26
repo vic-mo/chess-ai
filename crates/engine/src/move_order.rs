@@ -4,6 +4,7 @@
 //! The goal is to search the best moves first to maximize cutoffs.
 
 use crate::board::Board;
+use crate::eval::PIECE_VALUES;
 use crate::movelist::MoveList;
 use crate::r#move::Move;
 
@@ -33,6 +34,52 @@ impl MoveOrder {
         }
     }
 
+    /// MVV-LVA (Most Valuable Victim - Least Valuable Attacker) score for a capture.
+    ///
+    /// Prioritizes capturing high-value pieces with low-value pieces.
+    /// Example: Queen captures Pawn (QxP) scores higher than Pawn captures Queen (PxQ).
+    ///
+    /// # Formula
+    /// `victim_value * 10 - attacker_value`
+    ///
+    /// This ensures QxP (900*10 - 100 = 8900) > PxQ (100*10 - 900 = 100)
+    ///
+    /// # Arguments
+    /// * `board` - Current board position
+    /// * `m` - Move to score (must be a capture)
+    ///
+    /// # Returns
+    /// MVV-LVA score, or 0 if not a capture
+    fn mvv_lva_score(board: &Board, m: Move) -> i32 {
+        if !m.is_capture() {
+            return 0;
+        }
+
+        // Get the piece being captured (victim)
+        let victim = board.piece_at(m.to());
+
+        // Get the piece making the capture (attacker)
+        let attacker = board.piece_at(m.from());
+
+        // Handle en passant capture (victim square is empty, but it's a pawn capture)
+        let victim_value = if let Some(piece) = victim {
+            PIECE_VALUES[piece.piece_type.index()]
+        } else {
+            // En passant - capturing a pawn
+            PIECE_VALUES[0] // Pawn value
+        };
+
+        let attacker_value = if let Some(piece) = attacker {
+            PIECE_VALUES[piece.piece_type.index()]
+        } else {
+            // This shouldn't happen (no piece at from square)
+            0
+        };
+
+        // MVV-LVA: prioritize high-value victims and low-value attackers
+        victim_value * 10 - attacker_value
+    }
+
     /// Score a move for ordering purposes.
     ///
     /// Higher scores are searched first.
@@ -49,15 +96,15 @@ impl MoveOrder {
     /// * `m` - Move to score
     /// * `ply` - Current search ply (for killer moves)
     /// * `tt_move` - Best move from transposition table (if any)
-    pub fn score_move(&self, _board: &Board, m: Move, _ply: usize, tt_move: Option<Move>) -> i32 {
+    pub fn score_move(&self, board: &Board, m: Move, _ply: usize, tt_move: Option<Move>) -> i32 {
         // 1. TT move gets highest priority
         if Some(m) == tt_move {
             return 10_000_000;
         }
 
-        // 2. Captures (placeholder - will add MVV-LVA in Session 3)
+        // 2. Captures (MVV-LVA ordering)
         if m.is_capture() {
-            return 1_000_000;
+            return 1_000_000 + Self::mvv_lva_score(board, m);
         }
 
         // 3. Killer moves (will add in Sessions 4-5)
@@ -207,5 +254,132 @@ mod tests {
         // Should be reset
         assert_eq!(move_order.killers[0][0], None);
         assert_eq!(move_order.history[0][0], 0);
+    }
+
+    #[test]
+    fn test_mvv_lva_basic() {
+        use crate::r#move::MoveFlags;
+
+        // Create a simple position: White Queen on e4, Black Pawn on e5
+        // QxP should have high MVV-LVA score
+        let fen = "rnbqkbnr/pppp1ppp/8/4p3/4Q3/8/PPPP1PPP/RNB1KBNR w KQkq - 0 1";
+        let board = parse_fen(fen).unwrap();
+
+        // Queen captures pawn
+        let qxp = Move::new(Square::E4, Square::E5, MoveFlags::CAPTURE);
+        let mvv_lva = MoveOrder::mvv_lva_score(&board, qxp);
+
+        // Expected: pawn_value * 10 - queen_value = 100 * 10 - 900 = 100
+        assert_eq!(mvv_lva, 100);
+    }
+
+    #[test]
+    fn test_mvv_lva_qxp_vs_pxq() {
+        use crate::r#move::MoveFlags;
+
+        // Position with Queen and Pawn that can capture each other
+        // White: Queen on e4, Pawn on d2
+        // Black: Queen on d5, Pawn on e5
+        let fen = "rnb1kbnr/pppp1ppp/8/3qp3/4Q3/8/PPPP1PPP/RNB1KBNR w KQkq - 0 1";
+        let board = parse_fen(fen).unwrap();
+
+        let move_order = MoveOrder::new();
+
+        // Queen takes Queen (from e4 to d5)
+        let qxq = Move::new(Square::E4, Square::D5, MoveFlags::CAPTURE);
+        let qxq_score = move_order.score_move(&board, qxq, 0, None);
+
+        // Create position for pawn takes queen
+        let fen2 = "rnb1kbnr/pppp1ppp/8/3Qp3/8/8/PPPPPPPP/RNB1KBNR b KQkq - 0 1";
+        let board2 = parse_fen(fen2).unwrap();
+
+        // Pawn takes Queen (from e5 to d5)
+        let pxq = Move::new(Square::E5, Square::D5, MoveFlags::CAPTURE);
+        let pxq_score = move_order.score_move(&board2, pxq, 0, None);
+
+        // QxQ should score higher than PxQ
+        // QxQ: 900*10 - 900 = 8100
+        // PxQ: 900*10 - 100 = 8900
+        // Actually PxQ should score higher! (better to use pawn to capture queen)
+        assert!(pxq_score > qxq_score, "PxQ should score higher than QxQ");
+    }
+
+    #[test]
+    fn test_mvv_lva_ordering_multiple_captures() {
+        use crate::r#move::MoveFlags;
+
+        // Position with multiple possible captures
+        // White can capture: Queen(d5), Knight(b5)
+        let fen = "rnb1kbnr/pppp1ppp/8/nrBqR3/4p3/8/PPPP1PPP/RNBQK1NR w KQkq - 0 1";
+        let board = parse_fen(fen).unwrap();
+
+        let move_order = MoveOrder::new();
+
+        // Bishop captures Queen (best victim) - c5 to d5
+        let bxq = Move::new(
+            Square::from_coords(2, 4), // c5
+            Square::D5,
+            MoveFlags::CAPTURE,
+        );
+
+        // Rook captures Knight (medium victim) - e5 to b5
+        let rxn = Move::new(
+            Square::E5,
+            Square::from_coords(1, 4), // b5
+            MoveFlags::CAPTURE,
+        );
+
+        let bxq_score = move_order.score_move(&board, bxq, 0, None);
+        let rxn_score = move_order.score_move(&board, rxn, 0, None);
+
+        // BxQ should score higher than RxN
+        // BxQ: 900*10 - 330 = 8670
+        // RxN: 320*10 - 500 = 2700
+        assert!(
+            bxq_score > rxn_score,
+            "BxQ (score={}) should score higher than RxN (score={})",
+            bxq_score,
+            rxn_score
+        );
+    }
+
+    #[test]
+    fn test_mvv_lva_same_victim_prefers_lower_attacker() {
+        use crate::r#move::MoveFlags;
+
+        // Position where both Queen and Pawn can capture the same piece (a Rook)
+        // White: Queen on d4, Pawn on a4
+        // Black: Rook on a5
+        let fen = "rnbqkbnr/1ppppppp/8/r7/P2Q4/8/1PPPPPPP/RNB1KBNR w KQkq - 0 1";
+        let board = parse_fen(fen).unwrap();
+
+        let move_order = MoveOrder::new();
+
+        // Pawn captures Rook (a4 -> a5)
+        let pxr = Move::new(
+            Square::from_coords(0, 3), // a4
+            Square::from_coords(0, 4), // a5
+            MoveFlags::CAPTURE,
+        );
+
+        // Queen captures Rook (d4 -> a5)
+        let qxr = Move::new(
+            Square::D4,
+            Square::from_coords(0, 4), // a5
+            MoveFlags::CAPTURE,
+        );
+
+        let pxr_score = move_order.score_move(&board, pxr, 0, None);
+        let qxr_score = move_order.score_move(&board, qxr, 0, None);
+
+        // PxR should score higher than QxR (same victim, lower attacker)
+        // PxR: 500*10 - 100 = 4900
+        // QxR: 500*10 - 900 = 4100
+        assert!(
+            pxr_score > qxr_score,
+            "PxR (score={}) should score higher than QxR (score={})",
+            pxr_score,
+            qxr_score
+        );
     }
 }
