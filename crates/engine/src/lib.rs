@@ -1,6 +1,9 @@
 pub mod bitboard;
 pub mod board;
 pub mod io;
+#[allow(clippy::module_inception)]
+pub mod r#move;
+pub mod movelist;
 pub mod piece;
 pub mod square;
 pub mod types;

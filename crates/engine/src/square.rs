@@ -94,6 +94,25 @@ impl Square {
     pub const G1: Square = Square(6);
     pub const H1: Square = Square(7);
 
+    pub const A2: Square = Square(8);
+    pub const D2: Square = Square(11);
+    pub const E2: Square = Square(12);
+
+    pub const E3: Square = Square(20);
+
+    pub const D4: Square = Square(27);
+    pub const E4: Square = Square(28);
+
+    pub const D5: Square = Square(35);
+    pub const E5: Square = Square(36);
+
+    pub const D6: Square = Square(43);
+
+    pub const A7: Square = Square(48);
+    pub const E7: Square = Square(52);
+    pub const G7: Square = Square(54);
+    pub const H7: Square = Square(55);
+
     pub const A8: Square = Square(56);
     pub const B8: Square = Square(57);
     pub const C8: Square = Square(58);
@@ -102,13 +121,6 @@ impl Square {
     pub const F8: Square = Square(61);
     pub const G8: Square = Square(62);
     pub const H8: Square = Square(63);
-
-    pub const E2: Square = Square(12);
-    pub const E3: Square = Square(20);
-    pub const E4: Square = Square(28);
-    pub const E5: Square = Square(36);
-    pub const E7: Square = Square(52);
-    pub const D4: Square = Square(27);
 }
 
 impl std::fmt::Display for Square {
