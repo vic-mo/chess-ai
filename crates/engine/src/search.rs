@@ -2,6 +2,7 @@
 
 use crate::board::Board;
 use crate::eval::Evaluator;
+use crate::move_order::MoveOrder;
 use crate::r#move::Move;
 use crate::tt::{Bound, TranspositionTable};
 
@@ -28,6 +29,7 @@ pub struct SearchResult {
 pub struct Searcher {
     evaluator: Evaluator,
     tt: TranspositionTable,
+    move_order: MoveOrder,
     nodes: u64,
 }
 
@@ -42,6 +44,7 @@ impl Searcher {
         Self {
             evaluator: Evaluator::new(),
             tt: TranspositionTable::new(size_mb),
+            move_order: MoveOrder::new(),
             nodes: 0,
         }
     }
@@ -60,6 +63,7 @@ impl Searcher {
     pub fn search(&mut self, board: &Board, max_depth: u32) -> SearchResult {
         self.nodes = 0;
         self.tt.new_search();
+        self.move_order.clear();
 
         let mut best_move = Move::new(
             crate::square::Square::A1,
@@ -97,11 +101,16 @@ impl Searcher {
 
     /// Search at the root (find best move at current depth).
     fn search_root(&mut self, board: &Board, depth: u32) -> i32 {
-        let legal_moves = board.generate_legal_moves();
+        let mut legal_moves = board.generate_legal_moves();
 
         if legal_moves.is_empty() {
             return if board.is_in_check() { -MATE_SCORE } else { 0 };
         }
+
+        // Order moves (using TT move from previous iteration if available)
+        let tt_move = self.tt.probe(board.hash()).map(|e| e.best_move);
+        self.move_order
+            .order_moves(board, &mut legal_moves, 0, tt_move);
 
         let mut best_score = -INFINITY;
         let mut best_move = legal_moves[0];
@@ -184,7 +193,7 @@ impl Searcher {
         let hash = board.hash();
 
         // Probe transposition table
-        if let Some(tt_entry) = self.tt.probe(hash) {
+        let tt_move = if let Some(tt_entry) = self.tt.probe(hash) {
             if tt_entry.depth >= depth as u8 {
                 match tt_entry.bound {
                     Bound::Exact => return tt_entry.score,
@@ -199,14 +208,17 @@ impl Searcher {
                     return tt_entry.score;
                 }
             }
-        }
+            Some(tt_entry.best_move)
+        } else {
+            None
+        };
 
         // Leaf node: enter quiescence search
         if depth <= 0 {
             return self.quiesce(board, alpha, beta);
         }
 
-        let legal_moves = board.generate_legal_moves();
+        let mut legal_moves = board.generate_legal_moves();
 
         // Checkmate or stalemate
         if legal_moves.is_empty() {
@@ -219,6 +231,10 @@ impl Searcher {
                 0
             };
         }
+
+        // Order moves for better alpha-beta pruning
+        self.move_order
+            .order_moves(board, &mut legal_moves, ply as usize, tt_move);
 
         let mut best_score = -INFINITY;
         let mut best_move = legal_moves[0];

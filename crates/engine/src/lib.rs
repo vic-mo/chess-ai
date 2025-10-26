@@ -45,6 +45,7 @@ pub mod eval;
 pub mod io;
 #[allow(clippy::module_inception)]
 pub mod r#move;
+pub mod move_order;
 pub mod movegen;
 pub mod movelist;
 pub mod perft;
