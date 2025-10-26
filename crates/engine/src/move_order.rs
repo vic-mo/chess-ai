@@ -34,6 +34,45 @@ impl MoveOrder {
         }
     }
 
+    /// Store a killer move at this ply.
+    ///
+    /// Killer moves are quiet moves that caused beta cutoffs.
+    /// We store 2 killers per ply, shifting the first to second when a new one is added.
+    ///
+    /// # Arguments
+    /// * `m` - Move to store as killer (must be a quiet move)
+    /// * `ply` - Search ply where the cutoff occurred
+    pub fn store_killer(&mut self, m: Move, ply: usize) {
+        if ply >= MAX_PLY {
+            return;
+        }
+
+        // Don't store if it's already the first killer
+        if self.killers[ply][0] == Some(m) {
+            return;
+        }
+
+        // Shift: first killer becomes second, new move becomes first
+        self.killers[ply][1] = self.killers[ply][0];
+        self.killers[ply][0] = Some(m);
+    }
+
+    /// Check if a move is a killer at this ply.
+    ///
+    /// # Arguments
+    /// * `m` - Move to check
+    /// * `ply` - Search ply
+    ///
+    /// # Returns
+    /// `true` if the move is one of the killers at this ply
+    fn is_killer(&self, m: Move, ply: usize) -> bool {
+        if ply >= MAX_PLY {
+            return false;
+        }
+
+        self.killers[ply][0] == Some(m) || self.killers[ply][1] == Some(m)
+    }
+
     /// MVV-LVA (Most Valuable Victim - Least Valuable Attacker) score for a capture.
     ///
     /// Prioritizes capturing high-value pieces with low-value pieces.
@@ -96,7 +135,7 @@ impl MoveOrder {
     /// * `m` - Move to score
     /// * `ply` - Current search ply (for killer moves)
     /// * `tt_move` - Best move from transposition table (if any)
-    pub fn score_move(&self, board: &Board, m: Move, _ply: usize, tt_move: Option<Move>) -> i32 {
+    pub fn score_move(&self, board: &Board, m: Move, ply: usize, tt_move: Option<Move>) -> i32 {
         // 1. TT move gets highest priority
         if Some(m) == tt_move {
             return 10_000_000;
@@ -107,7 +146,11 @@ impl MoveOrder {
             return 1_000_000 + Self::mvv_lva_score(board, m);
         }
 
-        // 3. Killer moves (will add in Sessions 4-5)
+        // 3. Killer moves (quiet moves that caused beta cutoffs)
+        if !m.is_capture() && self.is_killer(m, ply) {
+            return 900_000;
+        }
+
         // 4. History heuristic (will add in Sessions 6-7)
 
         // 5. Quiet moves get lowest priority
@@ -340,6 +383,127 @@ mod tests {
             "BxQ (score={}) should score higher than RxN (score={})",
             bxq_score,
             rxn_score
+        );
+    }
+
+    #[test]
+    fn test_killer_moves_storage() {
+        use crate::r#move::MoveFlags;
+
+        let mut move_order = MoveOrder::new();
+
+        let killer1 = Move::new(Square::E2, Square::E4, MoveFlags::QUIET);
+        let killer2 = Move::new(Square::D2, Square::D4, MoveFlags::QUIET);
+        let killer3 = Move::new(Square::E7, Square::E5, MoveFlags::QUIET);
+
+        // Store first killer at ply 0
+        move_order.store_killer(killer1, 0);
+        assert_eq!(move_order.killers[0][0], Some(killer1));
+        assert_eq!(move_order.killers[0][1], None);
+
+        // Store second killer at ply 0 - should shift first to second
+        move_order.store_killer(killer2, 0);
+        assert_eq!(move_order.killers[0][0], Some(killer2));
+        assert_eq!(move_order.killers[0][1], Some(killer1));
+
+        // Store third killer - should shift again
+        move_order.store_killer(killer3, 0);
+        assert_eq!(move_order.killers[0][0], Some(killer3));
+        assert_eq!(move_order.killers[0][1], Some(killer2));
+        // killer1 is now lost (only keep 2 per ply)
+    }
+
+    #[test]
+    fn test_killer_moves_no_duplicate() {
+        use crate::r#move::MoveFlags;
+
+        let mut move_order = MoveOrder::new();
+
+        let killer1 = Move::new(Square::E2, Square::E4, MoveFlags::QUIET);
+        let killer2 = Move::new(Square::D2, Square::D4, MoveFlags::QUIET);
+
+        // Store first killer
+        move_order.store_killer(killer1, 0);
+        move_order.store_killer(killer2, 0);
+
+        // Try to store killer1 again - should not duplicate
+        move_order.store_killer(killer1, 0);
+
+        // killer1 should still be at position 0, not duplicated
+        assert_eq!(move_order.killers[0][0], Some(killer1));
+        assert_eq!(move_order.killers[0][1], Some(killer2));
+    }
+
+    #[test]
+    fn test_killer_moves_is_killer() {
+        use crate::r#move::MoveFlags;
+
+        let mut move_order = MoveOrder::new();
+
+        let killer1 = Move::new(Square::E2, Square::E4, MoveFlags::QUIET);
+        let killer2 = Move::new(Square::D2, Square::D4, MoveFlags::QUIET);
+        let non_killer = Move::new(Square::E3, Square::F3, MoveFlags::QUIET);
+
+        move_order.store_killer(killer1, 0);
+        move_order.store_killer(killer2, 0);
+
+        // Both killers should be recognized
+        assert!(move_order.is_killer(killer1, 0));
+        assert!(move_order.is_killer(killer2, 0));
+
+        // Non-killer should not be recognized
+        assert!(!move_order.is_killer(non_killer, 0));
+
+        // Killers at ply 0 should not be killers at ply 1
+        assert!(!move_order.is_killer(killer1, 1));
+        assert!(!move_order.is_killer(killer2, 1));
+    }
+
+    #[test]
+    fn test_killer_moves_ordering() {
+        use crate::r#move::MoveFlags;
+
+        let board = Board::startpos();
+        let mut move_order = MoveOrder::new();
+
+        let killer = Move::new(Square::E2, Square::E4, MoveFlags::QUIET);
+        let non_killer = Move::new(Square::D2, Square::D4, MoveFlags::QUIET);
+
+        move_order.store_killer(killer, 0);
+
+        let killer_score = move_order.score_move(&board, killer, 0, None);
+        let non_killer_score = move_order.score_move(&board, non_killer, 0, None);
+
+        // Killer should score higher than non-killer
+        assert_eq!(killer_score, 900_000);
+        assert_eq!(non_killer_score, 0);
+        assert!(killer_score > non_killer_score);
+    }
+
+    #[test]
+    fn test_killer_moves_below_captures() {
+        use crate::r#move::MoveFlags;
+
+        // Position with a capture available
+        let fen = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 1";
+        let board = parse_fen(fen).unwrap();
+
+        let mut move_order = MoveOrder::new();
+
+        let killer = Move::new(Square::E4, Square::E5, MoveFlags::QUIET);
+        let capture = Move::new(Square::E4, Square::D5, MoveFlags::CAPTURE);
+
+        move_order.store_killer(killer, 0);
+
+        let killer_score = move_order.score_move(&board, killer, 0, None);
+        let capture_score = move_order.score_move(&board, capture, 0, None);
+
+        // Captures should score higher than killers
+        assert!(
+            capture_score > killer_score,
+            "Capture ({}) should score higher than killer ({})",
+            capture_score,
+            killer_score
         );
     }
 
