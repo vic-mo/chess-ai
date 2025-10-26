@@ -6,10 +6,16 @@
 use crate::board::Board;
 use crate::eval::PIECE_VALUES;
 use crate::movelist::MoveList;
+use crate::piece::PieceType;
 use crate::r#move::Move;
+use crate::search::history::{CaptureHistory, ContinuationHistory, CountermoveTable};
+use crate::search::see::see_value_of_move;
 
 /// Maximum search depth (for killer move storage)
 const MAX_PLY: usize = 64;
+
+/// Number of killer moves per ply (increased from 2 to 3 for M7)
+const MAX_KILLERS: usize = 3;
 
 /// Move ordering manager.
 ///
@@ -18,26 +24,38 @@ const MAX_PLY: usize = 64;
 pub struct MoveOrder {
     /// Killer moves for each ply [ply][slot]
     /// Stores quiet moves that caused beta cutoffs
-    killers: [[Option<Move>; 2]; MAX_PLY],
+    killers: [[Option<Move>; MAX_KILLERS]; MAX_PLY],
 
     /// History scores [from_sq][to_sq]
     /// Tracks how often moves cause cutoffs across all positions
     history: [[i32; 64]; 64],
+
+    /// Countermove table: best refutation for each move
+    countermoves: CountermoveTable,
+
+    /// Continuation history: move pairs that work well
+    continuation_history: ContinuationHistory,
+
+    /// Capture history: separate history for captures
+    capture_history: CaptureHistory,
 }
 
 impl MoveOrder {
     /// Create a new move ordering manager.
     pub fn new() -> Self {
         Self {
-            killers: [[None; 2]; MAX_PLY],
+            killers: [[None; MAX_KILLERS]; MAX_PLY],
             history: [[0; 64]; 64],
+            countermoves: CountermoveTable::new(),
+            continuation_history: ContinuationHistory::new(),
+            capture_history: CaptureHistory::new(),
         }
     }
 
     /// Store a killer move at this ply.
     ///
     /// Killer moves are quiet moves that caused beta cutoffs.
-    /// We store 2 killers per ply, shifting the first to second when a new one is added.
+    /// We store 3 killers per ply, shifting when a new one is added.
     ///
     /// # Arguments
     /// * `m` - Move to store as killer (must be a quiet move)
@@ -52,7 +70,8 @@ impl MoveOrder {
             return;
         }
 
-        // Shift: first killer becomes second, new move becomes first
+        // Shift: first -> second, second -> third, new move becomes first
+        self.killers[ply][2] = self.killers[ply][1];
         self.killers[ply][1] = self.killers[ply][0];
         self.killers[ply][0] = Some(m);
     }
@@ -70,7 +89,9 @@ impl MoveOrder {
             return false;
         }
 
-        self.killers[ply][0] == Some(m) || self.killers[ply][1] == Some(m)
+        self.killers[ply][0] == Some(m)
+            || self.killers[ply][1] == Some(m)
+            || self.killers[ply][2] == Some(m)
     }
 
     /// Update history score for a move that caused a beta cutoff.
@@ -105,6 +126,56 @@ impl MoveOrder {
         }
     }
 
+    /// Store a countermove (best refutation for a given move)
+    ///
+    /// # Arguments
+    /// * `prev_move` - The move we're responding to
+    /// * `countermove` - The move that caused the cutoff
+    pub fn store_countermove(&mut self, prev_move: Move, countermove: Move) {
+        self.countermoves.store(prev_move, countermove);
+    }
+
+    /// Update continuation history for a move pair
+    ///
+    /// # Arguments
+    /// * `prev_move` - The previous move
+    /// * `current_move` - The move that caused a cutoff
+    /// * `depth` - Depth of the cutoff
+    pub fn update_continuation_history(&mut self, prev_move: Move, current_move: Move, depth: i32) {
+        if !current_move.is_capture() {
+            self.continuation_history
+                .update(prev_move, current_move, depth);
+        }
+    }
+
+    /// Update capture history for a capture that caused a cutoff
+    ///
+    /// # Arguments
+    /// * `board` - Current board position (before the capture)
+    /// * `capture_move` - The capture move that caused a cutoff
+    /// * `depth` - Depth of the cutoff
+    pub fn update_capture_history(&mut self, board: &Board, capture_move: Move, depth: i32) {
+        if !capture_move.is_capture() {
+            return;
+        }
+
+        // Get the captured piece
+        if let Some(victim) = board.piece_at(capture_move.to()) {
+            self.capture_history
+                .update(capture_move, victim.piece_type, depth);
+        }
+        // Handle en passant
+        else if let Some(attacker) = board.piece_at(capture_move.from()) {
+            if attacker.piece_type == PieceType::Pawn
+                && capture_move.from().file() != capture_move.to().file()
+            {
+                // En passant - captured piece is a pawn
+                self.capture_history
+                    .update(capture_move, PieceType::Pawn, depth);
+            }
+        }
+    }
+
     /// Get history score for a move.
     ///
     /// # Arguments
@@ -124,6 +195,8 @@ impl MoveOrder {
 
     /// MVV-LVA (Most Valuable Victim - Least Valuable Attacker) score for a capture.
     ///
+    /// NOTE: This is kept for testing purposes. M7 uses SEE instead of MVV-LVA.
+    ///
     /// Prioritizes capturing high-value pieces with low-value pieces.
     /// Example: Queen captures Pawn (QxP) scores higher than Pawn captures Queen (PxQ).
     ///
@@ -138,6 +211,7 @@ impl MoveOrder {
     ///
     /// # Returns
     /// MVV-LVA score, or 0 if not a capture
+    #[allow(dead_code)]
     fn mvv_lva_score(board: &Board, m: Move) -> i32 {
         if !m.is_capture() {
             return 0;
@@ -168,45 +242,86 @@ impl MoveOrder {
         victim_value * 10 - attacker_value
     }
 
-    /// Score a move for ordering purposes.
+    /// Score a move for ordering purposes (M7 Enhanced).
     ///
     /// Higher scores are searched first.
     ///
-    /// # Ordering Priority
+    /// # Ordering Priority (M7)
     /// 1. TT move (from transposition table) - 10M
-    /// 2. Captures (MVV-LVA) - 1M + (100-8,900)
-    /// 3. Killer moves - 900k
-    /// 4. History heuristic - 0-100k
-    /// 5. Other quiet moves - 0
+    /// 2. Good captures (SEE >= 0) - 2M + SEE value + capture history
+    /// 3. Killer moves (3 per ply) - 900k
+    /// 4. Countermove - 800k
+    /// 5. Quiet moves - history + continuation history
+    /// 6. Bad captures (SEE < 0) - SEE value (negative)
     ///
     /// # Arguments
     /// * `board` - Current board position
     /// * `m` - Move to score
     /// * `ply` - Current search ply (for killer moves)
     /// * `tt_move` - Best move from transposition table (if any)
-    pub fn score_move(&self, board: &Board, m: Move, ply: usize, tt_move: Option<Move>) -> i32 {
+    /// * `prev_move` - Previous move (for countermove and continuation history)
+    pub fn score_move(
+        &self,
+        board: &Board,
+        m: Move,
+        ply: usize,
+        tt_move: Option<Move>,
+        prev_move: Option<Move>,
+    ) -> i32 {
         // 1. TT move gets highest priority
         if Some(m) == tt_move {
             return 10_000_000;
         }
 
-        // 2. Captures (MVV-LVA ordering)
+        // 2. Captures - separate good and bad captures using SEE
         if m.is_capture() {
-            return 1_000_000 + Self::mvv_lva_score(board, m);
+            let see_score = see_value_of_move(board, m);
+
+            // Good captures: SEE >= 0
+            if see_score >= 0 {
+                // Get captured piece for capture history
+                let cap_hist_score = if let Some(victim) = board.piece_at(m.to()) {
+                    self.capture_history.get(m, victim.piece_type)
+                } else if let Some(attacker) = board.piece_at(m.from()) {
+                    // En passant
+                    if attacker.piece_type == PieceType::Pawn && m.from().file() != m.to().file() {
+                        self.capture_history.get(m, PieceType::Pawn)
+                    } else {
+                        0
+                    }
+                } else {
+                    0
+                };
+
+                return 2_000_000 + see_score + cap_hist_score;
+            }
+            // Bad captures: SEE < 0 - defer until after quiet moves
+            else {
+                return see_score; // Negative value, will be ordered last
+            }
         }
 
         // 3. Killer moves (quiet moves that caused beta cutoffs)
-        if !m.is_capture() && self.is_killer(m, ply) {
+        if self.is_killer(m, ply) {
             return 900_000;
         }
 
-        // 4. History heuristic (quiet moves with good track record)
-        if !m.is_capture() {
-            return self.history_score(m);
+        // 4. Countermove (refutation of previous move)
+        if let Some(prev) = prev_move {
+            if Some(m) == self.countermoves.get(prev) {
+                return 800_000;
+            }
         }
 
-        // 5. Other quiet moves get lowest priority
-        0
+        // 5. Quiet moves: history + continuation history
+        let hist_score = self.history_score(m);
+        let cont_hist_score = if let Some(prev) = prev_move {
+            self.continuation_history.get(prev, m)
+        } else {
+            0
+        };
+
+        hist_score + cont_hist_score
     }
 
     /// Sort moves in-place by score (highest first).
@@ -216,21 +331,26 @@ impl MoveOrder {
     /// * `moves` - Moves to sort (modified in-place)
     /// * `ply` - Current search ply
     /// * `tt_move` - Best move from transposition table (if any)
+    /// * `prev_move` - Previous move (for countermove and continuation history)
     pub fn order_moves(
         &mut self,
         board: &Board,
         moves: &mut MoveList,
         ply: usize,
         tt_move: Option<Move>,
+        prev_move: Option<Move>,
     ) {
         // Sort by score (descending - highest scores first)
-        moves.sort_by_key(|&m| -self.score_move(board, m, ply, tt_move));
+        moves.sort_by_key(|&m| -self.score_move(board, m, ply, tt_move, prev_move));
     }
 
     /// Clear history and killers for new search.
     pub fn clear(&mut self) {
-        self.killers = [[None; 2]; MAX_PLY];
+        self.killers = [[None; MAX_KILLERS]; MAX_PLY];
         self.history = [[0; 64]; 64];
+        self.countermoves.clear();
+        self.continuation_history.clear();
+        self.capture_history.clear();
     }
 }
 
@@ -264,8 +384,8 @@ mod tests {
         let tt_move = moves[5]; // Arbitrary move as TT move
         let other_move = moves[0];
 
-        let tt_score = move_order.score_move(&board, tt_move, 0, Some(tt_move));
-        let other_score = move_order.score_move(&board, other_move, 0, Some(tt_move));
+        let tt_score = move_order.score_move(&board, tt_move, 0, Some(tt_move), None);
+        let other_score = move_order.score_move(&board, other_move, 0, Some(tt_move), None);
 
         // TT move should have higher score
         assert!(tt_score > other_score);
@@ -276,19 +396,28 @@ mod tests {
     fn test_capture_priority() {
         let move_order = MoveOrder::new();
 
-        // Make a position with captures available
-        let fen = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 1";
+        // Position with a free pawn to capture (good SEE)
+        let fen = "rnbqkbnr/pppppppp/8/8/3p4/4P3/PPPP1PPP/RNBQKBNR w KQkq - 0 1";
         let board = parse_fen(fen).unwrap();
 
         let moves = board.generate_legal_moves();
-        let capture = moves.iter().find(|m| m.is_capture()).unwrap();
+        // Find the capture exd4 (should be a good capture, SEE >= 0)
+        let capture = moves
+            .iter()
+            .find(|m| m.is_capture() && m.from().to_string() == "e3" && m.to().to_string() == "d4")
+            .unwrap();
         let quiet = moves.iter().find(|m| !m.is_capture()).unwrap();
 
-        let capture_score = move_order.score_move(&board, *capture, 0, None);
-        let quiet_score = move_order.score_move(&board, *quiet, 0, None);
+        let capture_score = move_order.score_move(&board, *capture, 0, None, None);
+        let quiet_score = move_order.score_move(&board, *quiet, 0, None, None);
 
-        // Captures should score higher than quiet moves
-        assert!(capture_score > quiet_score);
+        // Good captures (SEE >= 0) should score higher than quiet moves
+        assert!(
+            capture_score > quiet_score,
+            "Good capture (score={}) should beat quiet (score={})",
+            capture_score,
+            quiet_score
+        );
     }
 
     #[test]
@@ -301,7 +430,7 @@ mod tests {
 
         let tt_move = moves[5]; // Make an arbitrary move the TT move
 
-        move_order.order_moves(&board, &mut moves, 0, Some(tt_move));
+        move_order.order_moves(&board, &mut moves, 0, Some(tt_move), None);
 
         // TT move should be sorted to first position
         assert_eq!(moves[0], tt_move);
@@ -309,24 +438,25 @@ mod tests {
 
     #[test]
     fn test_move_ordering_captures_before_quiet() {
-        // Position with both captures and quiet moves
-        let fen = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 1";
+        // Position with good captures and quiet moves
+        let fen = "rnbqkbnr/pppppppp/8/8/3p4/4P3/PPPP1PPP/RNBQKBNR w KQkq - 0 1";
         let board = parse_fen(fen).unwrap();
 
         let mut moves = board.generate_legal_moves();
         let mut move_order = MoveOrder::new();
 
-        move_order.order_moves(&board, &mut moves, 0, None);
+        move_order.order_moves(&board, &mut moves, 0, None, None);
 
-        // Find first capture and first quiet move in ordered list
+        // Find first good capture (SEE >= 0) and first quiet move in ordered list
         let first_capture_idx = moves.iter().position(|m| m.is_capture());
         let first_quiet_idx = moves.iter().position(|m| !m.is_capture());
 
         if let (Some(cap_idx), Some(quiet_idx)) = (first_capture_idx, first_quiet_idx) {
-            // Captures should come before quiet moves
+            // Good captures should come before quiet moves
+            // Note: Bad captures (SEE < 0) would come AFTER quiet moves in M7
             assert!(
                 cap_idx < quiet_idx,
-                "Captures should be ordered before quiet moves"
+                "Good captures should be ordered before quiet moves"
             );
         }
     }
@@ -382,7 +512,7 @@ mod tests {
 
         // Queen takes Queen (from e4 to d5)
         let qxq = Move::new(Square::E4, Square::D5, MoveFlags::CAPTURE);
-        let qxq_score = move_order.score_move(&board, qxq, 0, None);
+        let qxq_score = move_order.score_move(&board, qxq, 0, None, None);
 
         // Create position for pawn takes queen
         let fen2 = "rnb1kbnr/pppp1ppp/8/3Qp3/8/8/PPPPPPPP/RNB1KBNR b KQkq - 0 1";
@@ -390,7 +520,7 @@ mod tests {
 
         // Pawn takes Queen (from e5 to d5)
         let pxq = Move::new(Square::E5, Square::D5, MoveFlags::CAPTURE);
-        let pxq_score = move_order.score_move(&board2, pxq, 0, None);
+        let pxq_score = move_order.score_move(&board2, pxq, 0, None, None);
 
         // QxQ should score higher than PxQ
         // QxQ: 900*10 - 900 = 8100
@@ -424,8 +554,8 @@ mod tests {
             MoveFlags::CAPTURE,
         );
 
-        let bxq_score = move_order.score_move(&board, bxq, 0, None);
-        let rxn_score = move_order.score_move(&board, rxn, 0, None);
+        let bxq_score = move_order.score_move(&board, bxq, 0, None, None);
+        let rxn_score = move_order.score_move(&board, rxn, 0, None, None);
 
         // BxQ should score higher than RxN
         // BxQ: 900*10 - 330 = 8670
@@ -523,8 +653,8 @@ mod tests {
 
         move_order.store_killer(killer, 0);
 
-        let killer_score = move_order.score_move(&board, killer, 0, None);
-        let non_killer_score = move_order.score_move(&board, non_killer, 0, None);
+        let killer_score = move_order.score_move(&board, killer, 0, None, None);
+        let non_killer_score = move_order.score_move(&board, non_killer, 0, None, None);
 
         // Killer should score higher than non-killer
         assert_eq!(killer_score, 900_000);
@@ -533,27 +663,27 @@ mod tests {
     }
 
     #[test]
-    fn test_killer_moves_below_captures() {
+    fn test_killer_moves_below_good_captures() {
         use crate::r#move::MoveFlags;
 
-        // Position with a capture available
-        let fen = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 1";
+        // Position with a free piece (good capture, SEE > 0)
+        let fen = "rnbqkbnr/pppppppp/8/8/3n4/4P3/PPPP1PPP/RNBQKBNR w KQkq - 0 1";
         let board = parse_fen(fen).unwrap();
 
         let mut move_order = MoveOrder::new();
 
-        let killer = Move::new(Square::E4, Square::E5, MoveFlags::QUIET);
-        let capture = Move::new(Square::E4, Square::D5, MoveFlags::CAPTURE);
+        let killer = Move::new(Square::E3, Square::E4, MoveFlags::QUIET);
+        let capture = Move::new(Square::E3, Square::D4, MoveFlags::CAPTURE); // Pawn takes undefended knight
 
         move_order.store_killer(killer, 0);
 
-        let killer_score = move_order.score_move(&board, killer, 0, None);
-        let capture_score = move_order.score_move(&board, capture, 0, None);
+        let killer_score = move_order.score_move(&board, killer, 0, None, None);
+        let capture_score = move_order.score_move(&board, capture, 0, None, None);
 
-        // Captures should score higher than killers
+        // Good captures (SEE >= 0) should score higher than killers
         assert!(
             capture_score > killer_score,
-            "Capture ({}) should score higher than killer ({})",
+            "Good capture ({}) should score higher than killer ({})",
             capture_score,
             killer_score
         );
@@ -657,8 +787,8 @@ mod tests {
         // Update mv2 with lower history
         move_order.update_history(mv2, 2); // bonus = 4
 
-        let score1 = move_order.score_move(&board, mv1, 0, None);
-        let score2 = move_order.score_move(&board, mv2, 0, None);
+        let score1 = move_order.score_move(&board, mv1, 0, None, None);
+        let score2 = move_order.score_move(&board, mv2, 0, None, None);
 
         // mv1 should score higher due to better history
         assert!(score1 > score2);
@@ -682,8 +812,8 @@ mod tests {
         // Give history_move a high history score
         move_order.update_history(history_move, 300); // bonus = 90,000
 
-        let killer_score = move_order.score_move(&board, killer, 0, None);
-        let history_score = move_order.score_move(&board, history_move, 0, None);
+        let killer_score = move_order.score_move(&board, killer, 0, None, None);
+        let history_score = move_order.score_move(&board, history_move, 0, None, None);
 
         // Killer should still score higher than history
         assert_eq!(killer_score, 900_000);
@@ -695,15 +825,16 @@ mod tests {
     fn test_complete_move_ordering() {
         use crate::r#move::MoveFlags;
 
-        let fen = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 1";
+        // Position with a free knight to capture (clear SEE > 0)
+        let fen = "rnbqkbnr/pppppppp/8/8/3n4/4P3/PPPP1PPP/RNBQKBNR w KQkq - 0 1";
         let board = parse_fen(fen).unwrap();
 
         let mut move_order = MoveOrder::new();
 
         // Create different types of moves
-        let tt_move = Move::new(Square::E4, Square::D5, MoveFlags::CAPTURE);
-        let capture = Move::new(Square::E4, Square::D5, MoveFlags::CAPTURE);
-        let killer = Move::new(Square::E2, Square::E3, MoveFlags::QUIET);
+        let tt_move = Move::new(Square::E3, Square::D4, MoveFlags::CAPTURE); // Good capture
+        let capture = Move::new(Square::E3, Square::D4, MoveFlags::CAPTURE);
+        let killer = Move::new(Square::E3, Square::E4, MoveFlags::QUIET);
         let history_move = Move::new(Square::D2, Square::D4, MoveFlags::QUIET);
         let quiet = Move::new(Square::E1, Square::E2, MoveFlags::QUIET);
 
@@ -712,21 +843,25 @@ mod tests {
         move_order.update_history(history_move, 5); // bonus = 25
 
         // Score all moves
-        let tt_score = move_order.score_move(&board, tt_move, 0, Some(tt_move));
-        let capture_score = move_order.score_move(&board, capture, 0, None);
-        let killer_score = move_order.score_move(&board, killer, 0, None);
-        let history_score = move_order.score_move(&board, history_move, 0, None);
-        let quiet_score = move_order.score_move(&board, quiet, 0, None);
+        let tt_score = move_order.score_move(&board, tt_move, 0, Some(tt_move), None);
+        let capture_score = move_order.score_move(&board, capture, 0, None, None);
+        let killer_score = move_order.score_move(&board, killer, 0, None, None);
+        let history_score = move_order.score_move(&board, history_move, 0, None, None);
+        let quiet_score = move_order.score_move(&board, quiet, 0, None, None);
 
-        // Verify ordering: TT > Capture > Killer > History > Quiet
+        // Verify M7 ordering: TT > Good Capture > Killer > History > Quiet
+        // (Bad captures would come after quiet moves)
         assert!(tt_score > capture_score, "TT move should score highest");
-        assert!(capture_score > killer_score, "Captures should beat killers");
+        assert!(
+            capture_score > killer_score,
+            "Good captures should beat killers"
+        );
         assert!(killer_score > history_score, "Killers should beat history");
         assert!(history_score > quiet_score, "History should beat quiet");
 
         // Verify specific values
         assert_eq!(tt_score, 10_000_000);
-        assert!(capture_score >= 1_000_000);
+        assert!(capture_score >= 2_000_000, "Good captures start at 2M");
         assert_eq!(killer_score, 900_000);
         assert_eq!(history_score, 25);
         assert_eq!(quiet_score, 0);
@@ -758,8 +893,8 @@ mod tests {
             MoveFlags::CAPTURE,
         );
 
-        let pxr_score = move_order.score_move(&board, pxr, 0, None);
-        let qxr_score = move_order.score_move(&board, qxr, 0, None);
+        let pxr_score = move_order.score_move(&board, pxr, 0, None, None);
+        let qxr_score = move_order.score_move(&board, qxr, 0, None, None);
 
         // PxR should score higher than QxR (same victim, lower attacker)
         // PxR: 500*10 - 100 = 4900
