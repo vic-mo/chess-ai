@@ -56,6 +56,7 @@ struct PawnEntry {
 }
 
 /// Pawn hash table for caching pawn structure evaluations.
+#[derive(Debug)]
 pub struct PawnHashTable {
     entries: Vec<PawnEntry>,
     size: usize,
