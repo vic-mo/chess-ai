@@ -99,6 +99,11 @@ pub fn parse_fen(fen: &str) -> Result<Board, FenError> {
         .map_err(|_| FenError::InvalidFullmoveNumber(parts[5].to_string()))?;
     board.set_fullmove_number(fullmove_number);
 
+    // Compute and set the Zobrist hash
+    use crate::zobrist::zobrist_hash;
+    let hash = zobrist_hash(&board);
+    board.set_hash(hash);
+
     Ok(board)
 }
 

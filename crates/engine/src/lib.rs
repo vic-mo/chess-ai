@@ -9,6 +9,7 @@ pub mod movelist;
 pub mod piece;
 pub mod square;
 pub mod types;
+pub mod zobrist;
 
 use types::*;
 

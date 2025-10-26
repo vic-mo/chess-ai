@@ -171,12 +171,15 @@ pub struct Board {
 
     /// Fullmove number (starts at 1, increments after black's move)
     fullmove_number: u32,
+
+    /// Zobrist hash of the position
+    hash: u64,
 }
 
 impl Board {
     /// Create an empty board
     pub fn empty() -> Self {
-        Board {
+        let mut board = Board {
             pieces: [[Bitboard::EMPTY; 6]; 2],
             occupied_by_color: [Bitboard::EMPTY; 2],
             occupied: Bitboard::EMPTY,
@@ -185,7 +188,10 @@ impl Board {
             ep_square: None,
             halfmove_clock: 0,
             fullmove_number: 1,
-        }
+            hash: 0,
+        };
+        board.hash = crate::zobrist::zobrist_hash(&board);
+        board
     }
 
     /// Create the standard chess starting position
@@ -231,6 +237,8 @@ impl Board {
         board.ep_square = None;
         board.halfmove_clock = 0;
         board.fullmove_number = 1;
+
+        board.hash = crate::zobrist::zobrist_hash(&board);
 
         board
     }
@@ -376,6 +384,18 @@ impl Board {
         self.fullmove_number = number;
     }
 
+    /// Get the Zobrist hash of the current position
+    #[inline]
+    pub fn hash(&self) -> u64 {
+        self.hash
+    }
+
+    /// Set the Zobrist hash (used internally by FEN parser)
+    #[inline]
+    pub(crate) fn set_hash(&mut self, hash: u64) {
+        self.hash = hash;
+    }
+
     /// Make a move on the board, returning undo information.
     ///
     /// This updates the board state and returns information needed to unmake
@@ -419,7 +439,7 @@ impl Board {
             castling_rights: self.castling,
             ep_square: self.ep_square,
             halfmove_clock: self.halfmove_clock,
-            hash: 0, // TODO: Will be implemented in Session 14
+            hash: self.hash,
         };
 
         // Get the moving piece
@@ -547,6 +567,61 @@ impl Board {
             self.fullmove_number += 1;
         }
 
+        // Incrementally update hash
+        use crate::zobrist::{hash_castling, hash_en_passant, hash_piece, hash_side_to_move};
+
+        // Remove old piece from source square
+        self.hash = hash_piece(self.hash, moving_piece, from);
+
+        // Remove captured piece
+        if let Some(piece) = captured_piece {
+            let capture_sq = if m.is_en_passant() {
+                if us == Color::White {
+                    Square::new(to.index() - 8)
+                } else {
+                    Square::new(to.index() + 8)
+                }
+            } else {
+                to
+            };
+            self.hash = hash_piece(self.hash, piece, capture_sq);
+        }
+
+        // Add new piece to destination square (or promoted piece)
+        let final_piece = if m.is_promotion() {
+            Piece::new(m.promotion_piece().unwrap(), us)
+        } else {
+            moving_piece
+        };
+        self.hash = hash_piece(self.hash, final_piece, to);
+
+        // Handle castling rook move
+        if m.is_castling() {
+            let (rook_from, rook_to) = if to.file() > from.file() {
+                (
+                    Square::from_coords(7, from.rank()),
+                    Square::from_coords(5, from.rank()),
+                )
+            } else {
+                (
+                    Square::from_coords(0, from.rank()),
+                    Square::from_coords(3, from.rank()),
+                )
+            };
+            let rook = Piece::new(PieceType::Rook, us);
+            self.hash = hash_piece(self.hash, rook, rook_from);
+            self.hash = hash_piece(self.hash, rook, rook_to);
+        }
+
+        // Update castling rights hash
+        self.hash = hash_castling(self.hash, undo.castling_rights, self.castling);
+
+        // Update en passant hash
+        self.hash = hash_en_passant(self.hash, undo.ep_square, self.ep_square);
+
+        // Toggle side to move (always XOR since we switched sides)
+        self.hash = hash_side_to_move(self.hash);
+
         undo
     }
 
@@ -637,6 +712,7 @@ impl Board {
         self.castling = undo.castling_rights;
         self.ep_square = undo.ep_square;
         self.halfmove_clock = undo.halfmove_clock;
+        self.hash = undo.hash;
     }
 
     /// Check if a square is attacked by the given color.
