@@ -109,6 +109,7 @@ function initWasmWorker(): Promise<void> {
       // Set up message handler
       wasmWorker.onmessage = (ev: MessageEvent) => {
         const msg = ev.data;
+        console.debug('[EngineClient] Received message from worker:', msg);
 
         // Handle initialization
         if (msg.type === 'initialized') {
@@ -122,15 +123,28 @@ function initWasmWorker(): Promise<void> {
         // Handle engine events
         if (msg.type === 'searchInfo' || msg.type === 'bestMove' || msg.type === 'error') {
           const payload = msg.payload as { id: string };
+          console.debug('[EngineClient] Event type:', msg.type, 'ID:', payload?.id);
+
           const handler = wasmEventHandlers.get(payload.id);
+          console.debug(
+            '[EngineClient] Handler found:',
+            !!handler,
+            'Active handlers:',
+            Array.from(wasmEventHandlers.keys()),
+          );
+
           if (handler) {
+            console.debug('[EngineClient] Calling handler with event');
             handler(msg as EngineEvent);
 
             // Clean up handler on bestMove or error
             if (msg.type === 'bestMove' || msg.type === 'error') {
               wasmEventHandlers.delete(payload.id);
               performanceMonitor.endSearch();
+              console.debug('[EngineClient] Handler cleaned up');
             }
+          } else {
+            console.warn('[EngineClient] No handler for ID:', payload?.id);
           }
         }
       };

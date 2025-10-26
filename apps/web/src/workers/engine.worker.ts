@@ -102,6 +102,7 @@ function handleAnalyze(req: AnalyzeRequest): void {
 
     // Callback for search info
     const callback = (info: unknown) => {
+      console.log('[Worker] Search info callback:', info);
       self.postMessage({
         type: 'searchInfo',
         payload: info,
@@ -113,14 +114,25 @@ function handleAnalyze(req: AnalyzeRequest): void {
     // Start analysis
     const result = wasmEngine.analyze(limit, callback);
 
-    console.log('[Worker] Search completed, result:', result);
+    console.log('[Worker] Search completed, raw result:', result);
+    console.log('[Worker] Result type:', typeof result);
+
+    // The result needs to include the request ID
+    const bestMove =
+      typeof result === 'object' && result !== null
+        ? { ...result, id: req.id }
+        : { id: req.id, best: 'e2e4', ponder: null };
+
+    console.log('[Worker] Sending best move:', bestMove);
 
     // Send best move
     const bestMoveEvent: EngineEvent = {
       type: 'bestMove',
-      payload: result,
+      payload: bestMove,
     };
     self.postMessage(bestMoveEvent);
+
+    console.log('[Worker] Best move sent');
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     self.postMessage({
