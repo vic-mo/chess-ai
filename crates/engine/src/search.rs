@@ -72,16 +72,50 @@ impl Searcher {
         );
         let mut best_score = 0;
 
-        // Iterative deepening: search 1, 2, 3, ..., max_depth
+        // Iterative deepening with aspiration windows
         for depth in 1..=max_depth {
-            let score = self.search_root(board, depth);
+            let score = if depth <= 4 {
+                // First few depths: use full window for stability
+                self.search_root(board, depth)
+            } else {
+                // Aspiration window: narrow bounds around previous score
+                const ASPIRATION_DELTA: i32 = 50; // 0.5 pawns
+
+                let mut alpha = best_score - ASPIRATION_DELTA;
+                let mut beta = best_score + ASPIRATION_DELTA;
+                let mut delta = ASPIRATION_DELTA;
+
+                loop {
+                    let score = self.search_root_window(board, depth, alpha, beta);
+
+                    if score <= alpha {
+                        // Fail low: widen window downward
+                        alpha -= delta;
+                        delta *= 2;
+                    } else if score >= beta {
+                        // Fail high: widen window upward
+                        beta += delta;
+                        delta *= 2;
+                    } else {
+                        // Success: score within window
+                        break score;
+                    }
+
+                    // Safety: prevent infinite widening
+                    if delta > 1000 {
+                        alpha = -INFINITY;
+                        beta = INFINITY;
+                    }
+                }
+            };
+
+            best_score = score;
 
             // Extract PV from TT
             let pv = self.extract_pv(board, depth);
 
             if let Some(&first_move) = pv.first() {
                 best_move = first_move;
-                best_score = score;
             }
 
             // Could print UCI info here in the future
@@ -101,6 +135,12 @@ impl Searcher {
 
     /// Search at the root (find best move at current depth).
     fn search_root(&mut self, board: &Board, depth: u32) -> i32 {
+        self.search_root_window(board, depth, -INFINITY, INFINITY)
+    }
+
+    /// Search at the root with custom alpha-beta window.
+    /// Used for aspiration windows.
+    fn search_root_window(&mut self, board: &Board, depth: u32, mut alpha: i32, beta: i32) -> i32 {
         let mut legal_moves = board.generate_legal_moves();
 
         if legal_moves.is_empty() {
@@ -114,8 +154,6 @@ impl Searcher {
 
         let mut best_score = -INFINITY;
         let mut best_move = legal_moves[0];
-        let mut alpha = -INFINITY;
-        let beta = INFINITY;
 
         for m in legal_moves.iter() {
             let mut new_board = board.clone();
@@ -129,16 +167,24 @@ impl Searcher {
             }
 
             alpha = alpha.max(score);
+
+            // Beta cutoff at root
+            if alpha >= beta {
+                break;
+            }
         }
 
         // Store best move in TT
-        self.tt.store(
-            board.hash(),
-            best_move,
-            best_score,
-            depth as u8,
-            Bound::Exact,
-        );
+        let bound = if best_score >= beta {
+            Bound::Lower
+        } else if best_score > alpha {
+            Bound::Exact
+        } else {
+            Bound::Upper
+        };
+
+        self.tt
+            .store(board.hash(), best_move, best_score, depth as u8, bound);
 
         best_score
     }
@@ -663,5 +709,69 @@ mod tests {
         // Should still find good moves (captures should be searched fully)
         assert!(board.is_legal(result.best_move));
         println!("Nodes searched: {}", result.nodes);
+    }
+
+    #[test]
+    fn test_aspiration_window_basic() {
+        // Test that aspiration windows work correctly
+        let board = Board::startpos();
+
+        let mut searcher = Searcher::new();
+        let result = searcher.search(&board, 6);
+
+        // Should find a legal move
+        assert!(board.is_legal(result.best_move));
+        assert_eq!(result.depth, 6);
+        println!("Aspiration windows at depth 6: {} nodes", result.nodes);
+    }
+
+    #[test]
+    fn test_aspiration_window_tactical_position() {
+        // Test aspiration windows on a tactical position
+        // Position with clear best move
+        let fen = "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4";
+        let board = parse_fen(fen).unwrap();
+
+        let mut searcher = Searcher::new();
+        let result = searcher.search(&board, 6);
+
+        // Should find a good move
+        assert!(board.is_legal(result.best_move));
+        println!(
+            "Best move: {} with score {}",
+            result.best_move.to_uci(),
+            result.score
+        );
+    }
+
+    #[test]
+    fn test_aspiration_window_stable_score() {
+        // Test that aspiration windows handle stable scores well
+        let board = Board::startpos();
+
+        let mut searcher = Searcher::new();
+        let result = searcher.search(&board, 5);
+
+        // Score should be reasonable (near equality at start)
+        assert!(result.score.abs() < 200); // Within 2 pawns
+        assert!(board.is_legal(result.best_move));
+    }
+
+    #[test]
+    fn test_aspiration_window_mate_position() {
+        // Test aspiration windows with mate scores
+        let fen = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
+        let board = parse_fen(fen).unwrap();
+
+        let mut searcher = Searcher::new();
+        let result = searcher.search(&board, 5);
+
+        // Should find mate or strong advantage
+        assert!(board.is_legal(result.best_move));
+        println!(
+            "Mate position score: {} with move {}",
+            result.score,
+            result.best_move.to_uci()
+        );
     }
 }
