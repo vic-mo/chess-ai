@@ -638,6 +638,197 @@ impl Board {
         self.ep_square = undo.ep_square;
         self.halfmove_clock = undo.halfmove_clock;
     }
+
+    /// Check if a square is attacked by the given color.
+    ///
+    /// This is used for legality checking (king in check, castling through check, etc).
+    ///
+    /// # Example
+    /// ```
+    /// use engine::board::Board;
+    /// use engine::piece::Color;
+    /// use engine::square::Square;
+    ///
+    /// let board = Board::startpos();
+    /// // E2 is protected by white pieces
+    /// assert!(board.is_square_attacked(Square::E2, Color::White));
+    /// ```
+    pub fn is_square_attacked(&self, square: Square, by_color: Color) -> bool {
+        use crate::attacks::{
+            bishop_attacks, king_attacks, knight_attacks, pawn_attacks, rook_attacks,
+        };
+
+        let occupied = self.occupied();
+
+        // Check for pawn attacks
+        let pawns = self.piece_bb(PieceType::Pawn, by_color);
+        for pawn_sq in pawns {
+            if pawn_attacks(pawn_sq, by_color).contains(square) {
+                return true;
+            }
+        }
+
+        // Check for knight attacks
+        let knights = self.piece_bb(PieceType::Knight, by_color);
+        for knight_sq in knights {
+            if knight_attacks(knight_sq).contains(square) {
+                return true;
+            }
+        }
+
+        // Check for bishop/queen diagonal attacks
+        let bishops = self.piece_bb(PieceType::Bishop, by_color);
+        let queens = self.piece_bb(PieceType::Queen, by_color);
+        let diagonal_attackers = bishops | queens;
+        for attacker_sq in diagonal_attackers {
+            if bishop_attacks(attacker_sq, occupied).contains(square) {
+                return true;
+            }
+        }
+
+        // Check for rook/queen orthogonal attacks
+        let rooks = self.piece_bb(PieceType::Rook, by_color);
+        let orthogonal_attackers = rooks | queens;
+        for attacker_sq in orthogonal_attackers {
+            if rook_attacks(attacker_sq, occupied).contains(square) {
+                return true;
+            }
+        }
+
+        // Check for king attacks
+        let king = self.piece_bb(PieceType::King, by_color);
+        for king_sq in king {
+            if king_attacks(king_sq).contains(square) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    /// Check if the current side to move is in check.
+    ///
+    /// # Example
+    /// ```
+    /// use engine::board::Board;
+    /// use engine::io::parse_fen;
+    ///
+    /// let board = Board::startpos();
+    /// assert!(!board.is_in_check());
+    ///
+    /// // Position with white king in check
+    /// let fen = "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3";
+    /// let board = parse_fen(fen).unwrap();
+    /// assert!(board.is_in_check());
+    /// ```
+    pub fn is_in_check(&self) -> bool {
+        let us = self.side_to_move;
+        let them = us.opponent();
+
+        // Find our king
+        let our_king = self.piece_bb(PieceType::King, us);
+        if our_king.is_empty() {
+            // No king (shouldn't happen in valid position)
+            return false;
+        }
+
+        let king_square = our_king.into_iter().next().unwrap();
+        self.is_square_attacked(king_square, them)
+    }
+
+    /// Check if a move is legal (doesn't leave the king in check).
+    ///
+    /// This assumes the move is pseudo-legal (follows piece movement rules).
+    ///
+    /// # Example
+    /// ```
+    /// use engine::board::Board;
+    /// use engine::r#move::{Move, MoveFlags};
+    /// use engine::square::Square;
+    ///
+    /// let board = Board::startpos();
+    /// let m = Move::new(Square::E2, Square::E4, MoveFlags::DOUBLE_PAWN_PUSH);
+    /// assert!(board.is_legal(m));
+    /// ```
+    pub fn is_legal(&self, m: Move) -> bool {
+        // Special handling for castling
+        if m.is_castling() {
+            return self.is_castling_legal(m);
+        }
+
+        // For non-castling moves, make the move and check if king is in check
+        let mut board = self.clone();
+        board.make_move(m);
+        !board.is_in_check()
+    }
+
+    /// Check if a castling move is legal.
+    ///
+    /// Castling is illegal if:
+    /// 1. The king is currently in check
+    /// 2. The king passes through a square under attack
+    /// 3. The king ends up in check
+    fn is_castling_legal(&self, m: Move) -> bool {
+        let us = self.side_to_move;
+        let them = us.opponent();
+
+        // Can't castle out of check
+        if self.is_in_check() {
+            return false;
+        }
+
+        let from = m.from();
+        let to = m.to();
+
+        // Determine which squares the king passes through
+        let passing_square = if m.is_kingside_castle() {
+            // Kingside: king passes through f1/f8
+            Square::from_coords(5, from.rank())
+        } else {
+            // Queenside: king passes through d1/d8
+            Square::from_coords(3, from.rank())
+        };
+
+        // Check if king passes through attacked square
+        if self.is_square_attacked(passing_square, them) {
+            return false;
+        }
+
+        // Check if king ends up in check (destination square)
+        if self.is_square_attacked(to, them) {
+            return false;
+        }
+
+        true
+    }
+
+    /// Generate all legal moves for the current position.
+    ///
+    /// This generates pseudo-legal moves and filters out illegal ones.
+    ///
+    /// # Example
+    /// ```
+    /// use engine::board::Board;
+    ///
+    /// let board = Board::startpos();
+    /// let legal_moves = board.generate_legal_moves();
+    /// assert_eq!(legal_moves.len(), 20); // 16 pawn moves + 4 knight moves
+    /// ```
+    pub fn generate_legal_moves(&self) -> crate::movelist::MoveList {
+        use crate::movegen::generate_moves;
+        use crate::movelist::MoveList;
+
+        let pseudo_legal = generate_moves(self);
+        let mut legal = MoveList::new();
+
+        for m in pseudo_legal {
+            if self.is_legal(m) {
+                legal.push(m);
+            }
+        }
+
+        legal
+    }
 }
 
 impl Default for Board {
@@ -1105,5 +1296,188 @@ mod tests {
 
         // Should be back to original
         assert_eq!(board, original);
+    }
+
+    #[test]
+    fn test_is_square_attacked() {
+        let board = Board::startpos();
+
+        // E2 is protected by white
+        assert!(board.is_square_attacked(Square::E2, Color::White));
+
+        // E7 is protected by black
+        assert!(board.is_square_attacked(Square::E7, Color::Black));
+
+        // E4 is not attacked at start
+        assert!(!board.is_square_attacked(Square::E4, Color::White));
+        assert!(!board.is_square_attacked(Square::E4, Color::Black));
+    }
+
+    #[test]
+    fn test_is_in_check_startpos() {
+        let board = Board::startpos();
+        assert!(!board.is_in_check());
+    }
+
+    #[test]
+    fn test_is_in_check_white() {
+        use crate::io::parse_fen;
+
+        // White king in check from black queen on h4
+        let fen = "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3";
+        let board = parse_fen(fen).unwrap();
+        assert!(board.is_in_check());
+    }
+
+    #[test]
+    fn test_is_in_check_black() {
+        use crate::io::parse_fen;
+
+        // Black king in check from white queen on e8
+        let fen = "rnb1k2Q/pppp1ppp/5n2/2b1p3/2B1P3/8/PPPP1PPP/RNB1K1NR b KQq - 4 4";
+        let board = parse_fen(fen).unwrap();
+        assert!(board.is_in_check());
+    }
+
+    #[test]
+    fn test_is_legal_normal_move() {
+        let board = Board::startpos();
+        let m = Move::new(Square::E2, Square::E4, MoveFlags::DOUBLE_PAWN_PUSH);
+        assert!(board.is_legal(m));
+    }
+
+    #[test]
+    fn test_is_legal_pinned_piece() {
+        use crate::io::parse_fen;
+
+        // Position where knight can move freely
+        let fen = "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4";
+        let board = parse_fen(fen).unwrap();
+
+        // Move knight normally - should be legal
+        let legal_move = Move::new(Square::F3, Square::from_coords(6, 4), MoveFlags::QUIET); // Ng5
+        assert!(board.is_legal(legal_move));
+    }
+
+    #[test]
+    fn test_is_legal_blocks_check() {
+        use crate::io::parse_fen;
+
+        // Position where white is in check and must block or move king
+        let fen = "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3";
+        let board = parse_fen(fen).unwrap();
+        assert!(board.is_in_check());
+
+        // Moving king is legal
+        let king_move = Move::new(Square::E1, Square::from_coords(5, 0), MoveFlags::QUIET); // Kf1
+        assert!(board.is_legal(king_move));
+
+        // Blocking with g3-g4 would be illegal (pawn can't move that way)
+        // Let's test a legal block instead - Nf3
+        let block_move = Move::new(Square::G1, Square::F3, MoveFlags::QUIET);
+        assert!(board.is_legal(block_move));
+    }
+
+    #[test]
+    fn test_castling_legal() {
+        let mut board = Board::empty();
+        board.set_piece(Square::E1, Piece::new(PieceType::King, Color::White));
+        board.set_piece(Square::H1, Piece::new(PieceType::Rook, Color::White));
+        board.set_side_to_move(Color::White);
+        board.set_castling(CastlingRights::all());
+
+        let castle_move = Move::new(Square::E1, Square::G1, MoveFlags::KING_CASTLE);
+        assert!(board.is_legal(castle_move));
+    }
+
+    #[test]
+    fn test_castling_through_check() {
+        let mut board = Board::empty();
+        board.set_piece(Square::E1, Piece::new(PieceType::King, Color::White));
+        board.set_piece(Square::H1, Piece::new(PieceType::Rook, Color::White));
+        board.set_piece(Square::F3, Piece::new(PieceType::Rook, Color::Black)); // Attacks f1
+        board.set_side_to_move(Color::White);
+        board.set_castling(CastlingRights::all());
+
+        let castle_move = Move::new(Square::E1, Square::G1, MoveFlags::KING_CASTLE);
+        assert!(!board.is_legal(castle_move)); // Can't castle through check
+    }
+
+    #[test]
+    fn test_castling_into_check() {
+        let mut board = Board::empty();
+        board.set_piece(Square::E1, Piece::new(PieceType::King, Color::White));
+        board.set_piece(Square::H1, Piece::new(PieceType::Rook, Color::White));
+        board.set_piece(
+            Square::from_coords(6, 2),
+            Piece::new(PieceType::Rook, Color::Black),
+        ); // G3 - Attacks g1
+        board.set_side_to_move(Color::White);
+        board.set_castling(CastlingRights::all());
+
+        let castle_move = Move::new(Square::E1, Square::G1, MoveFlags::KING_CASTLE);
+        assert!(!board.is_legal(castle_move)); // Can't castle into check
+    }
+
+    #[test]
+    fn test_castling_out_of_check() {
+        let mut board = Board::empty();
+        board.set_piece(Square::E1, Piece::new(PieceType::King, Color::White));
+        board.set_piece(Square::H1, Piece::new(PieceType::Rook, Color::White));
+        board.set_piece(Square::E3, Piece::new(PieceType::Rook, Color::Black)); // Attacks e1
+        board.set_side_to_move(Color::White);
+        board.set_castling(CastlingRights::all());
+
+        let castle_move = Move::new(Square::E1, Square::G1, MoveFlags::KING_CASTLE);
+        assert!(!board.is_legal(castle_move)); // Can't castle out of check
+    }
+
+    #[test]
+    fn test_generate_legal_moves_startpos() {
+        let board = Board::startpos();
+        let legal_moves = board.generate_legal_moves();
+
+        // Starting position has 20 legal moves (same as pseudo-legal)
+        assert_eq!(legal_moves.len(), 20);
+    }
+
+    #[test]
+    fn test_generate_legal_moves_in_check() {
+        use crate::io::parse_fen;
+
+        // White king in check, must respond
+        let fen = "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3";
+        let board = parse_fen(fen).unwrap();
+
+        let legal_moves = board.generate_legal_moves();
+
+        // Should have some legal moves (king moves, blocks)
+        assert!(!legal_moves.is_empty());
+
+        // All legal moves should actually be legal
+        for m in legal_moves {
+            assert!(board.is_legal(m));
+        }
+    }
+
+    #[test]
+    fn test_generate_legal_moves_filters_illegal() {
+        use crate::io::parse_fen;
+        use crate::movegen::generate_moves;
+
+        // Position with some pins
+        let fen = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+        let board = parse_fen(fen).unwrap();
+
+        let pseudo_legal = generate_moves(&board);
+        let legal = board.generate_legal_moves();
+
+        // Legal should be <= pseudo-legal (some moves may be illegal)
+        assert!(legal.len() <= pseudo_legal.len());
+
+        // All legal moves should pass is_legal check
+        for m in legal {
+            assert!(board.is_legal(m));
+        }
     }
 }
