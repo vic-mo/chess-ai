@@ -4,10 +4,12 @@
 //! Positive scores favor the side to move, negative scores favor the opponent.
 
 mod material;
+pub mod phase;
 mod positional;
 mod pst;
 
 pub use material::*;
+pub use phase::*;
 pub use positional::*;
 pub use pst::*;
 
