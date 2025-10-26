@@ -3,12 +3,14 @@
 //! Evaluates positions from the current side to move's perspective.
 //! Positive scores favor the side to move, negative scores favor the opponent.
 
+pub mod king;
 mod material;
 pub mod pawns;
 pub mod phase;
 mod positional;
 mod pst;
 
+pub use king::*;
 pub use material::*;
 pub use pawns::*;
 pub use phase::*;
