@@ -41,6 +41,7 @@
 pub mod attacks;
 pub mod bitboard;
 pub mod board;
+pub mod eval;
 pub mod io;
 #[allow(clippy::module_inception)]
 pub mod r#move;
