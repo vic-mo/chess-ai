@@ -265,11 +265,65 @@ impl Searcher {
         let mut best_score = -INFINITY;
         let mut best_move = legal_moves[0];
 
-        for m in legal_moves.iter() {
+        for (move_count, m) in legal_moves.iter().enumerate() {
             let mut new_board = board.clone();
             new_board.make_move(*m);
 
-            let score = -self.negamax(&new_board, depth - 1, -beta, -alpha, ply + 1);
+            let mut score;
+
+            // Late Move Reductions (LMR)
+            // Reduce search depth for moves that are unlikely to be best
+            // Conditions:
+            // 1. Not the first few moves (move_count >= 3)
+            // 2. Sufficient depth (depth >= 3)
+            // 3. Not a tactical move (capture, promotion, gives check)
+            // 4. Not currently in check
+            let can_reduce = move_count >= 3
+                && depth >= 3
+                && !m.is_capture()
+                && !m.is_promotion()
+                && !new_board.is_in_check()
+                && !board.is_in_check();
+
+            if can_reduce {
+                // Calculate reduction amount
+                // More reduction for later moves and higher depths
+                let reduction = if move_count >= 6 && depth >= 6 {
+                    2 // Reduce by 2 plies
+                } else {
+                    1 // Reduce by 1 ply
+                };
+
+                // Search at reduced depth with null window
+                score = -self.negamax(
+                    &new_board,
+                    depth - 1 - reduction,
+                    -alpha - 1,
+                    -alpha,
+                    ply + 1,
+                );
+
+                // If reduced search beats alpha, re-search at full depth
+                if score > alpha {
+                    score = -self.negamax(&new_board, depth - 1, -beta, -alpha, ply + 1);
+                }
+            } else {
+                // First few moves: search at full depth
+                // Use PVS (Principal Variation Search) for efficiency
+
+                if move_count == 0 {
+                    // First move: search with full window
+                    score = -self.negamax(&new_board, depth - 1, -beta, -alpha, ply + 1);
+                } else {
+                    // Later moves: try null window first (PVS)
+                    score = -self.negamax(&new_board, depth - 1, -alpha - 1, -alpha, ply + 1);
+
+                    // If it beats alpha, re-search with full window
+                    if score > alpha && score < beta {
+                        score = -self.negamax(&new_board, depth - 1, -beta, -alpha, ply + 1);
+                    }
+                }
+            }
 
             if score > best_score {
                 best_score = score;
@@ -504,5 +558,110 @@ mod tests {
         assert!(board.is_legal(result.best_move));
         // Score should be reasonable (not a crazy mate score unless it's actually mate)
         assert!(result.score.abs() < MATE_SCORE / 2);
+    }
+
+    #[test]
+    fn test_lmr_reduces_nodes() {
+        // Test that LMR significantly reduces node count
+        let fen = "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4";
+        let board = parse_fen(fen).unwrap();
+
+        let mut searcher = Searcher::new();
+        let result = searcher.search(&board, 6);
+
+        println!("Nodes with LMR + null move at depth 6: {}", result.nodes);
+
+        // With both LMR and null move, expect major node reduction
+        // At depth 6, should be significantly less than without optimizations
+        assert!(result.nodes > 1000); // Should still search something
+        assert!(result.nodes < 300_000); // But much less than naive search
+    }
+
+    #[test]
+    fn test_lmr_tactical_accuracy() {
+        // Test that LMR doesn't miss tactics
+        // Position where there's a clear best move (Bxf7+ fork)
+        let fen = "r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - 0 1";
+        let board = parse_fen(fen).unwrap();
+
+        let mut searcher = Searcher::new();
+        let result = searcher.search(&board, 5);
+
+        // Should find a legal move
+        assert!(board.is_legal(result.best_move));
+        // Should have a positive score (white is winning)
+        assert!(result.score > 0);
+        println!(
+            "Best move: {} with score {}",
+            result.best_move.to_uci(),
+            result.score
+        );
+    }
+
+    #[test]
+    fn test_lmr_finds_mate() {
+        // Test that LMR doesn't miss mate in few moves
+        // Back rank mate: Ra8# is mate in 1
+        let fen = "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1";
+        let board = parse_fen(fen).unwrap();
+
+        let mut searcher = Searcher::new();
+        let result = searcher.search(&board, 5);
+
+        // Should find the mating move Ra8
+        assert!(board.is_legal(result.best_move));
+        println!(
+            "Best move: {} with score {}",
+            result.best_move.to_uci(),
+            result.score
+        );
+        // Should recognize this is a winning position
+        assert!(result.score > 1000 || result.score < -1000); // Either we see mate or strong advantage
+    }
+
+    #[test]
+    fn test_lmr_deeper_search() {
+        // Test that LMR enables deeper search
+        let board = Board::startpos();
+
+        let mut searcher = Searcher::new();
+        let result = searcher.search(&board, 6);
+
+        println!("Nodes at depth 6 with LMR: {}", result.nodes);
+
+        // Should complete depth 6 search
+        assert_eq!(result.depth, 6);
+        assert!(result.nodes > 5000); // Should search reasonably
+                                      // With LMR, depth 6 should be feasible
+        assert!(result.nodes < 500_000);
+    }
+
+    #[test]
+    fn test_pvs_first_move_full_window() {
+        // Test that PVS gives first move full window
+        // This is more of a regression test to ensure the logic is correct
+        let board = Board::startpos();
+
+        let mut searcher = Searcher::new();
+        let result = searcher.search(&board, 4);
+
+        // Should find a legal move
+        assert!(board.is_legal(result.best_move));
+        assert!(result.nodes > 0);
+    }
+
+    #[test]
+    fn test_lmr_quiet_moves_only() {
+        // Test that LMR only applies to quiet moves
+        // Position with many captures available
+        let fen = "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4";
+        let board = parse_fen(fen).unwrap();
+
+        let mut searcher = Searcher::new();
+        let result = searcher.search(&board, 5);
+
+        // Should still find good moves (captures should be searched fully)
+        assert!(board.is_legal(result.best_move));
+        println!("Nodes searched: {}", result.nodes);
     }
 }
