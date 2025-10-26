@@ -7,6 +7,7 @@ pub mod king;
 mod material;
 pub mod pawns;
 pub mod phase;
+pub mod pieces;
 mod positional;
 mod pst;
 
@@ -14,6 +15,7 @@ pub use king::*;
 pub use material::*;
 pub use pawns::*;
 pub use phase::*;
+pub use pieces::*;
 pub use positional::*;
 pub use pst::*;
 
