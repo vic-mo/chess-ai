@@ -201,9 +201,9 @@ impl Searcher {
             }
         }
 
-        // Leaf node: return evaluation
+        // Leaf node: enter quiescence search
         if depth <= 0 {
-            return self.evaluator.evaluate(board);
+            return self.quiesce(board, alpha, beta);
         }
 
         let legal_moves = board.generate_legal_moves();
@@ -255,6 +255,43 @@ impl Searcher {
             .store(hash, best_move, best_score, depth as u8, bound);
 
         best_score
+    }
+
+    /// Quiescence search to avoid horizon effect.
+    ///
+    /// Only searches tactical moves (captures) to reach a quiet position.
+    fn quiesce(&mut self, board: &Board, mut alpha: i32, beta: i32) -> i32 {
+        self.nodes += 1;
+
+        // Stand pat: assume we can maintain current evaluation
+        let stand_pat = self.evaluator.evaluate(board);
+
+        if stand_pat >= beta {
+            return beta;
+        }
+
+        if stand_pat > alpha {
+            alpha = stand_pat;
+        }
+
+        // Generate and search only captures
+        let moves = board.generate_legal_moves();
+        let captures: Vec<Move> = moves.iter().filter(|m| m.is_capture()).copied().collect();
+
+        for m in captures {
+            let mut new_board = board.clone();
+            new_board.make_move(m);
+
+            let score = -self.quiesce(&new_board, -beta, -alpha);
+
+            if score >= beta {
+                return beta;
+            }
+
+            alpha = alpha.max(score);
+        }
+
+        alpha
     }
 }
 
