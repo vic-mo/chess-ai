@@ -101,7 +101,7 @@ fn find_least_valuable_attacker(
 ///
 /// ```
 /// use engine::board::Board;
-/// use engine::move_::Move;
+/// use engine::r#move::Move;
 /// use engine::search::see::see;
 /// use engine::io::parse_fen;
 ///
