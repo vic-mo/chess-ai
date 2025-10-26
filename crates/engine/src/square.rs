@@ -97,8 +97,12 @@ impl Square {
     pub const A2: Square = Square(8);
     pub const D2: Square = Square(11);
     pub const E2: Square = Square(12);
+    pub const H2: Square = Square(15);
 
     pub const E3: Square = Square(20);
+    pub const F3: Square = Square(21);
+
+    pub const C6: Square = Square(42);
 
     pub const D4: Square = Square(27);
     pub const E4: Square = Square(28);
@@ -109,6 +113,7 @@ impl Square {
     pub const D6: Square = Square(43);
 
     pub const A7: Square = Square(48);
+    pub const D7: Square = Square(51);
     pub const E7: Square = Square(52);
     pub const G7: Square = Square(54);
     pub const H7: Square = Square(55);
