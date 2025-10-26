@@ -7,6 +7,9 @@
   ],
   "scripts": {
     "build": "pnpm -r --workspace-root=false run build",
+    "build:wasm": "./scripts/build-wasm.sh --release",
+    "build:wasm:dev": "./scripts/build-wasm.sh --dev",
+    "build:wasm:release": "./scripts/build-wasm.sh --release",
     "lint": "node ./scripts/run-eslint.mjs",
     "lint:fix": "pnpm lint -- --fix",
     "fmt": "prettier -w .",

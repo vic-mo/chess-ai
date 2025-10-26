@@ -19,4 +19,10 @@ engine = { path = "../engine" }
 default = []
 
 [package.metadata.wasm-pack.profile.release]
-wasm-opt = false
+wasm-opt = [
+  "-Oz",
+  "--enable-mutable-globals",
+  "--enable-bulk-memory",
+  "--enable-nontrapping-float-to-int",
+  "--enable-sign-ext"
+]
