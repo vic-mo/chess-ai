@@ -4,6 +4,7 @@ use crate::board::Board;
 use crate::eval::Evaluator;
 use crate::move_order::MoveOrder;
 use crate::r#move::Move;
+use crate::time::{TimeControl, TimeManager};
 use crate::tt::{Bound, TranspositionTable};
 
 /// Maximum search depth.
@@ -40,6 +41,8 @@ pub struct Searcher {
     tt: TranspositionTable,
     move_order: MoveOrder,
     nodes: u64,
+    time_manager: Option<TimeManager>,
+    stopped: bool,
 }
 
 impl Searcher {
@@ -55,6 +58,8 @@ impl Searcher {
             tt: TranspositionTable::new(size_mb),
             move_order: MoveOrder::new(),
             nodes: 0,
+            time_manager: None,
+            stopped: false,
         }
     }
 
@@ -66,13 +71,24 @@ impl Searcher {
     /// # Arguments
     /// * `board` - The position to search
     /// * `max_depth` - Maximum search depth in plies
+    /// * `time_control` - Time control for the search (defaults to Infinite)
     ///
     /// # Returns
     /// SearchResult containing best move, score, PV, and statistics
-    pub fn search(&mut self, board: &Board, max_depth: u32) -> SearchResult {
+    pub fn search_with_limit(
+        &mut self,
+        board: &Board,
+        max_depth: u32,
+        time_control: TimeControl,
+    ) -> SearchResult {
         self.nodes = 0;
         self.tt.new_search();
         self.move_order.clear();
+        self.stopped = false;
+
+        // Initialize time manager
+        let is_white = board.side_to_move() == crate::piece::Color::White;
+        self.time_manager = Some(TimeManager::new(time_control, is_white));
 
         let mut best_move = Move::new(
             crate::square::Square::A1,
@@ -80,9 +96,15 @@ impl Searcher {
             crate::r#move::MoveFlags::QUIET,
         );
         let mut best_score = 0;
+        let mut completed_depth = 0;
 
         // Iterative deepening with aspiration windows
         for depth in 1..=max_depth {
+            // Check if we should stop (time, depth, or node limits)
+            if self.should_stop(depth) {
+                break;
+            }
+
             let score = if depth <= 4 {
                 // First few depths: use full window for stability
                 self.search_root(board, depth)
@@ -119,6 +141,7 @@ impl Searcher {
             };
 
             best_score = score;
+            completed_depth = depth;
 
             // Extract PV from TT
             let pv = self.extract_pv(board, depth);
@@ -131,16 +154,53 @@ impl Searcher {
             // println!("info depth {} score cp {} nodes {} pv ...", depth, score, self.nodes);
         }
 
-        let pv = self.extract_pv(board, max_depth);
+        let pv = self.extract_pv(board, completed_depth);
 
         SearchResult {
             best_move,
             score: best_score,
-            depth: max_depth,
+            depth: completed_depth,
             nodes: self.nodes,
             pv,
             multi_pv: Vec::new(), // Empty for single-PV search
         }
+    }
+
+    /// Convenience method for unlimited search (backward compatibility).
+    pub fn search(&mut self, board: &Board, max_depth: u32) -> SearchResult {
+        self.search_with_limit(board, max_depth, TimeControl::Infinite)
+    }
+
+    /// Check if search should stop due to time/depth/node limits.
+    fn should_stop(&self, current_depth: u32) -> bool {
+        if self.stopped {
+            return true;
+        }
+
+        if let Some(tm) = &self.time_manager {
+            // Check hard time limit (must stop)
+            if tm.must_stop() {
+                return true;
+            }
+
+            // Check soft time limit (should stop)
+            // But allow finishing current depth if we've made progress
+            if current_depth > 1 && tm.should_stop() {
+                return true;
+            }
+
+            // Check depth limit
+            if tm.depth_limit_reached(current_depth) {
+                return true;
+            }
+
+            // Check node limit
+            if tm.node_limit_reached(self.nodes) {
+                return true;
+            }
+        }
+
+        false
     }
 
     /// Multi-PV search: find top N best moves.
@@ -400,6 +460,22 @@ impl Searcher {
     /// The evaluation score from the current side's perspective
     fn negamax(&mut self, board: &Board, depth: i32, mut alpha: i32, beta: i32, ply: u32) -> i32 {
         self.nodes += 1;
+
+        // Check time limits periodically (every 1024 nodes)
+        if self.nodes.is_multiple_of(1024) {
+            if let Some(tm) = &self.time_manager {
+                if tm.must_stop() {
+                    self.stopped = true;
+                    return 0; // Return early with neutral score
+                }
+            }
+        }
+
+        // If we've been stopped, return immediately
+        if self.stopped {
+            return 0;
+        }
+
         let original_alpha = alpha;
         let hash = board.hash();
 
@@ -574,6 +650,11 @@ impl Searcher {
     /// Only searches tactical moves (captures) to reach a quiet position.
     fn quiesce(&mut self, board: &Board, mut alpha: i32, beta: i32) -> i32 {
         self.nodes += 1;
+
+        // If we've been stopped, return immediately
+        if self.stopped {
+            return 0;
+        }
 
         // Stand pat: assume we can maintain current evaluation
         let stand_pat = self.evaluator.evaluate(board);
@@ -1036,5 +1117,98 @@ mod tests {
         // Should get same result (same best move)
         assert_eq!(result1.best_move, result2.best_move);
         assert_eq!(result1.score, result2.score);
+    }
+
+    #[test]
+    fn test_time_limited_search_move_time() {
+        // Test fixed time per move
+        let board = Board::startpos();
+        let mut searcher = Searcher::new();
+
+        let time_control = TimeControl::MoveTime { millis: 100 };
+        let result = searcher.search_with_limit(&board, 10, time_control);
+
+        // Should find a legal move
+        assert!(board.is_legal(result.best_move));
+        // Should have stopped before reaching depth 10 (100ms is too short for depth 10)
+        assert!(result.depth < 10);
+    }
+
+    #[test]
+    fn test_depth_limited_search() {
+        // Test depth limit
+        let board = Board::startpos();
+        let mut searcher = Searcher::new();
+
+        let time_control = TimeControl::Depth { depth: 3 };
+        let result = searcher.search_with_limit(&board, 10, time_control);
+
+        // Should stop at depth 3
+        assert_eq!(result.depth, 3);
+        assert!(board.is_legal(result.best_move));
+    }
+
+    #[test]
+    fn test_node_limited_search() {
+        // Test node limit
+        let board = Board::startpos();
+        let mut searcher = Searcher::new();
+
+        let time_control = TimeControl::Nodes { nodes: 1000 };
+        let result = searcher.search_with_limit(&board, 10, time_control);
+
+        // Should stop when nodes exceeded
+        assert!(result.nodes >= 1000);
+        // Should not search to full depth
+        assert!(result.depth < 10);
+        assert!(board.is_legal(result.best_move));
+    }
+
+    #[test]
+    fn test_infinite_time_control() {
+        // Test that infinite time control searches to full depth
+        let board = Board::startpos();
+        let mut searcher = Searcher::new();
+
+        let time_control = TimeControl::Infinite;
+        let result = searcher.search_with_limit(&board, 4, time_control);
+
+        // Should search to full depth
+        assert_eq!(result.depth, 4);
+        assert!(board.is_legal(result.best_move));
+    }
+
+    #[test]
+    fn test_clock_time_control() {
+        // Test clock-based time control
+        let board = Board::startpos();
+        let mut searcher = Searcher::new();
+
+        let time_control = TimeControl::Clock {
+            wtime: 10000, // 10 seconds
+            btime: 10000,
+            winc: 0,
+            binc: 0,
+            movestogo: Some(20),
+        };
+        let result = searcher.search_with_limit(&board, 10, time_control);
+
+        // Should find a legal move
+        assert!(board.is_legal(result.best_move));
+        // Should stop before reaching depth 10 (not enough time)
+        assert!(result.depth < 10);
+    }
+
+    #[test]
+    fn test_backward_compatible_search() {
+        // Test that old search() method still works (backward compatibility)
+        let board = Board::startpos();
+        let mut searcher = Searcher::new();
+
+        let result = searcher.search(&board, 4);
+
+        // Should search to full depth (no time limit)
+        assert_eq!(result.depth, 4);
+        assert!(board.is_legal(result.best_move));
     }
 }

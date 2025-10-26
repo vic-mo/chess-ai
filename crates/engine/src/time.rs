@@ -171,7 +171,7 @@ impl TimeManager {
 
     /// Check if depth limit has been reached
     pub fn depth_limit_reached(&self, current_depth: u32) -> bool {
-        matches!(self.time_control, TimeControl::Depth { depth } if current_depth >= depth)
+        matches!(self.time_control, TimeControl::Depth { depth } if current_depth > depth)
     }
 
     /// Check if node limit has been reached
@@ -238,8 +238,8 @@ mod tests {
 
         assert!(!tm.depth_limit_reached(5));
         assert!(!tm.depth_limit_reached(9));
-        assert!(tm.depth_limit_reached(10));
-        assert!(tm.depth_limit_reached(11));
+        assert!(!tm.depth_limit_reached(10)); // Can still search depth 10
+        assert!(tm.depth_limit_reached(11)); // Cannot search depth 11
 
         // No time limits for depth control
         assert!(!tm.should_stop());
