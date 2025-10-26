@@ -11,6 +11,9 @@ type EventHandler = (evt: EngineEvent) => void;
 type StopHandler = () => void;
 
 function fakeAnalyze(req: AnalyzeRequest, onEvent: EventHandler): StopHandler {
+  // Start search performance monitoring
+  performanceMonitor.startSearch();
+
   let depth = 0;
   const maxDepth = req.limit.kind === 'depth' ? req.limit.depth : 6;
   const id = req.id;
@@ -33,10 +36,15 @@ function fakeAnalyze(req: AnalyzeRequest, onEvent: EventHandler): StopHandler {
       clearInterval(timer);
       const bestMove: BestMove = { id, best: 'e2e4', ponder: 'e7e5' };
       onEvent({ type: 'bestMove', payload: bestMove });
+      // End search performance monitoring
+      performanceMonitor.endSearch();
     }
   }, 120);
 
-  return () => clearInterval(timer);
+  return () => {
+    clearInterval(timer);
+    performanceMonitor.endSearch();
+  };
 }
 
 let remoteWs: WebSocket | null = null;
