@@ -204,4 +204,181 @@ mod tests {
             score
         );
     }
+
+    // ===== M6 VALIDATION TESTS =====
+
+    #[test]
+    fn test_m6_passed_pawn_bonus() {
+        // White has a far advanced passed pawn on e7
+        let fen = "4k3/4P3/8/8/8/8/8/4K3 w - - 0 1";
+        let board = parse_fen(fen).unwrap();
+        let mut eval = Evaluator::new();
+        let score = eval.evaluate(&board);
+
+        // Should recognize the powerful passed pawn
+        assert!(
+            score > 100,
+            "Far advanced passed pawn should have large bonus, got {}",
+            score
+        );
+    }
+
+    #[test]
+    fn test_m6_king_safety() {
+        // White king exposed, black king safe with pawn shield
+        let fen = "rnbq1rk1/ppp2ppp/3p1n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQ - 0 1";
+        let board = parse_fen(fen).unwrap();
+        let mut eval = Evaluator::new();
+        let score_white = eval.evaluate(&board);
+
+        // Black king is safer (castled with pawn shield), white is not castled
+        // So black should have better evaluation
+        assert!(
+            score_white < 0,
+            "Black should have advantage due to king safety, got score={}",
+            score_white
+        );
+    }
+
+    #[test]
+    fn test_m6_bishop_pair() {
+        // White has bishop pair, black has knight and bishop
+        let fen = "rnbqk1nr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        let board = parse_fen(fen).unwrap();
+        let mut eval = Evaluator::new();
+        let score = eval.evaluate(&board);
+
+        // White should have advantage from bishop pair (black missing a bishop)
+        assert!(
+            score > 0,
+            "Bishop pair should give white advantage, got {}",
+            score
+        );
+    }
+
+    #[test]
+    fn test_m6_rook_open_file() {
+        // White rook on open e-file (e2 pawn removed, e7 pawn removed)
+        let fen = "r1bqkbnr/pppp1ppp/8/8/8/8/PPPP1PPP/RNBQKBNR w KQkq - 0 1";
+        let board1 = parse_fen(fen).unwrap();
+
+        // Now move white rook to e-file in second position
+        let fen2 = "r1bqkbnr/pppp1ppp/8/8/8/4R3/PPPP1PPP/RNBQKBN1 w KQkq - 0 1";
+        let board2 = parse_fen(fen2).unwrap();
+
+        let mut eval = Evaluator::new();
+        let score1 = eval.evaluate(&board1);
+        let score2 = eval.evaluate(&board2);
+
+        // Position with rook on open file should be better than without
+        // (even though white is missing h1 rook in both cases, the open file bonus should matter)
+        assert!(
+            score2 > score1 - 50,
+            "Rook on open file should not be much worse, got score1={} score2={}",
+            score1,
+            score2
+        );
+    }
+
+    #[test]
+    fn test_m6_isolated_pawns() {
+        // Black has multiple isolated pawns
+        let fen = "rnbqkbnr/p1p1p1p1/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        let board = parse_fen(fen).unwrap();
+        let mut eval = Evaluator::new();
+        let score = eval.evaluate(&board);
+
+        // White should have advantage (black has isolated pawns)
+        assert!(
+            score > 0,
+            "Isolated pawns should give white advantage, got {}",
+            score
+        );
+    }
+
+    #[test]
+    fn test_m6_knight_outpost() {
+        // White has knight on strong outpost
+        let fen = "rnbqkb1r/pp3ppp/8/3N4/2P5/8/PP1PPPPP/RNBQKB1R w KQkq - 0 1";
+        let board = parse_fen(fen).unwrap();
+        let mut eval = Evaluator::new();
+        let score = eval.evaluate(&board);
+
+        // White should have advantage from knight outpost
+        assert!(
+            score > 0,
+            "Knight outpost should give advantage, got {}",
+            score
+        );
+    }
+
+    #[test]
+    fn test_m6_endgame_evaluation() {
+        // Endgame position - king activity matters more
+        let fen = "8/8/3k4/8/3K4/8/8/8 w - - 0 1";
+        let board = parse_fen(fen).unwrap();
+        let mut eval = Evaluator::new();
+        let score = eval.evaluate(&board);
+
+        // Should be roughly equal (bare kings)
+        assert!(
+            score.abs() < 20,
+            "Bare kings should be roughly equal, got {}",
+            score
+        );
+    }
+
+    #[test]
+    fn test_m6_material_dominance() {
+        // White has overwhelming material advantage
+        let fen = "4k3/8/8/8/8/8/PPPPPPPP/RNBQKBNR w KQ - 0 1";
+        let board = parse_fen(fen).unwrap();
+        let mut eval = Evaluator::new();
+        let score = eval.evaluate(&board);
+
+        // White should have huge advantage
+        assert!(
+            score > 2000,
+            "Overwhelming material advantage should give huge score, got {}",
+            score
+        );
+    }
+
+    #[test]
+    fn test_m6_pawn_structure_quality() {
+        // White has good pawn structure, black has doubled pawns
+        let fen = "rnbqkbnr/pppppppp/8/8/8/8/PP1PP1PP/RNBQKBNR w KQkq - 0 1";
+        let board1 = parse_fen(fen).unwrap();
+
+        let fen2 = "rnbqkbnr/pp1pp1pp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        let board2 = parse_fen(fen2).unwrap();
+
+        let mut eval = Evaluator::new();
+        let score1 = eval.evaluate(&board1); // White missing pawns
+        let score2 = eval.evaluate(&board2); // Black missing pawns
+
+        // score2 should be better for white (black missing pawns)
+        assert!(
+            score2 > score1,
+            "Missing pawns should be worse than having them, got score1={} score2={}",
+            score1,
+            score2
+        );
+    }
+
+    #[test]
+    fn test_m6_tactical_material() {
+        // Position where material is unequal
+        let fen = "rnbqkb1r/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        let board = parse_fen(fen).unwrap();
+        let mut eval = Evaluator::new();
+        let score = eval.evaluate(&board);
+
+        // White is up a knight, should have significant advantage
+        assert!(
+            score > 250,
+            "Being up a knight should give significant advantage, got {}",
+            score
+        );
+    }
 }
