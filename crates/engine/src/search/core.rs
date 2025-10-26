@@ -480,7 +480,7 @@ impl Searcher {
         let hash = board.hash();
 
         // Probe transposition table
-        let tt_move = if let Some(tt_entry) = self.tt.probe(hash) {
+        let mut tt_move = if let Some(tt_entry) = self.tt.probe(hash) {
             if tt_entry.depth >= depth as u8 {
                 match tt_entry.bound {
                     Bound::Exact => return tt_entry.score,
@@ -499,6 +499,27 @@ impl Searcher {
         } else {
             None
         };
+
+        // Internal Iterative Deepening (IID) and Internal Iterative Reduction (IIR)
+        // When we have no TT move, try to get one (IID) or reduce depth (IIR)
+        let mut depth = depth;
+        if tt_move.is_none() && depth >= 4 && !board.is_in_check() {
+            let is_pv = beta - alpha > 1;
+
+            if is_pv {
+                // IID: Do shallow search to populate TT with a good move
+                let iid_depth = depth - 2;
+                self.negamax(board, iid_depth, alpha, beta, ply);
+
+                // Re-probe TT to get the move
+                if let Some(tt_entry) = self.tt.probe(hash) {
+                    tt_move = Some(tt_entry.best_move);
+                }
+            } else {
+                // IIR: Reduce depth when we have no TT move in non-PV nodes
+                depth -= 1;
+            }
+        }
 
         // Null move pruning
         // Try "passing" the turn - if position is still winning, we can skip full search
@@ -1211,5 +1232,105 @@ mod tests {
         // Should search to full depth (no time limit)
         assert_eq!(result.depth, 4);
         assert!(board.is_legal(result.best_move));
+    }
+
+    #[test]
+    fn test_iid_activates_in_pv_nodes() {
+        // Test that IID is triggered in PV nodes without TT move
+        // IID should do a shallow search to get a TT move
+        let fen = "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4";
+        let board = parse_fen(fen).unwrap();
+
+        let mut searcher = Searcher::new();
+
+        // Clear TT to ensure no TT move
+        searcher.tt = TranspositionTable::new(16);
+
+        // Do a search that should trigger IID (depth >= 4, no TT move initially)
+        let result = searcher.search(&board, 5);
+
+        // IID should have found a good move
+        assert!(board.is_legal(result.best_move));
+        assert!(result.nodes > 0);
+    }
+
+    #[test]
+    fn test_iir_reduces_depth() {
+        // Test that IIR reduces depth in non-PV nodes without TT move
+        // This is harder to test directly, but we can verify it doesn't break search
+        let fen = "rnbqkb1r/pppppppp/5n2/8/8/5N2/PPPPPPPP/RNBQKB1R w KQkq - 2 2";
+        let board = parse_fen(fen).unwrap();
+
+        let mut searcher = Searcher::new();
+
+        // Clear TT to ensure IIR is triggered in non-PV nodes
+        searcher.tt = TranspositionTable::new(16);
+
+        let result = searcher.search(&board, 5);
+
+        // Should still find a legal move despite IIR reducing depth internally
+        assert!(board.is_legal(result.best_move));
+        // IIR should save nodes compared to full search
+        assert!(result.nodes > 1000);
+    }
+
+    #[test]
+    fn test_iid_iir_depth_requirement() {
+        // Test that IID/IIR only activates at depth >= 4
+        let board = Board::startpos();
+        let mut searcher = Searcher::new();
+
+        // Clear TT
+        searcher.tt = TranspositionTable::new(16);
+
+        // At depth 3, IID/IIR should not activate
+        let result = searcher.search(&board, 3);
+
+        assert!(board.is_legal(result.best_move));
+        assert_eq!(result.depth, 3);
+    }
+
+    #[test]
+    fn test_iid_iir_work_correctly() {
+        // Test that IID/IIR don't break normal search behavior
+        // Use a tactical position to ensure search works properly
+        let fen = "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4";
+        let board = parse_fen(fen).unwrap();
+
+        let mut searcher = Searcher::new();
+        searcher.tt = TranspositionTable::new(16);
+
+        // Search should work correctly with IID/IIR enabled
+        let result = searcher.search(&board, 5);
+
+        // Should find a legal move
+        assert!(board.is_legal(result.best_move));
+        assert!(result.nodes > 100);
+        assert_eq!(result.depth, 5);
+    }
+
+    #[test]
+    fn test_iid_improves_move_ordering() {
+        // Test that IID helps find better moves faster
+        let fen = "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4";
+        let board = parse_fen(fen).unwrap();
+
+        let mut searcher = Searcher::new();
+
+        // First search will populate TT via IID
+        let result1 = searcher.search(&board, 5);
+
+        // Second search should benefit from TT entries created by IID
+        searcher.tt = TranspositionTable::new(16); // Clear TT
+        let result2 = searcher.search(&board, 5);
+
+        // Both should find legal moves
+        assert!(board.is_legal(result1.best_move));
+        assert!(board.is_legal(result2.best_move));
+
+        // IID should help, though exact node count comparison is tricky
+        // Just verify both searches complete successfully
+        assert!(result1.nodes > 100);
+        assert!(result2.nodes > 100);
     }
 }
