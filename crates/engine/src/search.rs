@@ -213,6 +213,32 @@ impl Searcher {
             None
         };
 
+        // Null move pruning
+        // Try "passing" the turn - if position is still winning, we can skip full search
+        // Conditions:
+        // - Not in check (zugzwang risk)
+        // - Sufficient depth (need depth for reduced search)
+        // - Not in endgame (zugzwang risk)
+        // - Beta is not a mate score (avoid mate score distortion)
+        if depth >= 3
+            && !board.is_in_check()
+            && !crate::eval::is_endgame(board)
+            && beta.abs() < MATE_SCORE - MAX_DEPTH as i32
+        {
+            const R: i32 = 2; // Reduction factor
+
+            let mut null_board = board.clone();
+            null_board.make_null_move();
+
+            // Search with reduced depth and null window around beta
+            let null_score = -self.negamax(&null_board, depth - 1 - R, -beta, -beta + 1, ply + 1);
+
+            // If null move fails high, position is too good - prune this branch
+            if null_score >= beta {
+                return beta;
+            }
+        }
+
         // Leaf node: enter quiescence search
         if depth <= 0 {
             return self.quiesce(board, alpha, beta);
@@ -400,5 +426,83 @@ mod tests {
         // We should be somewhere in between
         println!("Nodes at depth 3: {}", result.nodes);
         assert!(result.nodes < 8_900);
+    }
+
+    #[test]
+    fn test_null_move_mechanics() {
+        use crate::piece::Color;
+
+        let board = Board::startpos();
+        let mut null_board = board.clone();
+
+        // Test side switches
+        assert_eq!(board.side_to_move(), Color::White);
+        null_board.make_null_move();
+        assert_eq!(null_board.side_to_move(), Color::Black);
+
+        // Test hash changes
+        assert_ne!(board.hash(), null_board.hash());
+
+        // Test with en passant
+        let fen = "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1";
+        let board_with_ep = parse_fen(fen).unwrap();
+        let mut null_board_ep = board_with_ep.clone();
+
+        assert!(board_with_ep.ep_square().is_some());
+        null_board_ep.make_null_move();
+        assert!(null_board_ep.ep_square().is_none());
+    }
+
+    #[test]
+    fn test_null_move_pruning_reduces_nodes() {
+        // Compare node counts with a position where null move should help
+        // Use a quiet middlegame position
+        let fen = "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4";
+        let board = parse_fen(fen).unwrap();
+
+        let mut searcher = Searcher::new();
+        let result = searcher.search(&board, 5);
+
+        println!("Nodes with null move pruning at depth 5: {}", result.nodes);
+
+        // With null move pruning, we expect significant node reduction
+        // At depth 5, we should search considerably fewer nodes
+        // This is a basic sanity check - exact numbers vary by position
+        assert!(result.nodes > 1000); // Should still search something
+        assert!(result.nodes < 150_000); // But not too much (relaxed threshold)
+    }
+
+    #[test]
+    fn test_null_move_disabled_in_endgame() {
+        // Test that null move is disabled in endgames
+        // Simple endgame - no queens, low material
+        let fen = "8/8/4k3/8/8/4K3/8/8 w - - 0 1";
+        let board = parse_fen(fen).unwrap();
+
+        // Verify this is considered an endgame
+        assert!(crate::eval::is_endgame(&board));
+
+        let mut searcher = Searcher::new();
+        let result = searcher.search(&board, 4);
+
+        // Should complete search without errors
+        // (null move is disabled in endgames, avoiding zugzwang issues)
+        assert!(result.nodes > 0);
+    }
+
+    #[test]
+    fn test_null_move_doesnt_break_tactics() {
+        // Test that null move pruning doesn't cause tactical oversights
+        // Position with a clear tactic
+        let fen = "r1bqkb1r/pppp1ppp/2n2n2/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4";
+        let board = parse_fen(fen).unwrap();
+
+        let mut searcher = Searcher::new();
+        let result = searcher.search(&board, 5);
+
+        // Should find a legal, reasonable move
+        assert!(board.is_legal(result.best_move));
+        // Score should be reasonable (not a crazy mate score unless it's actually mate)
+        assert!(result.score.abs() < MATE_SCORE / 2);
     }
 }

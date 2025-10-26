@@ -812,6 +812,42 @@ impl Board {
         self.is_square_attacked(king_square, them)
     }
 
+    /// Make a null move (pass the turn without moving).
+    ///
+    /// This is used in null move pruning during search. A null move:
+    /// - Toggles side to move
+    /// - Clears en passant square
+    /// - Increments halfmove clock
+    /// - Updates Zobrist hash
+    ///
+    /// # Example
+    /// ```
+    /// use engine::board::Board;
+    /// use engine::piece::Color;
+    ///
+    /// let mut board = Board::startpos();
+    /// assert_eq!(board.side_to_move(), Color::White);
+    /// board.make_null_move();
+    /// assert_eq!(board.side_to_move(), Color::Black);
+    /// ```
+    pub fn make_null_move(&mut self) {
+        use crate::zobrist::{hash_en_passant, hash_side_to_move};
+
+        // Clear en passant square if present
+        let old_ep = self.ep_square;
+        if old_ep.is_some() {
+            self.hash = hash_en_passant(self.hash, old_ep, None);
+            self.ep_square = None;
+        }
+
+        // Toggle side to move
+        self.side_to_move = self.side_to_move.opponent();
+        self.hash = hash_side_to_move(self.hash);
+
+        // Increment halfmove clock (null move doesn't reset it)
+        self.halfmove_clock += 1;
+    }
+
     /// Check if a move is legal (doesn't leave the king in check).
     ///
     /// This assumes the move is pseudo-legal (follows piece movement rules).
