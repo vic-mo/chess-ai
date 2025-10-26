@@ -3,6 +3,7 @@
 use crate::board::Board;
 use crate::eval::Evaluator;
 use crate::r#move::Move;
+use crate::tt::{Bound, TranspositionTable};
 
 /// Maximum search depth.
 pub const MAX_DEPTH: u32 = 64;
@@ -25,14 +26,21 @@ pub struct SearchResult {
 /// Main search engine.
 pub struct Searcher {
     evaluator: Evaluator,
+    tt: TranspositionTable,
     nodes: u64,
 }
 
 impl Searcher {
-    /// Create a new searcher.
+    /// Create a new searcher with default TT size (64 MB).
     pub fn new() -> Self {
+        Self::with_tt_size(64)
+    }
+
+    /// Create a new searcher with custom TT size in MB.
+    pub fn with_tt_size(size_mb: usize) -> Self {
         Self {
             evaluator: Evaluator::new(),
+            tt: TranspositionTable::new(size_mb),
             nodes: 0,
         }
     }
@@ -47,6 +55,7 @@ impl Searcher {
     /// SearchResult containing best move, score, and statistics
     pub fn search(&mut self, board: &Board, depth: u32) -> SearchResult {
         self.nodes = 0;
+        self.tt.new_search(); // Increment generation
 
         let _score = self.negamax(board, depth as i32, -INFINITY, INFINITY, 0);
         let legal_moves = board.generate_legal_moves();
@@ -95,6 +104,26 @@ impl Searcher {
     /// The evaluation score from the current side's perspective
     fn negamax(&mut self, board: &Board, depth: i32, mut alpha: i32, beta: i32, ply: u32) -> i32 {
         self.nodes += 1;
+        let original_alpha = alpha;
+        let hash = board.hash();
+
+        // Probe transposition table
+        if let Some(tt_entry) = self.tt.probe(hash) {
+            if tt_entry.depth >= depth as u8 {
+                match tt_entry.bound {
+                    Bound::Exact => return tt_entry.score,
+                    Bound::Lower => alpha = alpha.max(tt_entry.score),
+                    Bound::Upper => {
+                        if tt_entry.score < beta {
+                            return tt_entry.score;
+                        }
+                    }
+                }
+                if alpha >= beta {
+                    return tt_entry.score;
+                }
+            }
+        }
 
         // Leaf node: return evaluation
         if depth <= 0 {
@@ -116,6 +145,7 @@ impl Searcher {
         }
 
         let mut best_score = -INFINITY;
+        let mut best_move = legal_moves[0];
 
         for m in legal_moves.iter() {
             let mut new_board = board.clone();
@@ -123,7 +153,11 @@ impl Searcher {
 
             let score = -self.negamax(&new_board, depth - 1, -beta, -alpha, ply + 1);
 
-            best_score = best_score.max(score);
+            if score > best_score {
+                best_score = score;
+                best_move = *m;
+            }
+
             alpha = alpha.max(score);
 
             // Beta cutoff (opponent has a better option earlier)
@@ -131,6 +165,18 @@ impl Searcher {
                 break;
             }
         }
+
+        // Store in transposition table
+        let bound = if best_score >= beta {
+            Bound::Lower // Beta cutoff
+        } else if best_score > original_alpha {
+            Bound::Exact // PV node
+        } else {
+            Bound::Upper // All-node (fail-low)
+        };
+
+        self.tt
+            .store(hash, best_move, best_score, depth as u8, bound);
 
         best_score
     }
