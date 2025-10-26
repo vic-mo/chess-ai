@@ -8,6 +8,7 @@ import {
   getPerformanceReport,
   resetPerformanceMetrics,
 } from './engine/engineClient';
+import { getCompatibilityInfo, formatCompatibilityReport } from './utils/browserDetect';
 import './styles.css';
 
 type EngineMode = 'fake' | 'remote' | 'wasm';
@@ -22,9 +23,12 @@ export default function App() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showPerformance, setShowPerformance] = useState(false);
   const [performanceReport, setPerformanceReport] = useState<string>('');
+  const [showCompatibility, setShowCompatibility] = useState(false);
   const idRef = useRef<string>('');
   const stopHandlerRef = useRef<(() => void) | null>(null);
   const perfIntervalRef = useRef<number | null>(null);
+
+  const compatInfo = getCompatibilityInfo();
 
   function log(line: string) {
     setLogs((prev) => [line, ...prev].slice(0, 200));
@@ -121,6 +125,49 @@ export default function App() {
   return (
     <div className="container">
       <h1>♟️ Chess AI - WASM Engine</h1>
+
+      {/* Browser Compatibility Banner */}
+      {(compatInfo.errors.length > 0 || compatInfo.warnings.length > 0) && (
+        <div
+          className="card"
+          style={{
+            backgroundColor: compatInfo.errors.length > 0 ? '#fee' : '#ffc',
+            borderColor: compatInfo.errors.length > 0 ? '#c00' : '#880',
+          }}
+        >
+          <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ margin: 0 }}>
+              {compatInfo.errors.length > 0 ? '⚠️ Compatibility Issues' : '⚠️ Browser Warnings'}
+            </h3>
+            <button className="btn" onClick={() => setShowCompatibility(!showCompatibility)}>
+              {showCompatibility ? 'Hide' : 'Show'} Details
+            </button>
+          </div>
+          {compatInfo.errors.length > 0 && (
+            <div style={{ marginTop: '0.5rem' }}>
+              {compatInfo.errors.map((err, i) => (
+                <div key={i} style={{ color: '#c00' }}>
+                  ✗ {err}
+                </div>
+              ))}
+            </div>
+          )}
+          {compatInfo.warnings.length > 0 && (
+            <div style={{ marginTop: '0.5rem' }}>
+              {compatInfo.warnings.map((warn, i) => (
+                <div key={i} style={{ color: '#880' }}>
+                  ⚠ {warn}
+                </div>
+              ))}
+            </div>
+          )}
+          {showCompatibility && (
+            <pre className="mono" style={{ marginTop: '1rem', fontSize: '0.85rem' }}>
+              {formatCompatibilityReport(compatInfo)}
+            </pre>
+          )}
+        </div>
+      )}
 
       <div className="card">
         <h3>Engine Configuration</h3>
