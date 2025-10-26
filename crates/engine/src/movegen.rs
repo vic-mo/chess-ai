@@ -48,9 +48,7 @@ pub fn generate_moves(board: &Board) -> MoveList {
 // PAWN MOVES
 // =============================================================================
 
-/// Generate pawn moves (pushes and captures).
-///
-/// Note: Promotions, en passant, and double pushes will be completed in Session 9-10.
+/// Generate pawn moves (pushes, captures, promotions, en passant).
 fn generate_pawn_moves(
     board: &Board,
     moves: &mut MoveList,
@@ -71,16 +69,18 @@ fn generate_pawn_moves(
         if (0..64).contains(&to_idx) {
             let to_sq = Square::new(to_idx as u8);
 
-            // Check for promotion rank (will be fully implemented in Session 9-10)
+            // Check for promotion rank
             let is_promotion_rank = (us == Color::White && to_sq.rank() == 7)
                 || (us == Color::Black && to_sq.rank() == 0);
 
             // Single push
             if empty.contains(to_sq) {
                 if is_promotion_rank {
-                    // TODO: Generate all 4 promotion moves (Q, R, B, N)
-                    // For now, just generate queen promotion as placeholder
+                    // Generate all 4 promotion types
                     moves.push(Move::new(from_sq, to_sq, MoveFlags::QUEEN_PROMOTION));
+                    moves.push(Move::new(from_sq, to_sq, MoveFlags::ROOK_PROMOTION));
+                    moves.push(Move::new(from_sq, to_sq, MoveFlags::BISHOP_PROMOTION));
+                    moves.push(Move::new(from_sq, to_sq, MoveFlags::KNIGHT_PROMOTION));
                 } else {
                     moves.push(Move::new(from_sq, to_sq, MoveFlags::QUIET));
                 }
@@ -114,18 +114,35 @@ fn generate_pawn_moves(
                 || (us == Color::Black && to_sq.rank() == 0);
 
             if is_promotion_rank {
-                // TODO: Generate all 4 promotion captures (Q, R, B, N)
+                // Generate all 4 promotion capture types
                 moves.push(Move::new(
                     from_sq,
                     to_sq,
                     MoveFlags::QUEEN_PROMOTION_CAPTURE,
+                ));
+                moves.push(Move::new(from_sq, to_sq, MoveFlags::ROOK_PROMOTION_CAPTURE));
+                moves.push(Move::new(
+                    from_sq,
+                    to_sq,
+                    MoveFlags::BISHOP_PROMOTION_CAPTURE,
+                ));
+                moves.push(Move::new(
+                    from_sq,
+                    to_sq,
+                    MoveFlags::KNIGHT_PROMOTION_CAPTURE,
                 ));
             } else {
                 moves.push(Move::new(from_sq, to_sq, MoveFlags::CAPTURE));
             }
         }
 
-        // TODO: En passant captures (Session 9-10)
+        // En passant captures
+        if let Some(ep_square) = board.ep_square() {
+            let attacks = pawn_attacks(from_sq, us);
+            if attacks.contains(ep_square) {
+                moves.push(Move::new(from_sq, ep_square, MoveFlags::EP_CAPTURE));
+            }
+        }
     }
 }
 
@@ -257,9 +274,7 @@ fn generate_queen_moves(
 // KING MOVES
 // =============================================================================
 
-/// Generate king moves (non-castling).
-///
-/// Note: Castling will be added in Session 9-10.
+/// Generate king moves (including castling).
 fn generate_king_moves(
     board: &Board,
     moves: &mut MoveList,
@@ -283,9 +298,78 @@ fn generate_king_moves(
         for to_sq in capture_targets {
             moves.push(Move::new(from_sq, to_sq, MoveFlags::CAPTURE));
         }
+
+        // Castling
+        generate_castling_moves(board, moves, us, from_sq, occupied);
+    }
+}
+
+/// Generate castling moves for the given king position.
+///
+/// This checks if castling is pseudo-legal (has rights, squares are empty).
+/// Legality checking (not in check, not moving through check) is done in Session 13.
+fn generate_castling_moves(
+    board: &Board,
+    moves: &mut MoveList,
+    us: Color,
+    king_sq: Square,
+    occupied: Bitboard,
+) {
+    let castling = board.castling();
+
+    // Kingside castling
+    if (us == Color::White && castling.white_kingside())
+        || (us == Color::Black && castling.black_kingside())
+    {
+        // Check if squares between king and rook are empty
+        let squares_to_check = if us == Color::White {
+            // f1, g1
+            vec![Square::F1, Square::G1]
+        } else {
+            // f8, g8
+            vec![Square::from_coords(5, 7), Square::from_coords(6, 7)]
+        };
+
+        let all_empty = squares_to_check.iter().all(|&sq| !occupied.contains(sq));
+
+        if all_empty {
+            let to_sq = if us == Color::White {
+                Square::G1
+            } else {
+                Square::from_coords(6, 7)
+            };
+            moves.push(Move::new(king_sq, to_sq, MoveFlags::KING_CASTLE));
+        }
     }
 
-    // TODO: Castling (Session 9-10)
+    // Queenside castling
+    if (us == Color::White && castling.white_queenside())
+        || (us == Color::Black && castling.black_queenside())
+    {
+        // Check if squares between king and rook are empty
+        let squares_to_check = if us == Color::White {
+            // b1, c1, d1
+            vec![Square::B1, Square::C1, Square::D1]
+        } else {
+            // b8, c8, d8
+            vec![
+                Square::from_coords(1, 7),
+                Square::from_coords(2, 7),
+                Square::from_coords(3, 7),
+            ]
+        };
+
+        let all_empty = squares_to_check.iter().all(|&sq| !occupied.contains(sq));
+
+        if all_empty {
+            let to_sq = if us == Color::White {
+                Square::C1
+            } else {
+                Square::from_coords(2, 7)
+            };
+            moves.push(Move::new(king_sq, to_sq, MoveFlags::QUEEN_CASTLE));
+        }
+    }
 }
 
 // =============================================================================
@@ -532,5 +616,147 @@ mod tests {
 
         // None should be captures
         assert_eq!(moves.iter().filter(|m| m.is_capture()).count(), 0);
+    }
+
+    #[test]
+    fn test_en_passant_generation() {
+        let mut board = Board::empty();
+        board.set_piece(Square::E5, Piece::new(PieceType::Pawn, Color::White));
+        board.set_piece(Square::D5, Piece::new(PieceType::Pawn, Color::Black));
+        board.set_side_to_move(Color::White);
+        board.set_ep_square(Some(Square::D6));
+
+        let moves = generate_moves(&board);
+
+        // Should have regular pawn push + en passant capture
+        let ep_moves = moves.iter().filter(|m| m.is_en_passant()).count();
+        assert_eq!(ep_moves, 1);
+
+        let ep_move = moves.iter().find(|m| m.is_en_passant()).unwrap();
+        assert_eq!(ep_move.from(), Square::E5);
+        assert_eq!(ep_move.to(), Square::D6);
+    }
+
+    #[test]
+    fn test_all_promotion_types() {
+        let mut board = Board::empty();
+        board.set_piece(Square::E7, Piece::new(PieceType::Pawn, Color::White));
+        board.set_side_to_move(Color::White);
+
+        let moves = generate_moves(&board);
+
+        // Should generate 4 promotion moves (Q, R, B, N)
+        assert_eq!(moves.len(), 4);
+        assert!(moves.iter().all(|m| m.is_promotion()));
+
+        // Check all 4 promotion types are present
+        assert!(moves
+            .iter()
+            .any(|m| m.promotion_piece() == Some(PieceType::Queen)));
+        assert!(moves
+            .iter()
+            .any(|m| m.promotion_piece() == Some(PieceType::Rook)));
+        assert!(moves
+            .iter()
+            .any(|m| m.promotion_piece() == Some(PieceType::Bishop)));
+        assert!(moves
+            .iter()
+            .any(|m| m.promotion_piece() == Some(PieceType::Knight)));
+    }
+
+    #[test]
+    fn test_promotion_captures() {
+        let mut board = Board::empty();
+        board.set_piece(Square::E7, Piece::new(PieceType::Pawn, Color::White));
+        board.set_piece(Square::D8, Piece::new(PieceType::Rook, Color::Black));
+        board.set_side_to_move(Color::White);
+
+        let moves = generate_moves(&board);
+
+        // Should generate 4 quiet promotions + 4 capture promotions = 8 total
+        assert_eq!(moves.len(), 8);
+
+        let promotion_captures = moves
+            .iter()
+            .filter(|m| m.is_promotion() && m.is_capture())
+            .count();
+        assert_eq!(promotion_captures, 4);
+    }
+
+    #[test]
+    fn test_castling_kingside_white() {
+        use crate::board::CastlingRights;
+
+        let mut board = Board::empty();
+        board.set_piece(Square::E1, Piece::new(PieceType::King, Color::White));
+        board.set_piece(Square::H1, Piece::new(PieceType::Rook, Color::White));
+        board.set_side_to_move(Color::White);
+        board.set_castling(CastlingRights::none().set_white_kingside());
+
+        let moves = generate_moves(&board);
+
+        // Should have king moves + castling
+        let castling_moves = moves.iter().filter(|m| m.is_castling()).count();
+        assert_eq!(castling_moves, 1);
+
+        let castle_move = moves.iter().find(|m| m.is_castling()).unwrap();
+        assert_eq!(castle_move.from(), Square::E1);
+        assert_eq!(castle_move.to(), Square::G1);
+        assert!(castle_move.is_kingside_castle());
+    }
+
+    #[test]
+    fn test_castling_queenside_white() {
+        use crate::board::CastlingRights;
+
+        let mut board = Board::empty();
+        board.set_piece(Square::E1, Piece::new(PieceType::King, Color::White));
+        board.set_piece(Square::A1, Piece::new(PieceType::Rook, Color::White));
+        board.set_side_to_move(Color::White);
+        board.set_castling(CastlingRights::none().set_white_queenside());
+
+        let moves = generate_moves(&board);
+
+        // Should have king moves + castling
+        let castling_moves = moves.iter().filter(|m| m.is_castling()).count();
+        assert_eq!(castling_moves, 1);
+
+        let castle_move = moves.iter().find(|m| m.is_castling()).unwrap();
+        assert_eq!(castle_move.from(), Square::E1);
+        assert_eq!(castle_move.to(), Square::C1);
+        assert!(castle_move.is_queenside_castle());
+    }
+
+    #[test]
+    fn test_castling_blocked() {
+        use crate::board::CastlingRights;
+
+        let mut board = Board::empty();
+        board.set_piece(Square::E1, Piece::new(PieceType::King, Color::White));
+        board.set_piece(Square::H1, Piece::new(PieceType::Rook, Color::White));
+        board.set_piece(Square::F1, Piece::new(PieceType::Bishop, Color::White)); // Blocker
+        board.set_side_to_move(Color::White);
+        board.set_castling(CastlingRights::none().set_white_kingside());
+
+        let moves = generate_moves(&board);
+
+        // Should not generate castling move due to blocker
+        let castling_moves = moves.iter().filter(|m| m.is_castling()).count();
+        assert_eq!(castling_moves, 0);
+    }
+
+    #[test]
+    fn test_castling_no_rights() {
+        let mut board = Board::empty();
+        board.set_piece(Square::E1, Piece::new(PieceType::King, Color::White));
+        board.set_piece(Square::H1, Piece::new(PieceType::Rook, Color::White));
+        board.set_side_to_move(Color::White);
+        // No castling rights set
+
+        let moves = generate_moves(&board);
+
+        // Should not generate castling move without rights
+        let castling_moves = moves.iter().filter(|m| m.is_castling()).count();
+        assert_eq!(castling_moves, 0);
     }
 }

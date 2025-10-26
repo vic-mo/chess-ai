@@ -89,6 +89,18 @@ impl MoveFlags {
         matches!(self.0, 2 | 3)
     }
 
+    /// Returns true if this is kingside castling.
+    #[inline(always)]
+    pub fn is_kingside_castle(self) -> bool {
+        self.0 == 2
+    }
+
+    /// Returns true if this is queenside castling.
+    #[inline(always)]
+    pub fn is_queenside_castle(self) -> bool {
+        self.0 == 3
+    }
+
     /// Returns true if this is en passant capture.
     #[inline(always)]
     pub fn is_en_passant(self) -> bool {
@@ -176,6 +188,18 @@ impl Move {
     #[inline(always)]
     pub fn is_castling(self) -> bool {
         self.flags().is_castling()
+    }
+
+    /// Returns true if this is kingside castling.
+    #[inline(always)]
+    pub fn is_kingside_castle(self) -> bool {
+        self.flags().is_kingside_castle()
+    }
+
+    /// Returns true if this is queenside castling.
+    #[inline(always)]
+    pub fn is_queenside_castle(self) -> bool {
+        self.flags().is_queenside_castle()
     }
 
     /// Returns true if this is an en passant capture.
