@@ -21,6 +21,7 @@ pub struct SearchResult {
     pub score: i32,
     pub depth: u32,
     pub nodes: u64,
+    pub pv: Vec<Move>,
 }
 
 /// Main search engine.
@@ -45,50 +46,125 @@ impl Searcher {
         }
     }
 
-    /// Search for the best move at a given depth.
+    /// Iterative deepening search.
+    ///
+    /// Searches from depth 1 to max_depth, using results from shallower
+    /// searches to improve move ordering at deeper depths.
     ///
     /// # Arguments
     /// * `board` - The position to search
-    /// * `depth` - The search depth in plies
+    /// * `max_depth` - Maximum search depth in plies
     ///
     /// # Returns
-    /// SearchResult containing best move, score, and statistics
-    pub fn search(&mut self, board: &Board, depth: u32) -> SearchResult {
+    /// SearchResult containing best move, score, PV, and statistics
+    pub fn search(&mut self, board: &Board, max_depth: u32) -> SearchResult {
         self.nodes = 0;
-        self.tt.new_search(); // Increment generation
+        self.tt.new_search();
 
-        let _score = self.negamax(board, depth as i32, -INFINITY, INFINITY, 0);
+        let mut best_move = Move::new(
+            crate::square::Square::A1,
+            crate::square::Square::A1,
+            crate::r#move::MoveFlags::QUIET,
+        );
+        let mut best_score = 0;
+
+        // Iterative deepening: search 1, 2, 3, ..., max_depth
+        for depth in 1..=max_depth {
+            let score = self.search_root(board, depth);
+
+            // Extract PV from TT
+            let pv = self.extract_pv(board, depth);
+
+            if let Some(&first_move) = pv.first() {
+                best_move = first_move;
+                best_score = score;
+            }
+
+            // Could print UCI info here in the future
+            // println!("info depth {} score cp {} nodes {} pv ...", depth, score, self.nodes);
+        }
+
+        let pv = self.extract_pv(board, max_depth);
+
+        SearchResult {
+            best_move,
+            score: best_score,
+            depth: max_depth,
+            nodes: self.nodes,
+            pv,
+        }
+    }
+
+    /// Search at the root (find best move at current depth).
+    fn search_root(&mut self, board: &Board, depth: u32) -> i32 {
         let legal_moves = board.generate_legal_moves();
 
-        // Find the best move by searching each root move
-        let mut best_move = if legal_moves.is_empty() {
-            Move::new(
-                crate::square::Square::A1,
-                crate::square::Square::A1,
-                crate::r#move::MoveFlags::QUIET,
-            )
-        } else {
-            legal_moves[0]
-        };
+        if legal_moves.is_empty() {
+            return if board.is_in_check() { -MATE_SCORE } else { 0 };
+        }
+
         let mut best_score = -INFINITY;
+        let mut best_move = legal_moves[0];
+        let mut alpha = -INFINITY;
+        let beta = INFINITY;
 
         for m in legal_moves.iter() {
             let mut new_board = board.clone();
             new_board.make_move(*m);
-            let score = -self.negamax(&new_board, depth as i32 - 1, -INFINITY, INFINITY, 1);
+
+            let score = -self.negamax(&new_board, depth as i32 - 1, -beta, -alpha, 1);
 
             if score > best_score {
                 best_score = score;
                 best_move = *m;
             }
+
+            alpha = alpha.max(score);
         }
 
-        SearchResult {
+        // Store best move in TT
+        self.tt.store(
+            board.hash(),
             best_move,
-            score: best_score,
-            depth,
-            nodes: self.nodes,
+            best_score,
+            depth as u8,
+            Bound::Exact,
+        );
+
+        best_score
+    }
+
+    /// Extract principal variation from transposition table.
+    fn extract_pv(&self, board: &Board, max_depth: u32) -> Vec<Move> {
+        let mut pv = Vec::new();
+        let mut current_board = board.clone();
+        let mut seen_positions = std::collections::HashSet::new();
+
+        for _ in 0..max_depth {
+            let hash = current_board.hash();
+
+            // Avoid cycles
+            if !seen_positions.insert(hash) {
+                break;
+            }
+
+            // Probe TT for best move
+            if let Some(entry) = self.tt.probe(hash) {
+                let m = entry.best_move;
+
+                // Verify move is legal
+                if !current_board.is_legal(m) {
+                    break;
+                }
+
+                pv.push(m);
+                current_board.make_move(m);
+            } else {
+                break;
+            }
         }
+
+        pv
     }
 
     /// Negamax search with alpha-beta pruning.
@@ -198,11 +274,12 @@ mod tests {
         let board = Board::startpos();
         let mut searcher = Searcher::new();
 
-        let result = searcher.search(&board, 1);
+        let result = searcher.search(&board, 3);
 
         // Should find a legal move
         assert!(board.is_legal(result.best_move));
         assert!(result.nodes > 0);
+        assert_eq!(result.depth, 3);
     }
 
     #[test]
@@ -221,15 +298,35 @@ mod tests {
     }
 
     #[test]
-    fn test_search_finds_better_at_depth_2() {
+    fn test_iterative_deepening() {
         let board = Board::startpos();
         let mut searcher = Searcher::new();
 
-        let result1 = searcher.search(&board, 1);
-        let result2 = searcher.search(&board, 2);
+        let result = searcher.search(&board, 3);
 
-        // Deeper search should search more nodes
-        assert!(result2.nodes > result1.nodes);
+        // Should return depth 3 result
+        assert_eq!(result.depth, 3);
+        // Should have searched multiple depths (1, 2, 3)
+        assert!(result.nodes > 400); // More than just depth 3
+    }
+
+    #[test]
+    fn test_pv_extraction() {
+        let board = Board::startpos();
+        let mut searcher = Searcher::new();
+
+        let result = searcher.search(&board, 3);
+
+        // Should extract a PV
+        assert!(!result.pv.is_empty());
+        assert!(result.pv.len() <= 3);
+
+        // All moves in PV should be legal
+        let mut test_board = board.clone();
+        for m in &result.pv {
+            assert!(test_board.is_legal(*m));
+            test_board.make_move(*m);
+        }
     }
 
     #[test]
