@@ -1,27 +1,57 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnalyzeRequest, SearchInfo, BestMove } from '@chess-ai/protocol';
-import { useEngine, getEngineMode } from './engine/engineClient';
+import { useEngine, getEngineMode, setEngineMode, preloadWasm } from './engine/engineClient';
 import './styles.css';
+
+type EngineMode = 'fake' | 'remote' | 'wasm';
 
 export default function App() {
   const engine = useEngine();
   const [fen, setFen] = useState('startpos');
   const [depth, setDepth] = useState(8);
   const [logs, setLogs] = useState<string[]>([]);
+  const [mode, setMode] = useState<EngineMode>(getEngineMode());
+  const [wasmStatus, setWasmStatus] = useState<string>('uninitialized');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const idRef = useRef<string>('');
+  const stopHandlerRef = useRef<(() => void) | null>(null);
 
   function log(line: string) {
     setLogs((prev) => [line, ...prev].slice(0, 200));
   }
 
+  const onModeChange = (newMode: EngineMode) => {
+    setEngineMode(newMode);
+    setMode(newMode);
+    log(`Switched to ${newMode} mode`);
+
+    // Preload WASM if switching to WASM mode
+    if (newMode === 'wasm') {
+      setWasmStatus('initializing');
+      preloadWasm()
+        .then(() => {
+          setWasmStatus('ready');
+          log('WASM engine ready');
+        })
+        .catch((error) => {
+          setWasmStatus('error');
+          log(`WASM initialization failed: ${error.message}`);
+        });
+    }
+  };
+
   const onAnalyze = async () => {
+    setIsAnalyzing(true);
     idRef.current = crypto.randomUUID();
+    log(`Starting analysis (${mode} mode, depth ${depth})...`);
+
     const req: AnalyzeRequest = {
       id: idRef.current,
       fen,
       limit: { kind: 'depth', depth },
     };
-    engine.analyze(req, (evt) => {
+
+    const stopHandler = engine.analyze(req, (evt) => {
       if (evt.type === 'searchInfo') {
         const i: SearchInfo = evt.payload;
         log(
@@ -30,13 +60,27 @@ export default function App() {
       } else if (evt.type === 'bestMove') {
         const bm: BestMove = evt.payload;
         log(`bestmove ${bm.best}${bm.ponder ? ' ponder ' + bm.ponder : ''}`);
+        setIsAnalyzing(false);
+        stopHandlerRef.current = null;
       } else if (evt.type === 'error') {
         log(`error: ${evt.payload.message}`);
+        setIsAnalyzing(false);
+        stopHandlerRef.current = null;
       }
     });
+
+    stopHandlerRef.current = stopHandler;
   };
 
-  const onStop = () => engine.stop(idRef.current);
+  const onStop = () => {
+    if (stopHandlerRef.current) {
+      stopHandlerRef.current();
+      stopHandlerRef.current = null;
+    }
+    engine.stop(idRef.current);
+    setIsAnalyzing(false);
+    log('Analysis stopped');
+  };
 
   useEffect(() => {
     log(`Engine mode: ${getEngineMode()}`);
@@ -44,8 +88,29 @@ export default function App() {
 
   return (
     <div className="container">
-      <h1>♟️ Chess AI Scaffold</h1>
+      <h1>♟️ Chess AI - WASM Engine</h1>
+
       <div className="card">
+        <h3>Engine Configuration</h3>
+        <div className="row">
+          <label>
+            Engine Mode:&nbsp;
+            <select value={mode} onChange={(e) => onModeChange(e.target.value as EngineMode)}>
+              <option value="fake">Fake (Demo)</option>
+              <option value="wasm">WASM (Local)</option>
+              <option value="remote">Remote (Server)</option>
+            </select>
+          </label>
+          {mode === 'wasm' && (
+            <span className="small" style={{ marginLeft: '1rem' }}>
+              Status: <strong>{wasmStatus}</strong>
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="card" style={{ marginTop: '1rem' }}>
+        <h3>Analysis</h3>
         <div className="row">
           <label>
             FEN:&nbsp;
@@ -54,6 +119,7 @@ export default function App() {
               value={fen}
               onChange={(e) => setFen(e.target.value)}
               style={{ width: '36rem' }}
+              disabled={isAnalyzing}
             />
           </label>
           <label>
@@ -64,23 +130,28 @@ export default function App() {
               max={99}
               value={depth}
               onChange={(e) => setDepth(parseInt(e.target.value || '8', 10))}
+              disabled={isAnalyzing}
             />
           </label>
-          <button className="btn" onClick={onAnalyze}>
-            Analyze
+          <button
+            className="btn"
+            onClick={onAnalyze}
+            disabled={isAnalyzing || (mode === 'wasm' && wasmStatus !== 'ready')}
+          >
+            {isAnalyzing ? 'Analyzing...' : 'Analyze'}
           </button>
-          <button className="btn" onClick={onStop}>
+          <button className="btn" onClick={onStop} disabled={!isAnalyzing}>
             Stop
           </button>
         </div>
-        <p className="small">
-          This demo uses a fake engine stream by default. Wire the WASM/remote client when ready.
-        </p>
       </div>
 
       <div className="card" style={{ marginTop: '1rem' }}>
         <h3>Search Log</h3>
-        <pre className="mono" style={{ whiteSpace: 'pre-wrap' }}>
+        <pre
+          className="mono"
+          style={{ whiteSpace: 'pre-wrap', maxHeight: '400px', overflow: 'auto' }}
+        >
           {logs.join('\n')}
         </pre>
       </div>

@@ -185,6 +185,43 @@ export function getEngineMode(): EngineMode {
   return (globalThis as EngineGlobals).__ENGINE_MODE__ ?? 'fake';
 }
 
+export function setEngineMode(mode: EngineMode): void {
+  (globalThis as EngineGlobals).__ENGINE_MODE__ = mode;
+
+  // Reset WASM worker when switching modes
+  if (mode !== 'wasm' && wasmWorker) {
+    wasmWorker.terminate();
+    wasmWorker = null;
+    wasmInitialized = false;
+    wasmEventHandlers.clear();
+  }
+
+  // Reset remote WebSocket when switching modes
+  if (mode !== 'remote' && remoteWs) {
+    remoteWs.close();
+    remoteWs = null;
+  }
+}
+
+/**
+ * Get WASM engine status
+ */
+export function getWasmStatus(): 'uninitialized' | 'initializing' | 'ready' | 'error' {
+  if (wasmWorker === null) return 'uninitialized';
+  if (wasmInitialized) return 'ready';
+  return 'initializing';
+}
+
+/**
+ * Preload WASM engine (optional, for better UX)
+ */
+export function preloadWasm(): Promise<void> {
+  if (getEngineMode() !== 'wasm') {
+    return Promise.reject(new Error('Engine mode must be "wasm" to preload'));
+  }
+  return initWasmWorker();
+}
+
 export function useEngine() {
   const mode = getEngineMode();
   return {
@@ -195,7 +232,10 @@ export function useEngine() {
     },
     stop(id: string) {
       if (mode === 'remote') stopRemote(id);
-      // fake/wasm: no-op for scaffold
+      if (mode === 'wasm') {
+        wasmWorker?.postMessage({ type: 'stop', id });
+      }
+      // fake mode: no-op
     },
   };
 }
