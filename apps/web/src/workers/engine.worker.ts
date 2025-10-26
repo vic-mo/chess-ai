@@ -33,30 +33,28 @@ async function initWasm(wasmPath?: string): Promise<void> {
   }
 
   try {
-    // Import WASM module from public directory using importScripts
+    console.log('[Worker] Starting WASM initialization...');
+
+    // Load WASM module as ES module using dynamic import with base URL
     const basePath = wasmPath || '/wasm/engine_bridge_wasm.js';
+    const baseUrl = self.location.origin;
+    const fullUrl = new URL(basePath, baseUrl).href;
 
-    // Use importScripts to load the WASM glue code
-    // This is the proper way to load external scripts in Web Workers
-    importScripts(basePath);
+    console.log('[Worker] Loading WASM from:', fullUrl);
 
-    // The WASM module is now available in global scope
-    // TypeScript doesn't know about the dynamically loaded module, so we use any
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const initWasm = (self as any).default;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const WasmEngine = (self as any).WasmEngine;
+    // Dynamic import of the ES module
+    const wasmModule = await import(/* @vite-ignore */ fullUrl);
 
-    if (!initWasm || !WasmEngine) {
-      throw new Error('WASM module did not export expected functions');
-    }
+    console.log('[Worker] WASM module loaded, initializing...');
 
-    // Initialize the WASM module
-    // Pass the WASM file path explicitly
-    await initWasm('/wasm/engine_bridge_wasm_bg.wasm');
+    // Initialize with explicit WASM binary path
+    const wasmBinaryPath = new URL('/wasm/engine_bridge_wasm_bg.wasm', baseUrl).href;
+    await wasmModule.default(wasmBinaryPath);
 
-    // Create engine instance with default options
-    wasmEngine = new WasmEngine({
+    console.log('[Worker] WASM initialized, creating engine instance...');
+
+    // Create engine instance
+    wasmEngine = new wasmModule.WasmEngine({
       hashSizeMB: 128,
       threads: 1,
       contempt: 0,
@@ -67,11 +65,14 @@ async function initWasm(wasmPath?: string): Promise<void> {
 
     wasmInitialized = true;
 
+    console.log('[Worker] Engine instance created successfully');
+
     // Send success message back to main thread
     self.postMessage({ type: 'initialized' });
   } catch (error) {
     // Send error message back to main thread
     const message = error instanceof Error ? error.message : String(error);
+    console.error('[Worker] WASM initialization failed:', error);
     self.postMessage({
       type: 'error',
       payload: { id: 'init', message: `Failed to initialize WASM: ${message}` },
