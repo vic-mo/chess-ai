@@ -832,10 +832,20 @@ impl Board {
             return self.is_castling_legal(m);
         }
 
-        // For non-castling moves, make the move and check if king is in check
+        // For non-castling moves, make the move and check if our king is still safe
+        let us = self.side_to_move;
         let mut board = self.clone();
         board.make_move(m);
-        !board.is_in_check()
+
+        // After making the move, side_to_move has switched to opponent.
+        // We need to check if our king (the side that just moved) is attacked.
+        let our_king = board.piece_bb(PieceType::King, us);
+        if our_king.is_empty() {
+            return false; // No king (shouldn't happen in valid position)
+        }
+
+        let king_square = our_king.into_iter().next().unwrap();
+        !board.is_square_attacked(king_square, us.opponent())
     }
 
     /// Check if a castling move is legal.
@@ -1439,19 +1449,19 @@ mod tests {
     fn test_is_legal_blocks_check() {
         use crate::io::parse_fen;
 
-        // Position where white is in check and must block or move king
-        let fen = "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3";
+        // Black in check from rook on e1 (along e-file to e8)
+        let fen = "4k3/8/8/8/8/8/8/4R2K b - - 0 1";
         let board = parse_fen(fen).unwrap();
-        assert!(board.is_in_check());
 
-        // Moving king is legal
-        let king_move = Move::new(Square::E1, Square::from_coords(5, 0), MoveFlags::QUIET); // Kf1
+        assert!(board.is_in_check()); // Black king on e8 in check from rook on e1
+
+        // King can move to escape
+        let king_move = Move::new(
+            Square::from_coords(4, 7), // e8
+            Square::from_coords(3, 7), // d8
+            MoveFlags::QUIET,
+        );
         assert!(board.is_legal(king_move));
-
-        // Blocking with g3-g4 would be illegal (pawn can't move that way)
-        // Let's test a legal block instead - Nf3
-        let block_move = Move::new(Square::G1, Square::F3, MoveFlags::QUIET);
-        assert!(board.is_legal(block_move));
     }
 
     #[test]
@@ -1521,13 +1531,14 @@ mod tests {
     fn test_generate_legal_moves_in_check() {
         use crate::io::parse_fen;
 
-        // White king in check, must respond
-        let fen = "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3";
+        // Black king in check from rook
+        let fen = "4k3/8/8/8/8/8/8/4R2K b - - 0 1";
         let board = parse_fen(fen).unwrap();
 
+        assert!(board.is_in_check());
         let legal_moves = board.generate_legal_moves();
 
-        // Should have some legal moves (king moves, blocks)
+        // Should have some legal moves (king moves to escape)
         assert!(!legal_moves.is_empty());
 
         // All legal moves should actually be legal
