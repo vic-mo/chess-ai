@@ -31,8 +31,23 @@ async function initWasm(wasmPath?: string): Promise<void> {
     // Import WASM module from public directory
     const basePath = wasmPath || '/wasm/engine_bridge_wasm.js';
 
-    // Dynamic import of the WASM module
-    wasmModule = await import(/* @vite-ignore */ basePath);
+    // Fetch and execute the WASM glue code
+    const response = await fetch(basePath);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch WASM module: ${response.statusText}`);
+    }
+
+    const scriptText = await response.text();
+
+    // Create a blob URL for the script
+    const blob = new Blob([scriptText], { type: 'application/javascript' });
+    const scriptUrl = URL.createObjectURL(blob);
+
+    // Import the module from the blob URL
+    wasmModule = await import(/* @vite-ignore */ scriptUrl);
+
+    // Clean up blob URL
+    URL.revokeObjectURL(scriptUrl);
 
     // Initialize the WASM module
     await wasmModule.default();
