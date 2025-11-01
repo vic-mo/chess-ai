@@ -15,33 +15,82 @@ use crate::square::Square;
 
 /// Pawn evaluation penalties and bonuses (in centipawns).
 mod values {
+    use crate::tune;
+
     /// Doubled pawn penalty by file (central files worse)
-    pub const DOUBLED_PAWN: [i32; 8] = [-15, -12, -18, -20, -20, -18, -12, -15];
+    /// For now, we use a single value for all files during tuning
+    pub fn doubled_pawn_mg() -> i32 {
+        tune::get_param_or_default(|p| p.doubled_pawn_mg, -15)
+    }
+
+    pub fn doubled_pawn_eg() -> i32 {
+        tune::get_param_or_default(|p| p.doubled_pawn_eg, -15)
+    }
 
     /// Isolated pawn penalty [mg, eg]
-    pub const ISOLATED_PAWN: [i32; 2] = [-15, -20];
+    pub fn isolated_pawn_mg() -> i32 {
+        tune::get_param_or_default(|p| p.isolated_pawn_mg, -15)
+    }
+
+    pub fn isolated_pawn_eg() -> i32 {
+        tune::get_param_or_default(|p| p.isolated_pawn_eg, -20)
+    }
 
     /// Backward pawn penalty [mg, eg]
-    pub const BACKWARD_PAWN: [i32; 2] = [-10, -15];
+    pub fn backward_pawn_mg() -> i32 {
+        tune::get_param_or_default(|p| p.backward_pawn_mg, -10)
+    }
 
-    /// Passed pawn bonus by rank (from white's perspective) [mg, eg]
-    /// Indexed by rank: [1..=6] (no bonuses for 0 or 7)
-    pub const PASSED_PAWN_BONUS: [[i32; 2]; 8] = [
-        [0, 0],    // Rank 1 (impossible)
-        [0, 0],    // Rank 2
-        [10, 15],  // Rank 3
-        [15, 25],  // Rank 4
-        [30, 50],  // Rank 5
-        [50, 90],  // Rank 6
-        [80, 150], // Rank 7
-        [0, 0],    // Rank 8 (promotion)
-    ];
+    pub fn backward_pawn_eg() -> i32 {
+        tune::get_param_or_default(|p| p.backward_pawn_eg, -15)
+    }
+
+    /// Passed pawn bonus by rank [mg, eg]
+    pub fn passed_pawn_bonus_mg(rank: usize) -> i32 {
+        tune::get_param_or_default(
+            |p| p.passed_pawn_mg[rank],
+            match rank {
+                2 => 10,
+                3 => 15,
+                4 => 30,
+                5 => 50,
+                6 => 80,
+                _ => 0,
+            }
+        )
+    }
+
+    pub fn passed_pawn_bonus_eg(rank: usize) -> i32 {
+        tune::get_param_or_default(
+            |p| p.passed_pawn_eg[rank],
+            match rank {
+                2 => 15,
+                3 => 25,
+                4 => 50,
+                5 => 90,
+                6 => 150,
+                _ => 0,
+            }
+        )
+    }
 
     /// Protected pawn (pawn chain) bonus [mg, eg]
-    pub const PROTECTED_PAWN: [i32; 2] = [5, 10];
+    pub fn protected_pawn_mg() -> i32 {
+        tune::get_param_or_default(|p| p.protected_pawn_mg, 5)
+    }
+
+    pub fn protected_pawn_eg() -> i32 {
+        tune::get_param_or_default(|p| p.protected_pawn_eg, 10)
+    }
 
     /// Pawn island penalty (per island beyond 1) [mg, eg]
-    pub const PAWN_ISLAND: [i32; 2] = [-10, -15];
+    pub fn pawn_island_mg() -> i32 {
+        tune::get_param_or_default(|p| p.pawn_island_mg, -10)
+    }
+
+    pub fn pawn_island_eg() -> i32 {
+        tune::get_param_or_default(|p| p.pawn_island_eg, -15)
+    }
 }
 
 /// Entry in the pawn hash table.
@@ -150,21 +199,21 @@ fn evaluate_pawn_structure(board: &Board, color: Color) -> (i32, i32) {
 
         // 1. Doubled pawns
         if pawns_on_file > 1 {
-            mg_score += values::DOUBLED_PAWN[file as usize];
-            eg_score += values::DOUBLED_PAWN[file as usize];
+            mg_score += values::doubled_pawn_mg();
+            eg_score += values::doubled_pawn_eg();
         }
 
         // 2. Isolated pawns (no friendly pawns on adjacent files)
         let has_support = !(our_pawns & adjacent_files_mask).is_empty();
         if !has_support {
-            mg_score += values::ISOLATED_PAWN[0];
-            eg_score += values::ISOLATED_PAWN[1];
+            mg_score += values::isolated_pawn_mg();
+            eg_score += values::isolated_pawn_eg();
         }
 
         // 3. Backward pawns
         if !has_support && is_backward(sq, color, our_pawns, their_pawns) {
-            mg_score += values::BACKWARD_PAWN[0];
-            eg_score += values::BACKWARD_PAWN[1];
+            mg_score += values::backward_pawn_mg();
+            eg_score += values::backward_pawn_eg();
         }
 
         // 4. Passed pawns
@@ -174,14 +223,14 @@ fn evaluate_pawn_structure(board: &Board, color: Color) -> (i32, i32) {
             } else {
                 (7 - rank) as usize
             };
-            mg_score += values::PASSED_PAWN_BONUS[bonus_rank][0];
-            eg_score += values::PASSED_PAWN_BONUS[bonus_rank][1];
+            mg_score += values::passed_pawn_bonus_mg(bonus_rank);
+            eg_score += values::passed_pawn_bonus_eg(bonus_rank);
         }
 
         // 5. Protected pawns (pawn chains)
         if is_protected_by_pawn(sq, color, our_pawns) {
-            mg_score += values::PROTECTED_PAWN[0];
-            eg_score += values::PROTECTED_PAWN[1];
+            mg_score += values::protected_pawn_mg();
+            eg_score += values::protected_pawn_eg();
         }
     }
 
@@ -189,9 +238,13 @@ fn evaluate_pawn_structure(board: &Board, color: Color) -> (i32, i32) {
     let islands = count_pawn_islands(our_pawns);
     if islands > 1 {
         let penalty = (islands - 1) as i32;
-        mg_score += penalty * values::PAWN_ISLAND[0];
-        eg_score += penalty * values::PAWN_ISLAND[1];
+        mg_score += penalty * values::pawn_island_mg();
+        eg_score += penalty * values::pawn_island_eg();
     }
+
+    // NOTE: Phase 2 advanced pawn features (connected, candidates, majorities) DISABLED
+    // Testing showed they reduced performance from 50% to 45% vs SF1800
+    // Keeping implementation for future tuning but not using yet
 
     (mg_score, eg_score)
 }
@@ -547,4 +600,119 @@ mod tests {
             white_eg
         );
     }
+}
+
+/// PHASE 2: Evaluate connected passed pawns (adjacent passed pawns are much stronger).
+fn evaluate_connected_passed_pawns(our_pawns: Bitboard, enemy_pawns: Bitboard, color: Color) -> (i32, i32) {
+    let mut mg_bonus = 0;
+    let mut eg_bonus = 0;
+
+    // Find all passed pawns
+    let mut passed_pawns = Vec::new();
+    for sq in our_pawns {
+        if is_passed(sq, color, enemy_pawns) {
+            passed_pawns.push(sq);
+        }
+    }
+
+    // Check for connections (adjacent files)
+    for i in 0..passed_pawns.len() {
+        for j in (i + 1)..passed_pawns.len() {
+            let sq1 = passed_pawns[i];
+            let sq2 = passed_pawns[j];
+            let file_diff = (sq1.file() as i8 - sq2.file() as i8).abs();
+
+            if file_diff == 1 {
+                // Connected passed pawns!
+                let avg_rank = if color == Color::White {
+                    ((sq1.rank() + sq2.rank()) / 2) as i32
+                } else {
+                    ((14 - sq1.rank() - sq2.rank()) / 2) as i32
+                };
+
+                // Base bonus + rank bonus
+                mg_bonus += 15 + (avg_rank * 3);
+                eg_bonus += 25 + (avg_rank * 8);
+            }
+        }
+    }
+
+    (mg_bonus, eg_bonus)
+}
+
+/// PHASE 2: Evaluate candidate passed pawns (pawns that can become passed).
+fn evaluate_candidate_passers(our_pawns: Bitboard, enemy_pawns: Bitboard, color: Color) -> (i32, i32) {
+    let mut mg_bonus = 0;
+    let mut eg_bonus = 0;
+
+    for sq in our_pawns {
+        // Skip if already passed
+        if is_passed(sq, color, enemy_pawns) {
+            continue;
+        }
+
+        let file = sq.file();
+        let rank = sq.rank();
+
+        // Check if this is a candidate passer:
+        // 1. No enemy pawns directly in front on same file
+        // 2. Outnumber enemy pawns on adjacent files ahead
+        let file_mask = file_bitboard(file);
+        let adjacent_mask = adjacent_files_bitboard(file);
+
+        let front_mask = if color == Color::White {
+            passed_pawn_mask_white(file, rank)
+        } else {
+            passed_pawn_mask_black(file, rank)
+        };
+
+        // No enemy pawns directly ahead on same file
+        if !(enemy_pawns & file_mask & front_mask).is_empty() {
+            continue;
+        }
+
+        // Count our pawns and enemy pawns on adjacent files ahead
+        let our_support = (our_pawns & adjacent_mask & front_mask).count();
+        let enemy_blockers = (enemy_pawns & adjacent_mask & front_mask).count();
+
+        if our_support >= enemy_blockers {
+            // This is a candidate!
+            let relative_rank = if color == Color::White {
+                rank as i32
+            } else {
+                (7 - rank) as i32
+            };
+
+            mg_bonus += relative_rank * 2;
+            eg_bonus += relative_rank * 4;
+        }
+    }
+
+    (mg_bonus, eg_bonus)
+}
+
+/// PHASE 2: Evaluate pawn majorities (more pawns on one side).
+fn evaluate_pawn_majorities(our_pawns: Bitboard, enemy_pawns: Bitboard, _color: Color) -> (i32, i32) {
+    // Define queenside (files a-d) and kingside (files e-h)
+    const QUEENSIDE_MASK: u64 = 0x0F0F0F0F0F0F0F0F;  // Files a-d
+    const KINGSIDE_MASK: u64 = 0xF0F0F0F0F0F0F0F0;   // Files e-h
+
+    let our_qs = (our_pawns.0 & QUEENSIDE_MASK).count_ones() as i32;
+    let our_ks = (our_pawns.0 & KINGSIDE_MASK).count_ones() as i32;
+    let enemy_qs = (enemy_pawns.0 & QUEENSIDE_MASK).count_ones() as i32;
+    let enemy_ks = (enemy_pawns.0 & KINGSIDE_MASK).count_ones() as i32;
+
+    let mut eg_bonus = 0;
+
+    // Queenside majority (endgame only)
+    if our_qs > enemy_qs && our_qs >= 2 {
+        eg_bonus += (our_qs - enemy_qs) * 8;
+    }
+
+    // Kingside majority (endgame only)
+    if our_ks > enemy_ks && our_ks >= 2 {
+        eg_bonus += (our_ks - enemy_ks) * 8;
+    }
+
+    (0, eg_bonus)  // Only matters in endgame
 }

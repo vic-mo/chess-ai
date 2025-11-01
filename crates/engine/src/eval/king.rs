@@ -16,19 +16,20 @@ use crate::square::Square;
 mod values {
     /// Pawn shield bonus per pawn (by distance from king)
     /// Index 0 = immediately in front, 1 = one square ahead
+    /// REDUCED VALUES: King safety was dominating opening evaluation
     pub const PAWN_SHIELD_BONUS: [[i32; 2]; 2] = [
-        [30, 15], // [mg, eg] - immediately in front
-        [15, 5],  // [mg, eg] - one square ahead
+        [15, 10], // [mg, eg] - immediately in front (was 30, 15)
+        [8, 5],   // [mg, eg] - one square ahead (was 15, 5)
     ];
 
     /// Penalty for missing pawn shield
-    pub const MISSING_SHIELD_PENALTY: [i32; 2] = [-15, -5]; // [mg, eg]
+    pub const MISSING_SHIELD_PENALTY: [i32; 2] = [-10, -3]; // [mg, eg] (was -15, -5)
 
     /// Open file penalties near king [mg, eg]
-    pub const OPEN_FILE_ON_KING: [i32; 2] = [-40, -10];
-    pub const OPEN_FILE_ADJACENT: [i32; 2] = [-20, -5];
-    pub const SEMI_OPEN_FILE_ON_KING: [i32; 2] = [-20, -5];
-    pub const SEMI_OPEN_FILE_ADJACENT: [i32; 2] = [-10, 0];
+    pub const OPEN_FILE_ON_KING: [i32; 2] = [-25, -8];  // (was -40, -10)
+    pub const OPEN_FILE_ADJACENT: [i32; 2] = [-12, -4]; // (was -20, -5)
+    pub const SEMI_OPEN_FILE_ON_KING: [i32; 2] = [-12, -4]; // (was -20, -5)
+    pub const SEMI_OPEN_FILE_ADJACENT: [i32; 2] = [-6, 0]; // (was -10, 0)
 
     /// Attack weights by piece type
     pub const QUEEN_ATTACK_WEIGHT: i32 = 4;

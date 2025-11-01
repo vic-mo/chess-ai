@@ -46,6 +46,31 @@ impl PieceSquareTables {
 
         score
     }
+
+    /// Calculate the piece-square table bonus for a move.
+    ///
+    /// Returns the difference in PST value: PST[to_square] - PST[from_square].
+    /// Positive values mean the move improves piece placement.
+    ///
+    /// This is used in move ordering to give quiet moves a positional bonus.
+    pub fn move_bonus(&self, piece_type: PieceType, from: Square, to: Square, color: Color, is_eg: bool) -> i32 {
+        let from_sq = if color == Color::White {
+            from.index() as usize
+        } else {
+            Square::from_coords(from.file(), 7 - from.rank()).index() as usize
+        };
+
+        let to_sq = if color == Color::White {
+            to.index() as usize
+        } else {
+            Square::from_coords(to.file(), 7 - to.rank()).index() as usize
+        };
+
+        let tables = if is_eg { &self.eg_tables } else { &self.mg_tables };
+        let piece_idx = piece_type.index();
+
+        tables[piece_idx][to_sq] - tables[piece_idx][from_sq]
+    }
 }
 
 impl Default for PieceSquareTables {
