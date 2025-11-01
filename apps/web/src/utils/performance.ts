@@ -2,6 +2,8 @@
  * Performance monitoring utilities for WASM engine
  */
 
+import { logger } from './logger';
+
 export interface PerformanceMetrics {
   wasmLoadTime?: number;
   wasmInitTime?: number;
@@ -180,7 +182,7 @@ export function measureTime(label: string) {
         return await originalMethod.apply(this, args);
       } finally {
         const duration = performance.now() - start;
-        console.debug(`[Performance] ${label}: ${duration.toFixed(2)}ms`);
+        logger.debug(`[Performance] ${label}: ${duration.toFixed(2)}ms`);
       }
     };
 
@@ -197,7 +199,7 @@ export async function measure<T>(label: string, fn: () => Promise<T> | T): Promi
     return await fn();
   } finally {
     const duration = performance.now() - start;
-    console.debug(`[Performance] ${label}: ${duration.toFixed(2)}ms`);
+    logger.debug(`[Performance] ${label}: ${duration.toFixed(2)}ms`);
   }
 }
 
