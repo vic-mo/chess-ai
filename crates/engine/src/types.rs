@@ -40,6 +40,7 @@ pub enum Score {
 pub struct SearchInfo {
     pub id: String,
     pub depth: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub seldepth: Option<u32>,
     pub nodes: u64,
     pub nps: u64,
@@ -47,8 +48,9 @@ pub struct SearchInfo {
     pub time_ms: u64,
     pub score: Score,
     pub pv: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub hashfull: Option<u32>,
-    #[serde(rename = "tbHits")]
+    #[serde(rename = "tbHits", skip_serializing_if = "Option::is_none")]
     pub tb_hits: Option<u64>,
 }
 
@@ -56,6 +58,7 @@ pub struct SearchInfo {
 pub struct BestMove {
     pub id: String,
     pub best: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub ponder: Option<String>,
 }
 

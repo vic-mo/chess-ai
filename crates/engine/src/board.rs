@@ -812,6 +812,29 @@ impl Board {
         self.is_square_attacked(king_square, them)
     }
 
+    /// Check if a move gives check to the opponent.
+    ///
+    /// This requires making the move temporarily to check if the opponent's
+    /// king is in check. This is relatively expensive, so use sparingly.
+    ///
+    /// # Example
+    /// ```
+    /// use engine::board::Board;
+    /// use engine::movegen::generate_moves;
+    ///
+    /// let board = Board::startpos();
+    /// let moves = generate_moves(&board);
+    /// // Check if any move gives check
+    /// let checking_moves: Vec<_> = moves.into_iter()
+    ///     .filter(|&m| board.gives_check(m))
+    ///     .collect();
+    /// ```
+    pub fn gives_check(&self, m: Move) -> bool {
+        let mut board_after = self.clone();
+        board_after.make_move(m);
+        board_after.is_in_check()
+    }
+
     /// Make a null move (pass the turn without moving).
     ///
     /// This is used in null move pruning during search. A null move:

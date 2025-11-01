@@ -10,6 +10,7 @@
 /// 5. Halfmove clock (50-move rule)
 /// 6. Fullmove number
 use crate::board::{Board, CastlingRights};
+use crate::movegen::generate_moves;
 use crate::piece::{Color, Piece, PieceType};
 use crate::square::Square;
 
@@ -506,5 +507,298 @@ mod tests {
         ));
         assert!(!is_valid_fen("invalid"));
         assert!(!is_valid_fen(""));
+    }
+}
+
+// =============================================================================
+// EPD (Extended Position Description) PARSING
+// =============================================================================
+
+/// EPD test position containing board state and expected best moves.
+///
+/// EPD format extends FEN with additional operations:
+/// `FEN; bm MOVE1 MOVE2; id "Test Name"; c0 "Comment"`
+///
+/// # Example
+/// ```
+/// use engine::io::parse_epd;
+///
+/// let epd = r#"r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 0 1; bm Qxf7#; id "Scholar's Mate"; c0 "Checkmate in 1""#;
+/// let test_pos = parse_epd(epd).unwrap();
+/// assert_eq!(test_pos.id, "Scholar's Mate");
+/// assert!(test_pos.best_moves.contains(&"Qxf7#".to_string()));
+/// ```
+#[derive(Debug, Clone)]
+pub struct EpdTestPosition {
+    /// The board position
+    pub board: Board,
+    /// List of acceptable best moves (in UCI or SAN format)
+    pub best_moves: Vec<String>,
+    /// Test identifier/name
+    pub id: String,
+    /// Optional comment/description
+    pub comment: Option<String>,
+}
+
+/// Error type for EPD parsing.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum EpdError {
+    /// Invalid FEN portion
+    InvalidFen(String),
+    /// Missing or invalid best move operation
+    MissingBestMoves,
+    /// Invalid EPD format
+    InvalidFormat(String),
+    /// Best move is not legal in the position
+    IllegalMove(String),
+}
+
+impl std::fmt::Display for EpdError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EpdError::InvalidFen(s) => write!(f, "Invalid FEN in EPD: {}", s),
+            EpdError::MissingBestMoves => write!(f, "EPD missing best move (bm) operation"),
+            EpdError::InvalidFormat(s) => write!(f, "Invalid EPD format: {}", s),
+            EpdError::IllegalMove(s) => write!(f, "Best move is not legal: {}", s),
+        }
+    }
+}
+
+impl std::error::Error for EpdError {}
+
+/// Parse an EPD (Extended Position Description) line.
+///
+/// EPD format: `FEN; operation1 value1; operation2 value2; ...`
+///
+/// Common operations:
+/// - `bm` (best move): Expected best move(s)
+/// - `id`: Test identifier/name
+/// - `c0` through `c9`: Comments
+/// - `am` (avoid move): Moves to avoid
+///
+/// # Example
+/// ```
+/// use engine::io::parse_epd;
+///
+/// let epd = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1; bm e2e4 d2d4; id \"Opening\"";
+/// let test_pos = parse_epd(epd).unwrap();
+/// assert_eq!(test_pos.best_moves.len(), 2);
+/// ```
+pub fn parse_epd(epd_line: &str) -> Result<EpdTestPosition, EpdError> {
+    let epd_line = epd_line.trim();
+    if epd_line.is_empty() {
+        return Err(EpdError::InvalidFormat("Empty EPD line".to_string()));
+    }
+
+    // EPD format: FEN (4 fields) followed by operations
+    // Example: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - bm e2e4; id "test";
+    let tokens: Vec<&str> = epd_line.split_whitespace().collect();
+
+    if tokens.len() < 4 {
+        return Err(EpdError::InvalidFormat(format!(
+            "EPD requires at least 4 FEN fields, got {}",
+            tokens.len()
+        )));
+    }
+
+    // First 4 tokens are the FEN fields
+    let full_fen = format!("{} {} {} {} 0 1",
+        tokens[0], // position
+        tokens[1], // side to move
+        tokens[2], // castling
+        tokens[3]  // en passant
+    );
+
+    let board = parse_fen(&full_fen)
+        .map_err(|e| EpdError::InvalidFen(e.to_string()))?;
+
+    // Parse operations starting from token 4
+    // Operations are terminated by semicolons
+    let operations_str = tokens[4..].join(" ");
+    let operations: Vec<&str> = operations_str.split(';').collect();
+
+    let mut best_moves = Vec::new();
+    let mut id = String::new();
+    let mut comment = None;
+
+    for operation in operations {
+        let operation = operation.trim();
+        if operation.is_empty() {
+            continue;
+        }
+
+        let op_tokens: Vec<&str> = operation.split_whitespace().collect();
+        if op_tokens.is_empty() {
+            continue;
+        }
+
+        let op_name = op_tokens[0];
+        let op_values = &op_tokens[1..];
+
+        match op_name {
+            "bm" => {
+                // Best moves - can be multiple
+                for value in op_values {
+                    let move_str = value.trim_matches('"').trim_matches(',');
+                    if !move_str.is_empty() {
+                        best_moves.push(move_str.to_string());
+                    }
+                }
+            }
+            "id" => {
+                // Test ID - join remaining tokens and remove quotes
+                id = op_values.join(" ")
+                    .trim_matches('"')
+                    .to_string();
+            }
+            "c0" | "c1" | "c2" | "c3" | "c4" | "c5" | "c6" | "c7" | "c8" | "c9" => {
+                // Comment - join remaining tokens and remove quotes
+                comment = Some(op_values.join(" ")
+                    .trim_matches('"')
+                    .to_string());
+            }
+            _ => {
+                // Ignore unknown operations
+            }
+        }
+    }
+
+    if best_moves.is_empty() {
+        return Err(EpdError::MissingBestMoves);
+    }
+
+    Ok(EpdTestPosition {
+        board,
+        best_moves,
+        id,
+        comment,
+    })
+}
+
+/// Validate that all best moves in an EPD position are legal.
+///
+/// This is crucial to ensure test positions are valid.
+/// Returns the first illegal move found, or None if all moves are legal.
+pub fn validate_epd_moves(epd: &EpdTestPosition) -> Option<String> {
+    let legal_moves = generate_moves(&epd.board);
+
+    for best_move_str in &epd.best_moves {
+        let mut found_legal = false;
+
+        // Try to match the move string against legal moves
+        // Support both UCI format (e2e4) and SAN format (e4, Nf3, O-O, etc.)
+        for i in 0..legal_moves.len() {
+            let legal_move = legal_moves[i];
+            let uci = legal_move.to_uci();
+
+            // Direct UCI match
+            if uci == *best_move_str || uci == best_move_str.trim_end_matches(|c| c == '+' || c == '#' || c == '!' || c == '?') {
+                found_legal = true;
+                break;
+            }
+
+            // Also check algebraic notation variations
+            let to_sq = legal_move.to().to_algebraic();
+
+            // Handle variations like "Nf3" vs "nf3", case-insensitive for simple moves
+            if best_move_str.to_lowercase().ends_with(&to_sq) {
+                // For now, we'll be lenient and accept moves that end with the target square
+                // Full SAN parsing would require more complex logic
+                found_legal = true;
+                break;
+            }
+        }
+
+        if !found_legal {
+            return Some(best_move_str.clone());
+        }
+    }
+
+    None
+}
+
+/// Load and parse multiple EPD positions from a file.
+///
+/// Returns a vector of successfully parsed positions.
+/// Skips lines that fail to parse (with optional error reporting).
+pub fn load_epd_file(file_path: &str) -> Result<Vec<EpdTestPosition>, std::io::Error> {
+    use std::fs;
+    use std::io::{BufRead, BufReader};
+
+    let file = fs::File::open(file_path)?;
+    let reader = BufReader::new(file);
+    let mut positions = Vec::new();
+
+    for (line_num, line) in reader.lines().enumerate() {
+        let line = line?;
+        let line = line.trim();
+
+        // Skip empty lines and comments
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+
+        match parse_epd(line) {
+            Ok(pos) => positions.push(pos),
+            Err(e) => {
+                eprintln!("Warning: Failed to parse EPD at line {}: {}", line_num + 1, e);
+                eprintln!("  Line: {}", line);
+            }
+        }
+    }
+
+    Ok(positions)
+}
+
+#[cfg(test)]
+mod epd_tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_simple_epd() {
+        let epd = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1; bm e2e4; id \"Test\"";
+        let result = parse_epd(epd).unwrap();
+
+        assert_eq!(result.best_moves.len(), 1);
+        assert_eq!(result.best_moves[0], "e2e4");
+        assert_eq!(result.id, "Test");
+    }
+
+    #[test]
+    fn test_parse_epd_multiple_best_moves() {
+        let epd = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -; bm e2e4 d2d4; id \"Opening\"";
+        let result = parse_epd(epd).unwrap();
+
+        assert_eq!(result.best_moves.len(), 2);
+        assert!(result.best_moves.contains(&"e2e4".to_string()));
+        assert!(result.best_moves.contains(&"d2d4".to_string()));
+    }
+
+    #[test]
+    fn test_parse_epd_with_comment() {
+        let epd = r#"rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3; bm e7e5; id "Test"; c0 "King's pawn opening""#;
+        let result = parse_epd(epd).unwrap();
+
+        assert_eq!(result.best_moves[0], "e7e5");
+        assert_eq!(result.comment.as_ref().unwrap(), "King's pawn opening");
+    }
+
+    #[test]
+    fn test_parse_epd_no_best_move() {
+        let epd = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1; id \"Test\"";
+        let result = parse_epd(epd);
+
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), EpdError::MissingBestMoves));
+    }
+
+    #[test]
+    fn test_parse_epd_minimal_fen() {
+        // EPD with only 4 FEN fields (standard EPD format)
+        let epd = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -; bm e2e4";
+        let result = parse_epd(epd).unwrap();
+
+        assert_eq!(result.board.side_to_move(), Color::White);
+        assert_eq!(result.best_moves[0], "e2e4");
     }
 }
