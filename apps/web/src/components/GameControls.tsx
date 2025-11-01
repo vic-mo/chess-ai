@@ -1,7 +1,8 @@
 import { useGameStore } from '../store/gameStore';
+import { ELO_LEVELS } from '../utils/eloMapping';
 
 export function GameControls() {
-  const { playerColor, difficulty, isGameOver, isEngineThinking, newGame, resign, setDifficulty } =
+  const { playerColor, eloRating, isGameOver, isEngineThinking, newGame, resign, setEloRating } =
     useGameStore();
 
   const handleNewGame = () => {
@@ -13,8 +14,8 @@ export function GameControls() {
     newGame(color);
   };
 
-  const handleDifficultyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDifficulty(parseInt(e.target.value));
+  const handleEloChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setEloRating(parseInt(e.target.value));
   };
 
   return (
@@ -30,18 +31,14 @@ export function GameControls() {
       </div>
 
       <div className="control-group">
-        <div className="difficulty-label">
-          <label htmlFor="difficulty">Difficulty</label>
-          <span className="difficulty-value">{difficulty}</span>
-        </div>
-        <input
-          id="difficulty"
-          type="range"
-          min="1"
-          max="20"
-          value={difficulty}
-          onChange={handleDifficultyChange}
-        />
+        <label htmlFor="elo-rating">Difficulty</label>
+        <select id="elo-rating" value={eloRating} onChange={handleEloChange}>
+          {ELO_LEVELS.map((level) => (
+            <option key={level.elo} value={level.elo}>
+              {level.label} ({level.elo} Elo)
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="row">

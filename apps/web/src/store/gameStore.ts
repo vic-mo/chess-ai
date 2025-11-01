@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { useGameEngine, useEngine } from '../engine/engineClient';
 import type { GameEngineClient } from '../engine/engineClient';
+import { logger } from '../utils/logger';
+import { eloToDepth, depthToElo } from '../utils/eloMapping';
 
 const STARTPOS = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
@@ -17,7 +19,8 @@ export interface GameState {
 
   // Player settings
   playerColor: 'white' | 'black';
-  difficulty: number; // Search depth (1-20)
+  eloRating: number; // Elo rating (800-1800)
+  difficulty: number; // Search depth (computed from Elo)
 
   // Engine state
   isEngineThinking: boolean;
@@ -27,14 +30,12 @@ export interface GameState {
   makeMove: (uciMove: string) => Promise<boolean>;
   makeEngineMove: () => Promise<void>;
   resign: () => void;
+  setEloRating: (elo: number) => void;
   setDifficulty: (depth: number) => void;
   resetGame: () => void;
 }
 
 export const useGameStore = create<GameState>((set, get) => {
-  const gameEngine = useGameEngine();
-  const engine = useEngine();
-
   return {
     // Initial state
     fen: STARTPOS,
@@ -44,7 +45,8 @@ export const useGameStore = create<GameState>((set, get) => {
     gameResult: null,
     winner: null,
     playerColor: 'white',
-    difficulty: 10,
+    eloRating: 1400, // Default: Intermediate
+    difficulty: eloToDepth(1400), // Computed from Elo
     isEngineThinking: false,
 
     newGame: async (playerColor: 'white' | 'black') => {
@@ -70,26 +72,29 @@ export const useGameStore = create<GameState>((set, get) => {
     makeMove: async (uciMove: string): Promise<boolean> => {
       const { fen, isGameOver, isEngineThinking } = get();
 
-      console.log('[GameStore] makeMove called:', { uciMove, fen, isGameOver, isEngineThinking });
+      logger.log('[GameStore] makeMove called:', { uciMove, fen, isGameOver, isEngineThinking });
 
       if (isGameOver || isEngineThinking) {
-        console.log('[GameStore] Move rejected: game over or engine thinking');
+        logger.log('[GameStore] Move rejected: game over or engine thinking');
         return false;
       }
 
       try {
+        // Get engine client dynamically
+        const gameEngine = useGameEngine();
+
         // Validate move
-        console.log('[GameStore] Validating move...');
+        logger.log('[GameStore] Validating move...');
         const isValid = await gameEngine.validateMove(fen, uciMove);
-        console.log('[GameStore] Move valid:', isValid);
+        logger.log('[GameStore] Move valid:', isValid);
         if (!isValid) {
           return false;
         }
 
         // Apply move
-        console.log('[GameStore] Applying move...');
+        logger.log('[GameStore] Applying move...');
         const newFen = await gameEngine.makeMove(fen, uciMove);
-        console.log('[GameStore] New FEN:', newFen);
+        logger.log('[GameStore] New FEN:', newFen);
 
         // Update state
         set({
@@ -97,7 +102,7 @@ export const useGameStore = create<GameState>((set, get) => {
           moveHistory: [...get().moveHistory, uciMove],
           lastMove: uciMove,
         });
-        console.log('[GameStore] State updated');
+        logger.log('[GameStore] State updated');
 
         // Check game over
         const gameStatus = await gameEngine.checkGameOver(newFen);
@@ -118,7 +123,7 @@ export const useGameStore = create<GameState>((set, get) => {
 
         return true;
       } catch (e) {
-        console.error('Failed to make move:', e);
+        logger.error('Failed to make move:', e);
         return false;
       }
     },
@@ -133,9 +138,14 @@ export const useGameStore = create<GameState>((set, get) => {
       set({ isEngineThinking: true });
 
       try {
+        // Get engine clients dynamically
+        const gameEngine = useGameEngine();
+        const engine = useEngine();
+
         // Request engine analysis
         const requestId = Math.random().toString(36).substring(7);
         let bestMove: string | null = null;
+        let engineError: Error | null = null;
 
         const stop = engine.analyze(
           {
@@ -146,26 +156,41 @@ export const useGameStore = create<GameState>((set, get) => {
           (event) => {
             if (event.type === 'bestMove') {
               bestMove = event.payload.best;
+            } else if (event.type === 'error') {
+              engineError = new Error(event.payload.message || 'Engine error');
             }
           },
         );
 
         // Wait for best move (with timeout)
-        const timeout = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Engine timeout')), 30000),
-        );
+        let timeoutId: NodeJS.Timeout;
+        let checkInterval: NodeJS.Timeout;
 
-        await Promise.race([
-          new Promise((resolve) => {
-            const checkInterval = setInterval(() => {
-              if (bestMove) {
-                clearInterval(checkInterval);
-                resolve(bestMove);
-              }
-            }, 100);
-          }),
-          timeout,
-        ]);
+        try {
+          await Promise.race([
+            // Polling promise
+            new Promise<string>((resolve, reject) => {
+              checkInterval = setInterval(() => {
+                if (bestMove) {
+                  clearInterval(checkInterval);
+                  resolve(bestMove);
+                } else if (engineError) {
+                  clearInterval(checkInterval);
+                  reject(engineError);
+                }
+              }, 100);
+            }),
+            // Timeout promise
+            new Promise<string>((_, reject) => {
+              timeoutId = setTimeout(() => reject(new Error('Engine timeout')), 30000);
+            }),
+          ]);
+        } finally {
+          // Always clean up interval and timeout
+          clearInterval(checkInterval!);
+          clearTimeout(timeoutId!);
+          stop();
+        }
 
         if (!bestMove || bestMove === '0000') {
           throw new Error('No valid move from engine');
@@ -192,7 +217,7 @@ export const useGameStore = create<GameState>((set, get) => {
           });
         }
       } catch (e) {
-        console.error('Engine move failed:', e);
+        logger.error('Engine move failed:', e);
         set({ isEngineThinking: false });
       }
     },
@@ -206,8 +231,16 @@ export const useGameStore = create<GameState>((set, get) => {
       });
     },
 
+    setEloRating: (elo: number) => {
+      const clampedElo = Math.max(800, Math.min(1800, elo));
+      const depth = eloToDepth(clampedElo);
+      set({ eloRating: clampedElo, difficulty: depth });
+    },
+
     setDifficulty: (depth: number) => {
-      set({ difficulty: Math.max(1, Math.min(20, depth)) });
+      const clampedDepth = Math.max(1, Math.min(11, depth));
+      const elo = depthToElo(clampedDepth);
+      set({ difficulty: clampedDepth, eloRating: elo });
     },
 
     resetGame: () => {

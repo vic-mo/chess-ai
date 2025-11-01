@@ -7,13 +7,13 @@ import { getEngineMode, setEngineMode, getWasmStatus } from './engineClient';
 
 describe('engineClient', () => {
   beforeEach(() => {
-    // Reset to fake mode before each test
-    setEngineMode('fake');
+    // Reset to remote mode before each test
+    setEngineMode('remote');
   });
 
   describe('Mode Management', () => {
-    it('should default to fake mode', () => {
-      expect(getEngineMode()).toBe('fake');
+    it('should default to remote mode', () => {
+      expect(getEngineMode()).toBe('remote');
     });
 
     it('should switch to wasm mode', () => {
@@ -26,10 +26,10 @@ describe('engineClient', () => {
       expect(getEngineMode()).toBe('remote');
     });
 
-    it('should switch back to fake mode', () => {
+    it('should switch back to remote mode', () => {
       setEngineMode('wasm');
-      setEngineMode('fake');
-      expect(getEngineMode()).toBe('fake');
+      setEngineMode('remote');
+      expect(getEngineMode()).toBe('remote');
     });
   });
 
@@ -38,8 +38,8 @@ describe('engineClient', () => {
       expect(getWasmStatus()).toBe('uninitialized');
     });
 
-    it('should remain uninitialized after switching to fake mode', () => {
-      setEngineMode('fake');
+    it('should remain uninitialized in remote mode', () => {
+      setEngineMode('remote');
       expect(getWasmStatus()).toBe('uninitialized');
     });
   });
@@ -47,13 +47,13 @@ describe('engineClient', () => {
   describe('Mode Switching Cleanup', () => {
     it('should clean up WASM worker when switching away from wasm mode', () => {
       setEngineMode('wasm');
-      setEngineMode('fake');
+      setEngineMode('remote');
       expect(getWasmStatus()).toBe('uninitialized');
     });
 
     it('should allow switching between all modes', () => {
-      setEngineMode('fake');
-      expect(getEngineMode()).toBe('fake');
+      setEngineMode('remote');
+      expect(getEngineMode()).toBe('remote');
 
       setEngineMode('wasm');
       expect(getEngineMode()).toBe('wasm');
@@ -61,8 +61,8 @@ describe('engineClient', () => {
       setEngineMode('remote');
       expect(getEngineMode()).toBe('remote');
 
-      setEngineMode('fake');
-      expect(getEngineMode()).toBe('fake');
+      setEngineMode('wasm');
+      expect(getEngineMode()).toBe('wasm');
     });
   });
 });

@@ -9,6 +9,23 @@
 
 import type { AnalyzeRequest, EngineEvent } from '@chess-ai/protocol';
 
+// Worker-specific logger (can't import from utils due to worker context)
+const isDev = import.meta.env.DEV;
+const logger = {
+  log: (...args: any[]) => {
+    if (isDev) console.log(...args);
+  },
+  debug: (...args: any[]) => {
+    if (isDev) console.debug(...args);
+  },
+  warn: (...args: any[]) => {
+    if (isDev) console.warn(...args);
+  },
+  error: (...args: any[]) => {
+    if (isDev) console.error(...args);
+  },
+};
+
 // WASM module and engine instance
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let wasmEngine: any = null;
@@ -33,7 +50,7 @@ async function initWasm(wasmPath?: string): Promise<void> {
   }
 
   try {
-    console.log('[Worker] Starting WASM initialization...');
+    logger.log('[Worker] Starting WASM initialization...');
 
     // Load WASM module as ES module using dynamic import with base URL
     const basePath = wasmPath || '/wasm/engine_bridge_wasm.js';
@@ -43,19 +60,19 @@ async function initWasm(wasmPath?: string): Promise<void> {
     const cacheBuster = `?v=${Date.now()}`;
     const fullUrl = new URL(basePath + cacheBuster, baseUrl).href;
 
-    console.log('[Worker] Loading WASM from:', fullUrl);
+    logger.log('[Worker] Loading WASM from:', fullUrl);
 
     // Dynamic import of the ES module
     const wasmModule = await import(/* @vite-ignore */ fullUrl);
 
-    console.log('[Worker] WASM module loaded, initializing...');
+    logger.log('[Worker] WASM module loaded, initializing...');
 
     // Initialize with explicit WASM binary path (also with cache buster)
     // Use new object-based initialization to avoid deprecation warning
     const wasmBinaryPath = new URL('/wasm/engine_bridge_wasm_bg.wasm' + cacheBuster, baseUrl).href;
     await wasmModule.default({ module_or_path: wasmBinaryPath });
 
-    console.log('[Worker] WASM initialized, creating engine instance...');
+    logger.log('[Worker] WASM initialized, creating engine instance...');
 
     // Create engine instance
     wasmEngine = new wasmModule.WasmEngine({
@@ -69,14 +86,14 @@ async function initWasm(wasmPath?: string): Promise<void> {
 
     wasmInitialized = true;
 
-    console.log('[Worker] Engine instance created successfully');
+    logger.log('[Worker] Engine instance created successfully');
 
     // Send success message back to main thread
     self.postMessage({ type: 'initialized' });
   } catch (error) {
     // Send error message back to main thread
     const message = error instanceof Error ? error.message : String(error);
-    console.error('[Worker] WASM initialization failed:', error);
+    logger.error('[Worker] WASM initialization failed:', error);
     self.postMessage({
       type: 'error',
       payload: { id: 'init', message: `Failed to initialize WASM: ${message}` },
@@ -104,14 +121,14 @@ function handleAnalyze(req: AnalyzeRequest): void {
     // Just pass it through as-is
     const limit = req.limit;
 
-    console.log('[Worker] Starting search with limit:', limit);
+    logger.log('[Worker] Starting search with limit:', limit);
 
     // Start analysis (no callback - WASM doesn't support SearchInfo streaming)
     // The analyze method will return when search is complete
     const result = wasmEngine.analyze(limit);
 
-    console.log('[Worker] Search completed, raw result:', result);
-    console.log('[Worker] Result type:', typeof result);
+    logger.log('[Worker] Search completed, raw result:', result);
+    logger.log('[Worker] Result type:', typeof result);
 
     // The result needs to include the request ID
     const bestMove =
@@ -119,7 +136,7 @@ function handleAnalyze(req: AnalyzeRequest): void {
         ? { ...result, id: req.id }
         : { id: req.id, best: 'e2e4', ponder: null };
 
-    console.log('[Worker] Sending best move:', bestMove);
+    logger.log('[Worker] Sending best move:', bestMove);
 
     // Send best move
     const bestMoveEvent: EngineEvent = {
@@ -128,7 +145,7 @@ function handleAnalyze(req: AnalyzeRequest): void {
     };
     self.postMessage(bestMoveEvent);
 
-    console.log('[Worker] Best move sent');
+    logger.log('[Worker] Best move sent');
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     self.postMessage({
@@ -147,7 +164,7 @@ function handleStop(): void {
       wasmEngine.stop();
     } catch (error) {
       // Ignore stop errors
-      console.warn('Error stopping engine:', error);
+      logger.warn('Error stopping engine:', error);
     }
   }
 }
@@ -176,7 +193,7 @@ self.onmessage = (ev: MessageEvent<WorkerMessage>) => {
       break;
 
     default:
-      console.warn('Unknown message type:', msg);
+      logger.warn('Unknown message type:', msg);
   }
 };
 
@@ -184,7 +201,7 @@ self.onmessage = (ev: MessageEvent<WorkerMessage>) => {
  * Error handler
  */
 self.onerror = (error: ErrorEvent) => {
-  console.error('Worker error:', error);
+  logger.error('Worker error:', error);
   self.postMessage({
     type: 'error',
     payload: { id: 'worker', message: error.message || String(error) },

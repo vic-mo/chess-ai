@@ -1,8 +1,9 @@
 import type { AnalyzeRequest, EngineEvent, SearchInfo, BestMove } from '@chess-ai/protocol';
 import { Schema } from '@chess-ai/protocol';
 import { performanceMonitor } from '../utils/performance';
+import { logger } from '../utils/logger';
 
-type EngineMode = 'fake' | 'remote' | 'wasm';
+type EngineMode = 'remote' | 'wasm';
 interface EngineGlobals {
   __ENGINE_MODE__?: EngineMode;
 }
@@ -56,6 +57,8 @@ function remoteAnalyze(req: AnalyzeRequest, onEvent: EventHandler): StopHandler 
   remoteLastId = req.id;
 
   const ws = new WebSocket(wsUrl);
+  let requestSent = false;
+  let bestMoveSent = false;
 
   ws.onopen = () => {
     // Send analyze request over WebSocket
@@ -67,29 +70,54 @@ function remoteAnalyze(req: AnalyzeRequest, onEvent: EventHandler): StopHandler 
         limit: req.limit,
       }),
     );
+    requestSent = true;
   };
 
   ws.onmessage = (ev) => {
     try {
+      logger.log('[RemoteAnalyze] Raw message:', ev.data);
       const parsed: unknown = JSON.parse(ev.data);
+      logger.log('[RemoteAnalyze] Parsed message:', parsed);
       const result = Schema.EngineEvent.safeParse(parsed);
+      logger.log('[RemoteAnalyze] Schema validation:', result);
       if (result.success) {
+        logger.log('[RemoteAnalyze] Calling onEvent with:', result.data);
+        if (result.data.type === 'bestMove') {
+          bestMoveSent = true;
+        }
         onEvent(result.data);
+      } else {
+        logger.error('[RemoteAnalyze] Schema validation failed:', result.error);
       }
     } catch (e) {
-      console.error('Failed to parse WebSocket message:', e);
+      logger.error('Failed to parse WebSocket message:', e);
     }
   };
 
   ws.onerror = (error) => {
-    console.error('WebSocket error:', error);
-    onEvent({
-      type: 'error',
-      payload: { message: 'WebSocket connection failed' },
-    });
+    logger.error('WebSocket error:', error);
+    if (!bestMoveSent) {
+      onEvent({
+        type: 'error',
+        payload: { id: req.id, message: 'WebSocket connection failed' },
+      });
+    }
   };
 
-  ws.onclose = () => {
+  ws.onclose = (event) => {
+    // If connection closes before sending request or receiving bestMove, report error
+    if (!requestSent || !bestMoveSent) {
+      logger.error('WebSocket closed prematurely:', event.code, event.reason);
+      if (!bestMoveSent) {
+        onEvent({
+          type: 'error',
+          payload: {
+            id: req.id,
+            message: `WebSocket closed before completion: ${event.reason || 'Unknown reason'}`,
+          },
+        });
+      }
+    }
     if (remoteWs === ws) {
       remoteWs = null;
     }
@@ -136,13 +164,13 @@ function initWasmWorker(): Promise<void> {
       // Set up message handler
       wasmWorker.onmessage = (ev: MessageEvent) => {
         const msg = ev.data;
-        console.debug('[EngineClient] Received message from worker:', msg);
+        logger.debug('[EngineClient] Received message from worker:', msg);
 
         // Handle initialization
         if (msg.type === 'initialized') {
           wasmInitialized = true;
           performanceMonitor.endWasmLoad();
-          console.debug('[Performance] WASM initialized:', performanceMonitor.getMetrics());
+          logger.debug('[Performance] WASM initialized:', performanceMonitor.getMetrics());
           resolve();
           return;
         }
@@ -150,10 +178,10 @@ function initWasmWorker(): Promise<void> {
         // Handle engine events
         if (msg.type === 'searchInfo' || msg.type === 'bestMove' || msg.type === 'error') {
           const payload = msg.payload as { id: string };
-          console.debug('[EngineClient] Event type:', msg.type, 'ID:', payload?.id);
+          logger.debug('[EngineClient] Event type:', msg.type, 'ID:', payload?.id);
 
           const handler = wasmEventHandlers.get(payload.id);
-          console.debug(
+          logger.debug(
             '[EngineClient] Handler found:',
             !!handler,
             'Active handlers:',
@@ -161,25 +189,38 @@ function initWasmWorker(): Promise<void> {
           );
 
           if (handler) {
-            console.debug('[EngineClient] Calling handler with event');
+            logger.debug('[EngineClient] Calling handler with event');
             handler(msg as EngineEvent);
 
             // Clean up handler on bestMove or error
             if (msg.type === 'bestMove' || msg.type === 'error') {
               wasmEventHandlers.delete(payload.id);
               performanceMonitor.endSearch();
-              console.debug('[EngineClient] Handler cleaned up');
+              logger.debug('[EngineClient] Handler cleaned up');
             }
           } else {
-            console.warn('[EngineClient] No handler for ID:', payload?.id);
+            logger.warn('[EngineClient] No handler for ID:', payload?.id);
           }
         }
       };
 
       // Set up error handler
       wasmWorker.onerror = (error) => {
-        console.error('WASM worker error:', error);
-        reject(error);
+        logger.error('WASM worker error:', error);
+
+        // If not initialized yet, reject initialization
+        if (!wasmInitialized) {
+          reject(error);
+        } else {
+          // Worker crashed after initialization, notify all pending handlers
+          wasmEventHandlers.forEach((handler, id) => {
+            handler({
+              type: 'error',
+              payload: { id, message: 'WASM worker crashed' },
+            });
+          });
+          wasmEventHandlers.clear();
+        }
       };
 
       // Send init message
@@ -197,19 +238,28 @@ function wasmAnalyze(req: AnalyzeRequest, onEvent: EventHandler): StopHandler {
   // Start search performance monitoring
   performanceMonitor.startSearch();
 
+  let fallbackStopHandler: StopHandler | null = null;
+  let initFailed = false;
+
   // Initialize worker if needed
   if (!wasmInitialized) {
     initWasmWorker()
       .then(() => {
-        // Send analyze request
-        wasmWorker?.postMessage({ type: 'analyze', payload: req });
+        // Only send if init didn't fail in the meantime
+        if (!initFailed) {
+          wasmWorker?.postMessage({ type: 'analyze', payload: req });
+        }
       })
       .catch((error) => {
         // Fall back to fake on error
-        console.error('Failed to initialize WASM worker, falling back to fake:', error);
+        logger.error('Failed to initialize WASM worker, falling back to fake:', error);
+        initFailed = true;
         wasmEventHandlers.delete(req.id);
         performanceMonitor.endSearch();
-        return fakeAnalyze(req, onEvent);
+
+        // Start fake analyze and store its stop handler
+        // Note: fakeAnalyze will call onEvent with searchInfo and bestMove
+        fallbackStopHandler = fakeAnalyze(req, onEvent);
       });
   } else {
     // Send analyze request
@@ -218,9 +268,15 @@ function wasmAnalyze(req: AnalyzeRequest, onEvent: EventHandler): StopHandler {
 
   // Return stop handler
   return () => {
-    wasmWorker?.postMessage({ type: 'stop', id: req.id });
-    wasmEventHandlers.delete(req.id);
-    performanceMonitor.endSearch();
+    if (fallbackStopHandler) {
+      // Use fallback stop handler if we fell back
+      fallbackStopHandler();
+    } else {
+      // Normal WASM stop
+      wasmWorker?.postMessage({ type: 'stop', id: req.id });
+      wasmEventHandlers.delete(req.id);
+      performanceMonitor.endSearch();
+    }
   };
 }
 
@@ -241,7 +297,17 @@ function stopRemote(id: string) {
 }
 
 export function getEngineMode(): EngineMode {
-  return (globalThis as EngineGlobals).__ENGINE_MODE__ ?? 'fake';
+  const stored = (globalThis as EngineGlobals).__ENGINE_MODE__;
+  logger.log('[EngineClient] getEngineMode - stored:', stored);
+  // Validate stored mode (in case 'fake' was stored before removal)
+  if (stored === 'remote' || stored === 'wasm') {
+    logger.log('[EngineClient] getEngineMode - returning valid stored mode:', stored);
+    return stored;
+  }
+  // Reset to default if invalid
+  logger.log('[EngineClient] getEngineMode - invalid mode, resetting to remote');
+  (globalThis as EngineGlobals).__ENGINE_MODE__ = 'remote';
+  return 'remote';
 }
 
 export function setEngineMode(mode: EngineMode): void {
@@ -287,14 +353,14 @@ export function useEngine() {
     analyze(req: AnalyzeRequest, onEvent: EventHandler) {
       if (mode === 'remote') return remoteAnalyze(req, onEvent);
       if (mode === 'wasm') return wasmAnalyze(req, onEvent);
-      return fakeAnalyze(req, onEvent);
+      // Default to remote if somehow invalid
+      return remoteAnalyze(req, onEvent);
     },
     stop(id: string) {
       if (mode === 'remote') stopRemote(id);
       if (mode === 'wasm') {
         wasmWorker?.postMessage({ type: 'stop', id });
       }
-      // fake mode: no-op
     },
   };
 }
@@ -372,7 +438,7 @@ async function initWasmGame() {
     wasmGameEngine = new wasmModule.WasmEngine({ hashSizeMb: 16, threads: 1 });
     return wasmGameEngine;
   } catch (e) {
-    console.error('Failed to load WASM game engine (package not built yet):', e);
+    logger.error('Failed to load WASM game engine (package not built yet):', e);
     throw new Error('WASM package not available. Run ./scripts/build-wasm.sh first.');
   }
 }
@@ -431,7 +497,7 @@ function getRemoteGameWs(): Promise<WebSocket> {
           remotePendingRequests.delete(msg.id);
         }
       } catch (e) {
-        console.error('Failed to parse remote game message:', e);
+        logger.error('Failed to parse remote game message:', e);
       }
     };
   });
@@ -467,52 +533,52 @@ function sendRemoteGameRequest(type: string, payload: any): Promise<any> {
 
 const remoteGameClient: GameEngineClient = {
   async validateMove(fen: string, uciMove: string): Promise<boolean> {
-    console.log('[RemoteGameClient] validateMove:', { fen, uciMove });
+    logger.log('[RemoteGameClient] validateMove:', { fen, uciMove });
     try {
       const result = await sendRemoteGameRequest('validateMove', { fen, uci_move: uciMove });
-      console.log('[RemoteGameClient] validateMove result:', result);
+      logger.log('[RemoteGameClient] validateMove result:', result);
       return result.valid;
     } catch (e) {
-      console.error('[RemoteGameClient] validateMove error:', e);
+      logger.error('[RemoteGameClient] validateMove error:', e);
       return false;
     }
   },
 
   async makeMove(fen: string, uciMove: string): Promise<string> {
-    console.log('[RemoteGameClient] makeMove:', { fen, uciMove });
+    logger.log('[RemoteGameClient] makeMove:', { fen, uciMove });
     try {
       const result = await sendRemoteGameRequest('makeMove', { fen, uci_move: uciMove });
-      console.log('[RemoteGameClient] makeMove result:', result);
+      logger.log('[RemoteGameClient] makeMove result:', result);
       if (result.error) {
         throw new Error(result.error);
       }
       return result.fen;
     } catch (e) {
-      console.error('[RemoteGameClient] makeMove error:', e);
+      logger.error('[RemoteGameClient] makeMove error:', e);
       throw e;
     }
   },
 
   async legalMoves(fen: string): Promise<string[]> {
-    console.log('[RemoteGameClient] legalMoves:', fen);
+    logger.log('[RemoteGameClient] legalMoves:', fen);
     try {
       const result = await sendRemoteGameRequest('legalMoves', { fen });
-      console.log('[RemoteGameClient] legalMoves result:', result);
+      logger.log('[RemoteGameClient] legalMoves result:', result);
       return result.moves;
     } catch (e) {
-      console.error('[RemoteGameClient] legalMoves error:', e);
+      logger.error('[RemoteGameClient] legalMoves error:', e);
       return [];
     }
   },
 
   async checkGameOver(fen: string): Promise<{ isOver: boolean; status?: string }> {
-    console.log('[RemoteGameClient] checkGameOver:', fen);
+    logger.log('[RemoteGameClient] checkGameOver:', fen);
     try {
       const result = await sendRemoteGameRequest('gameStatus', { fen });
-      console.log('[RemoteGameClient] checkGameOver result:', result);
+      logger.log('[RemoteGameClient] checkGameOver result:', result);
       return { isOver: result.isOver, status: result.status };
     } catch (e) {
-      console.error('[RemoteGameClient] checkGameOver error:', e);
+      logger.error('[RemoteGameClient] checkGameOver error:', e);
       return { isOver: false };
     }
   },
@@ -525,5 +591,6 @@ export function useGameEngine(): GameEngineClient {
   const mode = getEngineMode();
   if (mode === 'remote') return remoteGameClient;
   if (mode === 'wasm') return wasmGameClient;
-  return fakeGameClient;
+  // Default to remote if somehow invalid
+  return remoteGameClient;
 }

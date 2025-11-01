@@ -2,6 +2,7 @@ import { Chessboard } from 'react-chessboard';
 import { useGameStore } from '../store/gameStore';
 import { useGameEngine } from '../engine/engineClient';
 import { useEffect, useState } from 'react';
+import { logger } from '../utils/logger';
 
 // Type assertion for Chessboard to work around type definition issues
 const ChessboardComponent = Chessboard as any;
@@ -32,10 +33,10 @@ export function Game() {
             (m) => m === 'e1g1' || m === 'e1c1' || m === 'e8g8' || m === 'e8c8',
           );
           if (castlingMoves.length > 0) {
-            console.log('[Game] 🏰 Castling moves available:', castlingMoves);
+            logger.log('[Game] 🏰 Castling moves available:', castlingMoves);
           }
         } catch (e) {
-          console.error('[Game] Failed to fetch legal moves:', e);
+          logger.error('[Game] Failed to fetch legal moves:', e);
         }
       }
     };
@@ -52,12 +53,41 @@ export function Game() {
     return isKingStartPos && moveDistance >= 2;
   };
 
+  // Convert king-to-rook castling moves to proper UCI notation
+  const convertCastlingMove = (from: string, to: string): string => {
+    // Check if this is a king-to-rook castling attempt
+    const isKingStartPos = from === 'e1' || from === 'e8';
+    const isRookSquare = to === 'a1' || to === 'h1' || to === 'a8' || to === 'h8';
+
+    if (!isKingStartPos || !isRookSquare) {
+      return from + to; // Not a king-to-rook move, return as-is
+    }
+
+    // Convert king-to-rook to proper UCI castling notation
+    const conversions: { [key: string]: string } = {
+      e1h1: 'e1g1', // White kingside
+      e1a1: 'e1c1', // White queenside
+      e8h8: 'e8g8', // Black kingside
+      e8a8: 'e8c8', // Black queenside
+    };
+
+    const moveKey = from + to;
+    const convertedMove = conversions[moveKey];
+
+    if (convertedMove) {
+      logger.log(`[Game] 🏰 Converted king-to-rook castling: ${moveKey} → ${convertedMove}`);
+      return convertedMove;
+    }
+
+    return from + to; // Not a valid castling conversion, return as-is
+  };
+
   // Handle piece drop
   const onDrop = async (sourceSquare: string, targetSquare: string): Promise<boolean> => {
-    console.log('[Game] onDrop called:', { sourceSquare, targetSquare });
+    logger.log('[Game] onDrop called:', { sourceSquare, targetSquare });
 
     if (!isPlayerTurn() || isEngineThinking || isGameOver) {
-      console.log('[Game] Drop rejected:', {
+      logger.log('[Game] Drop rejected:', {
         isPlayerTurn: isPlayerTurn(),
         isEngineThinking,
         isGameOver,
@@ -65,22 +95,23 @@ export function Game() {
       return false;
     }
 
-    const uciMove = sourceSquare + targetSquare;
+    // Convert king-to-rook moves to proper UCI castling notation
+    const uciMove = convertCastlingMove(sourceSquare, targetSquare);
 
     // Log castling detection
     if (isCastlingMove(sourceSquare, targetSquare)) {
-      console.log('[Game] 🏰 Castling move detected!', uciMove);
+      logger.log('[Game] 🏰 Castling move detected!', uciMove);
     }
 
-    console.log('[Game] Attempting move:', uciMove);
+    logger.log('[Game] Attempting move:', uciMove);
     const success = await makeMove(uciMove);
-    console.log('[Game] Move result:', success);
+    logger.log('[Game] Move result:', success);
     return success;
   };
 
   // Handle square clicks for castling and move selection
   const onSquareClick = async (square: string) => {
-    console.log('[Game] Square clicked:', square, 'Selected:', selectedSquare);
+    logger.log('[Game] Square clicked:', square, 'Selected:', selectedSquare);
 
     if (!isPlayerTurn() || isEngineThinking || isGameOver) {
       return;
@@ -88,20 +119,21 @@ export function Game() {
 
     // If a square is already selected, try to make a move
     if (selectedSquare) {
-      const uciMove = selectedSquare + square;
-      console.log('[Game] Attempting move via click:', uciMove);
+      // Convert king-to-rook moves to proper UCI castling notation
+      const uciMove = convertCastlingMove(selectedSquare, square);
+      logger.log('[Game] Attempting move via click:', uciMove);
 
       if (isCastlingMove(selectedSquare, square)) {
-        console.log('[Game] 🏰 Castling via click!');
+        logger.log('[Game] 🏰 Castling via click!');
       }
 
       const success = await makeMove(uciMove);
-      console.log('[Game] Click move result:', success);
+      logger.log('[Game] Click move result:', success);
       setSelectedSquare(null); // Clear selection after move attempt
     } else {
       // Select this square
       setSelectedSquare(square);
-      console.log('[Game] Square selected:', square);
+      logger.log('[Game] Square selected:', square);
     }
   };
 
@@ -119,7 +151,7 @@ export function Game() {
 
   // Debug: log FEN changes
   useEffect(() => {
-    console.log('[Game] 🔄 Board position updated:', fen);
+    logger.log('[Game] 🔄 Board position updated:', fen);
   }, [fen]);
 
   return (
