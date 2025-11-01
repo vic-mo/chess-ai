@@ -11,6 +11,7 @@ use crate::bitboard::Bitboard;
 use crate::board::Board;
 use crate::piece::{Color, PieceType};
 use crate::r#move::Move;
+use crate::search_params;
 use crate::square::Square;
 
 /// Maximum total extensions allowed per search path
@@ -179,15 +180,18 @@ pub fn singular_extension(
     depth: i32,
     _extensions_used: i32,
 ) -> i32 {
+    // Use tunable parameters
+    let params = search_params::get_search_params();
+
     // Only apply singular extensions at sufficient depth
-    if depth < SINGULAR_MIN_DEPTH {
+    if depth < params.singular_min_depth {
         return 0;
     }
 
     // Perform a reduced depth search excluding the TT move
     // If all other moves fail low by a margin, the TT move is "singular"
-    let verification_depth = depth - SINGULAR_DEPTH_REDUCTION;
-    let singular_beta = beta - SINGULAR_MARGIN;
+    let verification_depth = depth - params.singular_depth_reduction;
+    let singular_beta = beta - params.singular_margin;
 
     // This would require calling back into the search function
     // For now, we'll return a placeholder

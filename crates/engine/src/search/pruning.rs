@@ -12,6 +12,7 @@
 
 use crate::board::Board;
 use crate::r#move::Move;
+use crate::search_params;
 
 /// Futility pruning margins by depth
 /// Index by depth (0, 1, 2, 3)
@@ -30,11 +31,13 @@ pub const RAZOR_MARGINS: [i32; 4] = [0, 200, 300, 400];
 /// Index by depth (0, 1, 2, 3)
 pub const LMP_THRESHOLDS: [usize; 4] = [0, 3, 6, 12];
 
-/// SEE threshold for quiet moves
-pub const SEE_QUIET_THRESHOLD: i32 = -100;
+/// SEE threshold for captures in main search
+/// Conservative: only prune clearly losing captures
+pub const SEE_QUIET_THRESHOLD: i32 = -10;
 
 /// SEE threshold for captures in qsearch
-pub const SEE_CAPTURE_THRESHOLD: i32 = -50;
+/// More aggressive: can prune slightly losing captures
+pub const SEE_CAPTURE_THRESHOLD: i32 = -10;
 
 /// Probcut margin (how much higher than beta for probcut)
 pub const PROBCUT_MARGIN: i32 = 200;
@@ -73,7 +76,13 @@ pub fn can_futility_prune(depth: i32, in_check: bool, is_pv: bool, eval: i32, al
         return false;
     }
 
-    let margin = FUTILITY_MARGINS[depth as usize];
+    let params = search_params::get_search_params();
+    let margin = match depth {
+        1 => params.futility_margin_d1,
+        2 => params.futility_margin_d2,
+        3 => params.futility_margin_d3,
+        _ => 0,
+    };
     eval + margin < alpha
 }
 
@@ -114,7 +123,15 @@ pub fn can_reverse_futility_prune(
         return (false, 0);
     }
 
-    let margin = RFP_MARGINS[depth as usize];
+    let params = search_params::get_search_params();
+    let margin = match depth {
+        1 => params.rfp_margin_d1,
+        2 => params.rfp_margin_d2,
+        3 => params.rfp_margin_d3,
+        4 => params.rfp_margin_d4,
+        5 => params.rfp_margin_d5,
+        _ => 0,
+    };
     if eval - margin >= beta {
         (true, eval)
     } else {
@@ -147,7 +164,13 @@ pub fn can_razor(depth: i32, in_check: bool, is_pv: bool, eval: i32, alpha: i32)
         return false;
     }
 
-    let margin = RAZOR_MARGINS[depth as usize];
+    let params = search_params::get_search_params();
+    let margin = match depth {
+        1 => params.razor_margin_d1,
+        2 => params.razor_margin_d2,
+        3 => params.razor_margin_d3,
+        _ => 0,
+    };
     eval + margin < alpha
 }
 
@@ -180,7 +203,13 @@ pub fn can_late_move_prune(depth: i32, in_check: bool, move_count: usize, mv: Mo
         return false;
     }
 
-    let threshold = LMP_THRESHOLDS[depth as usize];
+    let params = search_params::get_search_params();
+    let threshold = match depth {
+        1 => params.lmp_threshold_d1,
+        2 => params.lmp_threshold_d2,
+        3 => params.lmp_threshold_d3,
+        _ => 99,
+    };
     move_count > threshold
 }
 

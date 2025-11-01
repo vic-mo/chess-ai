@@ -4,12 +4,13 @@
 //! The goal is to search the best moves first to maximize cutoffs.
 
 use crate::board::Board;
+use crate::eval::pst::PieceSquareTables;
 use crate::eval::PIECE_VALUES;
 use crate::movelist::MoveList;
 use crate::piece::PieceType;
 use crate::r#move::Move;
 use crate::search::history::{CaptureHistory, ContinuationHistory, CountermoveTable};
-use crate::search::see::see_value_of_move;
+use crate::search::see::see_value;
 
 /// Maximum search depth (for killer move storage)
 const MAX_PLY: usize = 64;
@@ -38,6 +39,9 @@ pub struct MoveOrder {
 
     /// Capture history: separate history for captures
     capture_history: CaptureHistory,
+
+    /// Piece-square tables for positional move bonuses
+    pst: PieceSquareTables,
 }
 
 impl MoveOrder {
@@ -49,6 +53,7 @@ impl MoveOrder {
             countermoves: CountermoveTable::new(),
             continuation_history: ContinuationHistory::new(),
             capture_history: CaptureHistory::new(),
+            pst: PieceSquareTables::default(),
         }
     }
 
@@ -112,7 +117,7 @@ impl MoveOrder {
 
         // Bonus proportional to depth squared
         // Deeper searches are more valuable
-        let bonus = depth * depth;
+        let bonus = depth.saturating_mul(depth);
 
         self.history[from][to] += bonus;
 
@@ -183,7 +188,7 @@ impl MoveOrder {
     ///
     /// # Returns
     /// History score (0-100k range), or 0 if it's a capture
-    fn history_score(&self, m: Move) -> i32 {
+    pub fn history_score(&self, m: Move) -> i32 {
         if m.is_capture() {
             return 0;
         }
@@ -275,7 +280,7 @@ impl MoveOrder {
 
         // 2. Captures - separate good and bad captures using SEE
         if m.is_capture() {
-            let see_score = see_value_of_move(board, m);
+            let see_score = see_value(board, m);
 
             // Good captures: SEE >= 0
             if see_score >= 0 {
@@ -313,7 +318,7 @@ impl MoveOrder {
             }
         }
 
-        // 5. Quiet moves: history + continuation history
+        // 5. Quiet moves: history + continuation history + PST bonus
         let hist_score = self.history_score(m);
         let cont_hist_score = if let Some(prev) = prev_move {
             self.continuation_history.get(prev, m)
@@ -321,7 +326,16 @@ impl MoveOrder {
             0
         };
 
-        hist_score + cont_hist_score
+        // Add piece-square table bonus for positional improvement
+        // This rewards moves that improve piece placement (centralization, advancement, etc.)
+        let pst_bonus = if let Some(piece) = board.piece_at(m.from()) {
+            let is_eg = crate::eval::material::is_endgame(board);
+            self.pst.move_bonus(piece.piece_type, m.from(), m.to(), board.side_to_move(), is_eg)
+        } else {
+            0
+        };
+
+        hist_score + cont_hist_score + pst_bonus
     }
 
     /// Sort moves in-place by score (highest first).

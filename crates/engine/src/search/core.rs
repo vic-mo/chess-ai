@@ -3,7 +3,9 @@
 use crate::board::Board;
 use crate::eval::Evaluator;
 use crate::move_order::MoveOrder;
+use crate::opening_book::OpeningBook;
 use crate::r#move::Move;
+use crate::search_params;
 use crate::time::{TimeControl, TimeManager};
 use crate::tt::{Bound, TranspositionTable};
 use crate::types::{Score, SearchInfo};
@@ -43,9 +45,11 @@ pub struct Searcher {
     evaluator: Evaluator,
     tt: TranspositionTable,
     move_order: MoveOrder,
+    opening_book: OpeningBook,
     nodes: u64,
     time_manager: Option<TimeManager>,
     stopped: Arc<AtomicBool>,
+    contempt: i32, // Centipawns to penalize draws (default: 20)
 }
 
 impl Searcher {
@@ -65,9 +69,33 @@ impl Searcher {
             evaluator: Evaluator::new(),
             tt: TranspositionTable::new(size_mb),
             move_order: MoveOrder::new(),
+            opening_book: OpeningBook::new(),
             nodes: 0,
             time_manager: None,
             stopped,
+            contempt: 20, // Default: 20cp contempt (avoid draws slightly)
+        }
+    }
+
+    /// Set contempt value (in centipawns).
+    /// Positive values discourage draws (think we're stronger).
+    /// Negative values accept draws more readily (think opponent is stronger).
+    pub fn set_contempt(&mut self, contempt: i32) {
+        self.contempt = contempt;
+    }
+
+    /// Apply contempt to an evaluation score.
+    /// Adjusts scores near zero (draw territory) by contempt value.
+    /// The effect tapers off for larger scores (clear advantages).
+    #[inline]
+    fn apply_contempt(&self, score: i32) -> i32 {
+        // Only apply contempt to scores near zero (within 2 pawns)
+        if score.abs() < 200 {
+            // Taper the contempt effect based on score magnitude
+            let factor = (200 - score.abs()) as f32 / 200.0;
+            score + (self.contempt as f32 * factor) as i32
+        } else {
+            score
         }
     }
 
@@ -125,6 +153,19 @@ impl Searcher {
         self.move_order.clear();
         self.stopped.store(false, Ordering::Relaxed);
 
+        // Check opening book first
+        if let Some(book_move) = self.opening_book.probe(board) {
+            // Book hit! Return immediately without searching
+            return SearchResult {
+                best_move: book_move,
+                score: 0, // Book moves don't have scores
+                depth: 0,
+                nodes: 0,
+                pv: vec![book_move],
+                multi_pv: vec![],
+            };
+        }
+
         // Initialize time manager
         let is_white = board.side_to_move() == crate::piece::Color::White;
         self.time_manager = Some(TimeManager::new(time_control, is_white));
@@ -155,11 +196,12 @@ impl Searcher {
                 self.search_root(board, depth)
             } else {
                 // Aspiration window: narrow bounds around previous score
-                const ASPIRATION_DELTA: i32 = 50; // 0.5 pawns
+                let params = search_params::get_search_params();
+                let aspiration_delta = params.aspiration_delta;
 
-                let mut alpha = best_score - ASPIRATION_DELTA;
-                let mut beta = best_score + ASPIRATION_DELTA;
-                let mut delta = ASPIRATION_DELTA;
+                let mut alpha = best_score - aspiration_delta;
+                let mut beta = best_score + aspiration_delta;
+                let mut delta = aspiration_delta;
 
                 loop {
                     let score = self.search_root_window(board, depth, alpha, beta);
@@ -167,20 +209,28 @@ impl Searcher {
                     if score <= alpha {
                         // Fail low: widen window downward
                         alpha -= delta;
-                        delta *= 2;
+                        // Cap delta to prevent overflow
+                        if delta >= 500 {
+                            alpha = -INFINITY;
+                            beta = INFINITY;
+                            delta = aspiration_delta; // Reset for next iteration
+                        } else {
+                            delta = delta.saturating_mul(2);
+                        }
                     } else if score >= beta {
                         // Fail high: widen window upward
                         beta += delta;
-                        delta *= 2;
+                        // Cap delta to prevent overflow
+                        if delta >= 500 {
+                            alpha = -INFINITY;
+                            beta = INFINITY;
+                            delta = aspiration_delta; // Reset for next iteration
+                        } else {
+                            delta = delta.saturating_mul(2);
+                        }
                     } else {
                         // Success: score within window
                         break score;
-                    }
-
-                    // Safety: prevent infinite widening
-                    if delta > 1000 {
-                        alpha = -INFINITY;
-                        beta = INFINITY;
                     }
                 }
             };
@@ -433,7 +483,7 @@ impl Searcher {
             let mut new_board = board.clone();
             new_board.make_move(*m);
 
-            let score = -self.negamax(&new_board, depth as i32 - 1, -beta, -alpha, 1, Some(*m));
+            let score = -self.negamax(&new_board, depth as i32 - 1, -beta, -alpha, 1, Some(*m), 0, false);
 
             if score > best_score {
                 best_score = score;
@@ -463,6 +513,7 @@ impl Searcher {
     /// Search at the root with custom alpha-beta window.
     /// Used for aspiration windows.
     fn search_root_window(&mut self, board: &Board, depth: u32, mut alpha: i32, beta: i32) -> i32 {
+        let original_alpha = alpha;
         let mut legal_moves = board.generate_legal_moves();
 
         if legal_moves.is_empty() {
@@ -481,7 +532,7 @@ impl Searcher {
             let mut new_board = board.clone();
             new_board.make_move(*m);
 
-            let score = -self.negamax(&new_board, depth as i32 - 1, -beta, -alpha, 1, Some(*m));
+            let score = -self.negamax(&new_board, depth as i32 - 1, -beta, -alpha, 1, Some(*m), 0, false);
 
             if score > best_score {
                 best_score = score;
@@ -499,7 +550,7 @@ impl Searcher {
         // Store best move in TT
         let bound = if best_score >= beta {
             Bound::Lower
-        } else if best_score > alpha {
+        } else if best_score > original_alpha {
             Bound::Exact
         } else {
             Bound::Upper
@@ -509,6 +560,48 @@ impl Searcher {
             .store(board.hash(), best_move, best_score, depth as u8, bound);
 
         best_score
+    }
+
+    /// Verify if a move is singular (much better than all alternatives).
+    /// Used for singular extensions.
+    fn verify_singular(&mut self, board: &Board, tt_move: Move, beta: i32, depth: i32, extensions_used: i32) -> bool {
+        // Search at reduced depth excluding the TT move
+        let all_moves = board.generate_legal_moves();
+
+        // Build a new list excluding the TT move
+        let mut legal_moves = crate::movelist::MoveList::new();
+        for m in all_moves.iter() {
+            if *m != tt_move {
+                legal_moves.push(*m);
+            }
+        }
+
+        if legal_moves.is_empty() {
+            return true; // Only move available is singular by definition
+        }
+
+        // Order remaining moves
+        self.move_order.order_moves(board, &mut legal_moves, 0, None, None);
+
+        let mut alpha = beta - 1;
+
+        // Search all other moves at reduced depth
+        for m in legal_moves.iter() {
+            let mut new_board = board.clone();
+            new_board.make_move(*m);
+
+            let score = -self.negamax(&new_board, depth - 1, -beta, -alpha, 0, Some(*m), extensions_used, true);
+
+            // If any move reaches beta, TT move is not singular
+            if score >= beta {
+                return false;
+            }
+
+            alpha = alpha.max(score);
+        }
+
+        // All other moves failed low - TT move is singular
+        true
     }
 
     /// Extract principal variation from transposition table.
@@ -560,9 +653,11 @@ impl Searcher {
         board: &Board,
         depth: i32,
         mut alpha: i32,
-        beta: i32,
+        mut beta: i32,
         ply: u32,
         prev_move: Option<Move>,
+        extensions_used: i32,
+        in_singular_verification: bool,
     ) -> i32 {
         self.nodes += 1;
 
@@ -589,11 +684,14 @@ impl Searcher {
             if tt_entry.depth >= depth as u8 {
                 match tt_entry.bound {
                     Bound::Exact => return tt_entry.score,
-                    Bound::Lower => alpha = alpha.max(tt_entry.score),
+                    Bound::Lower => {
+                        alpha = alpha.max(tt_entry.score);
+                    }
                     Bound::Upper => {
-                        if tt_entry.score < beta {
+                        if tt_entry.score <= alpha {
                             return tt_entry.score;
                         }
+                        beta = beta.min(tt_entry.score);
                     }
                 }
                 if alpha >= beta {
@@ -607,14 +705,15 @@ impl Searcher {
 
         // Internal Iterative Deepening (IID) and Internal Iterative Reduction (IIR)
         // When we have no TT move, try to get one (IID) or reduce depth (IIR)
+        let params = search_params::get_search_params();
         let mut depth = depth;
-        if tt_move.is_none() && depth >= 4 && !board.is_in_check() {
+        if tt_move.is_none() && depth >= params.iid_min_depth && !board.is_in_check() {
             let is_pv = beta - alpha > 1;
 
             if is_pv {
                 // IID: Do shallow search to populate TT with a good move
-                let iid_depth = depth - 2;
-                self.negamax(board, iid_depth, alpha, beta, ply, None);
+                let iid_depth = depth - params.iid_depth_reduction;
+                self.negamax(board, iid_depth, alpha, beta, ply, None, extensions_used, false);
 
                 // Re-probe TT to get the move
                 if let Some(tt_entry) = self.tt.probe(hash) {
@@ -622,7 +721,7 @@ impl Searcher {
                 }
             } else {
                 // IIR: Reduce depth when we have no TT move in non-PV nodes
-                depth -= 1;
+                depth -= params.iir_depth_reduction;
             }
         }
 
@@ -634,19 +733,20 @@ impl Searcher {
         // - Not in endgame (zugzwang risk)
         // - Beta is not a mate score (avoid mate score distortion)
         let in_check = board.is_in_check();
-        if depth >= 3
+        let params = search_params::get_search_params();
+        if depth >= params.null_move_min_depth
             && !in_check
             && !crate::eval::is_endgame(board)
             && beta.abs() < MATE_SCORE - MAX_DEPTH as i32
         {
-            const R: i32 = 2; // Reduction factor
+            let r = params.null_move_r; // Reduction factor
 
             let mut null_board = board.clone();
             null_board.make_null_move();
 
             // Search with reduced depth and null window around beta
             let null_score =
-                -self.negamax(&null_board, depth - 1 - R, -beta, -beta + 1, ply + 1, None);
+                -self.negamax(&null_board, depth - 1 - r, -beta, -beta + 1, ply + 1, None, extensions_used, false);
 
             // If null move fails high, position is too good - prune this branch
             if null_score >= beta {
@@ -659,6 +759,7 @@ impl Searcher {
         let is_pv = beta - alpha > 1;
         if !in_check && !is_pv && depth <= 5 {
             let eval = self.evaluator.evaluate(board);
+            let eval = self.apply_contempt(eval);
             let (can_prune, score) = crate::search::pruning::can_reverse_futility_prune(
                 depth, in_check, is_pv, eval, beta,
             );
@@ -671,6 +772,7 @@ impl Searcher {
         // If position is hopeless even with a margin, drop into qsearch
         if !in_check && !is_pv && (1..=3).contains(&depth) {
             let eval = self.evaluator.evaluate(board);
+            let eval = self.apply_contempt(eval);
             if crate::search::pruning::can_razor(depth, in_check, is_pv, eval, alpha) {
                 let q_score = self.quiesce(board, alpha, beta);
                 if q_score < alpha {
@@ -706,10 +808,27 @@ impl Searcher {
         let mut best_score = -INFINITY;
         let mut best_move = legal_moves[0];
 
+        // Singular extension: Check if TT move is much better than alternatives
+        // Only check if NOT already in a verification search (prevents recursion)
+        let mut singular_ext = 0;
+        if !in_singular_verification {
+            if let Some(tt_mv) = tt_move {
+                if depth >= 8 && is_pv && extensions_used < crate::search::extensions::MAX_EXTENSIONS_PER_PATH {
+                    let singular_beta = beta - 100; // Margin for singularity
+                    let singular_depth = depth - 4; // Reduced depth for verification
+
+                    if self.verify_singular(board, tt_mv, singular_beta, singular_depth, extensions_used) {
+                        singular_ext = 1;
+                    }
+                }
+            }
+        }
+
         // M7: Futility pruning - skip quiet moves if position is hopeless
         let futility_prune = !in_check && !is_pv && depth <= 3;
         let futility_eval = if futility_prune {
-            self.evaluator.evaluate(board)
+            let eval = self.evaluator.evaluate(board);
+            self.apply_contempt(eval)
         } else {
             0
         };
@@ -748,14 +867,19 @@ impl Searcher {
 
             // M7: Calculate extensions
             let in_check_after = new_board.is_in_check();
-            let extension = crate::search::extensions::calculate_extension(
+            let mut extension = crate::search::extensions::calculate_extension(
                 &new_board,
                 *m,
                 in_check_after,
                 prev_move, // Use prev_move for recapture detection
                 depth,
-                0, // extensions_used - TODO: track this through search
+                extensions_used, // Now properly tracked through search
             );
+
+            // Add singular extension if this is the TT move
+            if Some(*m) == tt_move && singular_ext > 0 {
+                extension += singular_ext;
+            }
 
             let mut score;
 
@@ -779,10 +903,10 @@ impl Searcher {
                 && extension == 0;
 
             if can_reduce {
-                // Calculate reduction amount
-                // More reduction for later moves and higher depths
-                let reduction = if move_count >= 6 && depth >= 6 {
-                    2 // Reduce by 2 plies
+                // Calculate reduction amount using tunable parameters
+                let params = search_params::get_search_params();
+                let reduction = if move_count >= params.lmr_move_threshold && depth >= params.lmr_depth_threshold {
+                    params.lmr_base_reduction
                 } else {
                     1 // Reduce by 1 ply
                 };
@@ -795,11 +919,13 @@ impl Searcher {
                     -alpha,
                     ply + 1,
                     Some(*m),
+                    extensions_used + extension,
+                    false,
                 );
 
                 // If reduced search beats alpha, re-search at full depth
                 if score > alpha {
-                    score = -self.negamax(&new_board, next_depth, -beta, -alpha, ply + 1, Some(*m));
+                    score = -self.negamax(&new_board, next_depth, -beta, -alpha, ply + 1, Some(*m), extensions_used + extension, false);
                 }
             } else {
                 // First few moves or extended/tactical moves: search at full depth
@@ -807,7 +933,7 @@ impl Searcher {
 
                 if move_count == 0 {
                     // First move: search with full window
-                    score = -self.negamax(&new_board, next_depth, -beta, -alpha, ply + 1, Some(*m));
+                    score = -self.negamax(&new_board, next_depth, -beta, -alpha, ply + 1, Some(*m), extensions_used + extension, false);
                 } else {
                     // Later moves: try null window first (PVS)
                     score = -self.negamax(
@@ -817,12 +943,14 @@ impl Searcher {
                         -alpha,
                         ply + 1,
                         Some(*m),
+                        extensions_used + extension,
+                        false,
                     );
 
                     // If it beats alpha, re-search with full window
                     if score > alpha && score < beta {
                         score =
-                            -self.negamax(&new_board, next_depth, -beta, -alpha, ply + 1, Some(*m));
+                            -self.negamax(&new_board, next_depth, -beta, -alpha, ply + 1, Some(*m), extensions_used + extension, false);
                     }
                 }
             }
@@ -887,6 +1015,7 @@ impl Searcher {
 
         // Stand pat: assume we can maintain current evaluation
         let stand_pat = self.evaluator.evaluate(board);
+        let stand_pat = self.apply_contempt(stand_pat);
 
         if stand_pat >= beta {
             return beta;
