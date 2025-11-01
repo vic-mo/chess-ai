@@ -1,0 +1,52 @@
+# Ignore build artifacts
+target/
+
+# Ignore node modules
+node_modules/
+apps/web/node_modules/
+apps/web/dist/
+
+# Ignore WASM build outputs
+apps/web/public/wasm/
+apps/web/dist/wasm/
+
+# Ignore git
+.git/
+.github/
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Ignore documentation
+docs/
+docs2/
+archive/
+
+# Ignore test files
+**/tests/
+**/e2e/
+test*.txt
+test*.sh
+test*.pgn
+
+# Ignore large data files
+data/
+*.json
+extraction_log.txt
+venv/
+scripts/
+
+# Ignore dev tooling
+.husky/
+.prettierrc
+.eslintrc.cjs
+
+# Important: DO NOT ignore these (needed for build)
+!Cargo.toml
+!Cargo.lock
+!crates/
+!apps/uci-server/

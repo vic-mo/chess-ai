@@ -261,13 +261,13 @@ fn is_trapped_bishop(bishop_sq: Square, color: Color) -> bool {
 
 /// Check if a bishop is bad (majority of pawns on bishop's color).
 fn is_bad_bishop(bishop_sq: Square, our_pawns: Bitboard) -> bool {
-    let bishop_on_light = (bishop_sq.file() + bishop_sq.rank()).is_multiple_of(2);
+    let bishop_on_light = (bishop_sq.file() + bishop_sq.rank()) % 2 == 0;
 
     let mut light_pawns = 0;
     let mut dark_pawns = 0;
 
     for pawn_sq in our_pawns {
-        if (pawn_sq.file() + pawn_sq.rank()).is_multiple_of(2) {
+        if (pawn_sq.file() + pawn_sq.rank()) % 2 == 0 {
             light_pawns += 1;
         } else {
             dark_pawns += 1;

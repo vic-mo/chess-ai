@@ -662,7 +662,7 @@ impl Searcher {
         self.nodes += 1;
 
         // Check time limits periodically (every 1024 nodes)
-        if self.nodes.is_multiple_of(1024) {
+        if self.nodes % 1024 == 0 {
             if let Some(tm) = &self.time_manager {
                 if tm.must_stop() {
                     self.stopped.store(true, Ordering::Relaxed);

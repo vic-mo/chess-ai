@@ -7,8 +7,6 @@ steps:
     args:
       - 'build'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/chess-engine-server:$COMMIT_SHA'
-      - '-t'
       - 'gcr.io/$PROJECT_ID/chess-engine-server:latest'
       - '-f'
       - 'apps/uci-server/Dockerfile'
@@ -18,7 +16,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args:
       - 'push'
-      - 'gcr.io/$PROJECT_ID/chess-engine-server:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/chess-engine-server:latest'
 
   # Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -28,14 +26,14 @@ steps:
       - 'deploy'
       - 'chess-engine-server'
       - '--image'
-      - 'gcr.io/$PROJECT_ID/chess-engine-server:$COMMIT_SHA'
+      - 'gcr.io/$PROJECT_ID/chess-engine-server:latest'
       - '--region'
       - 'us-central1'
       - '--platform'
       - 'managed'
       - '--allow-unauthenticated'
-      - '--set-env-vars'
-      - 'PORT=8080'
+      - '--port'
+      - '8080'
       - '--timeout'
       - '3600' # 60 minutes for long chess games
       - '--concurrency'
@@ -47,7 +45,6 @@ steps:
 
 # Store images in Container Registry
 images:
-  - 'gcr.io/$PROJECT_ID/chess-engine-server:$COMMIT_SHA'
   - 'gcr.io/$PROJECT_ID/chess-engine-server:latest'
 
 # Build timeout
