@@ -1,0 +1,60 @@
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2025.11.01"]
+[Round "1"]
+[White "ChessAI-D7"]
+[Black "SF-1400"]
+[Result "0-1"]
+[SetUp "1"]
+[FEN "rnbqkbnr/pppppp1p/6p1/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"]
+[GameDuration "00:00:17"]
+[GameStartTime "2025-11-01T14:32:24 +0100"]
+[GameEndTime "2025-11-01T14:32:41 +0100"]
+[PlyCount "14"]
+[Termination "time forfeit"]
+[TimeControl "5+0.05"]
+[ECO "B27"]
+[Opening "Sicilian Defense: Hyperaccelerated Dragon"]
+
+2. Nf3 {+0.20/7 0.114s} c5 {-0.53/18 0.566s} 3. e5 {+0.21/7 0.488s}
+d5 {+0.34/12 0.087s} 4. Nc3 {+0.18/7 0.797s} Nc6 {+0.22/16 0.269s}
+5. Bb5 {+0.17/7 0.291s} Bg7 {-0.24/12 0.129s} 6. d3 {+0.13/7 0.826s}
+Bg4 {+0.38/11 0.060s} 7. Qe2 {-0.10/7 0.821s} Rc8 {+0.94/14 0.233s}
+8. O-O {-0.06/7 1.462s} Nh6 {+0.60/17 0.409s, White loses on time} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2025.11.01"]
+[Round "1"]
+[White "SF-1400"]
+[Black "ChessAI-D7"]
+[Result "0-1"]
+[SetUp "1"]
+[FEN "rnbqkbnr/pppppp1p/6p1/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"]
+[GameDuration "00:00:09"]
+[GameStartTime "2025-11-01T14:32:41 +0100"]
+[GameEndTime "2025-11-01T14:32:51 +0100"]
+[PlyCount "48"]
+[Termination "normal"]
+[TimeControl "5+0.05"]
+[ECO "B06"]
+[Opening "Modern Defense"]
+
+2. Bc4 {+0.60/15 0.398s} Nc6 {-0.12/7 0.185s} 3. Nf3 {+0.59/16 0.403s}
+Bg7 {-0.12/7 0.327s} 4. c3 {+0.66/15 0.150s} e6 {-0.06/7 0.402s}
+5. d3 {+0.44/16 0.334s} Na5 {+0.04/7 0.627s} 6. a4 {+0.07/16 0.290s}
+Nxc4 {+0.32/7 0.470s} 7. Bg5 {-0.39/16 0.124s} f6 {+3.23/7 0.057s}
+8. Bd2 {-4.57/19 0.572s} Nxd2 {+3.29/7 0.130s} 9. Nd4 {-5.74/18 0.137s}
+Nxb1 {+6.52/7 0.067s} 10. a5 {-6.51/20 0.614s} Nxc3 {+7.64/7 0.102s}
+11. Nf5 {-6.63/18 0.129s} Nxd1 {+16.29/7 0.025s} 12. Nd6+ {-8.78/18 0.155s}
+cxd6 {+19.74/7 0.025s} 13. O-O {-10.17/20 0.330s} Nxb2 {+24.55/7 0.056s}
+14. e5 {-10.67/18 0.225s} Qe7 {+24.86/7 0.163s} 15. exd6 {-10.81/18 0.208s}
+Qxd6 {+24.92/7 0.022s} 16. Rae1 {-11.64/18 0.400s} Ne7 {+25.02/7 0.051s}
+17. Ra1 {-11.91/18 0.198s} f5 {+25.10/7 0.053s} 18. Rfe1 {-11.84/19 0.384s}
+O-O {+25.12/7 0.207s} 19. a6 {-11.15/17 0.120s} b5 {+26.07/7 0.122s}
+20. d4 {-11.58/18 0.314s} Bxd4 {+26.09/7 0.040s} 21. g4 {-11.21/16 0.102s}
+Nd3 {+28.06/7 0.067s} 22. h3 {-11.75/16 0.184s} Bxf2+ {+30.88/7 0.052s}
+23. Kf1 {-M8/40 0.008s} Bxe1 {+32.35/7 0.103s} 24. Ra3 {-M8/39 0.012s}
+Qh2 {+299.95/7 0.072s} 25. g5 {-M4/245 0.003s}
+Qf2# {+299.99/7 0.060s, Black mates} 0-1
+

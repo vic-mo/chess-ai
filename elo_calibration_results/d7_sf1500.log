@@ -1,0 +1,20 @@
+Indexing opening suite...
+Started game 1 of 2 (ChessAI-D7 vs SF-1500)
+Finished game 1 (ChessAI-D7 vs SF-1500): 1-0 {White mates}
+Started game 2 of 2 (SF-1500 vs ChessAI-D7)
+Finished game 2 (SF-1500 vs ChessAI-D7): 1-0 {Black loses on time}
+--------------------------------------------------
+Results of ChessAI-D7 vs SF-1500 (5+0.05, NULL - 1t, NULL - 16MB, opening_suite.epd):
+Elo: -0.00 +/- 0.00, nElo: nan +/- nan
+LOS: nan %, DrawRatio: 100.00 %, PairsRatio: nan
+Games: 2, Wins: 1, Losses: 1, Draws: 0, Points: 1.0 (50.00 %)
+Ptnml(0-2): [0, 0, 1, 0, 0], WL/DD Ratio: inf
+--------------------------------------------------
+
+Player: ChessAI-D7
+  Timeouts: 1
+  Crashed: 0
+
+Finished match
+Total Time: 00:00:16 (hours:minutes:seconds)
+

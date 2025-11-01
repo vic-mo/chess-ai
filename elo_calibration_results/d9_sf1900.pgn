@@ -1,0 +1,42 @@
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2025.11.01"]
+[Round "1"]
+[White "ChessAI-D9"]
+[Black "SF-1900"]
+[Result "0-1"]
+[SetUp "1"]
+[FEN "rnbqkbnr/pppppppp/8/8/8/4P3/PPPP1PPP/RNBQKBNR b KQkq - 0 1"]
+[GameDuration "00:00:16"]
+[GameStartTime "2025-11-01T14:39:18 +0100"]
+[GameEndTime "2025-11-01T14:39:35 +0100"]
+[PlyCount "5"]
+[Termination "time forfeit"]
+[TimeControl "5+0.05"]
+[ECO "D04"]
+[Opening "Queen's Pawn Game: Colle System"]
+
+1... d5 {-0.13/20 0.536s} 2. d4 {0.00/9 2.236s} Nf6 {-0.17/18 0.115s}
+3. Nf3 {+0.02/9 1.862s} Bg4 {-0.13/15 0.169s, White loses on time} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2025.11.01"]
+[Round "1"]
+[White "SF-1900"]
+[Black "ChessAI-D9"]
+[Result "1-0"]
+[SetUp "1"]
+[FEN "rnbqkbnr/pppppppp/8/8/8/4P3/PPPP1PPP/RNBQKBNR b KQkq - 0 1"]
+[GameDuration "00:00:17"]
+[GameStartTime "2025-11-01T14:39:35 +0100"]
+[GameEndTime "2025-11-01T14:39:52 +0100"]
+[PlyCount "4"]
+[Termination "time forfeit"]
+[TimeControl "5+0.05"]
+[ECO "A00"]
+[Opening "Van't Kruijs Opening"]
+
+1... Nc6 {-0.07/9 1.765s} 2. a3 {+0.45/16 0.304s} e5 {-0.01/9 2.136s}
+3. c4 {+0.21/13 0.090s, Black loses on time} 1-0
+

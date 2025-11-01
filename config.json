@@ -1,0 +1,155 @@
+{
+  "resign": {
+    "move_count": 1,
+    "score": 0,
+    "twosided": false,
+    "enabled": false
+  },
+  "draw": {
+    "move_number": 0,
+    "move_count": 1,
+    "score": 0,
+    "enabled": false
+  },
+  "maxmoves": {
+    "move_count": 1,
+    "enabled": false
+  },
+  "tb_adjudication": {
+    "syzygy_dirs": "",
+    "max_pieces": 0,
+    "ignore_50_move_rule": false,
+    "enabled": false
+  },
+  "opening": {
+    "file": "./crates/engine/positions/opening_suite.epd",
+    "format": 0,
+    "order": 0,
+    "plies": -1,
+    "start": 1
+  },
+  "pgn": {
+    "additional_lines_rgx": [],
+    "event_name": "Fastchess Tournament",
+    "site": "?",
+    "file": "./elo_calibration_results/d11_sf1320.pgn",
+    "notation": 0,
+    "track_nodes": false,
+    "track_seldepth": false,
+    "track_nps": false,
+    "track_hashfull": false,
+    "track_tbhits": false,
+    "track_timeleft": false,
+    "track_latency": false,
+    "track_pv": false,
+    "min": false,
+    "crc": false
+  },
+  "epd": {
+    "file": ""
+  },
+  "sprt": {
+    "alpha": 0.0,
+    "beta": 0.0,
+    "elo0": 0.0,
+    "elo1": 0.0,
+    "model": "normalized",
+    "enabled": false
+  },
+  "config_name": "config.json",
+  "output": 0,
+  "seed": 9849442504835408591,
+  "variant": 0,
+  "type": 0,
+  "gauntlet_seeds": 1,
+  "ratinginterval": 10,
+  "scoreinterval": 1,
+  "wait": 0,
+  "autosaveinterval": 20,
+  "games": 2,
+  "rounds": 1,
+  "concurrency": 1,
+  "force_concurrency": false,
+  "recover": false,
+  "noswap": false,
+  "reverse": false,
+  "report_penta": true,
+  "affinity": false,
+  "show_latency": false,
+  "log": {
+    "file": "",
+    "level": 2,
+    "compress": false,
+    "realtime": true,
+    "engine_coms": false
+  },
+  "engines": [
+    {
+      "name": "ChessAI-D11",
+      "dir": "",
+      "cmd": "./target/release/examples/uci_stdio",
+      "args": "",
+      "restart": false,
+      "options": [["FixedDepth", "11"]],
+      "limit": {
+        "tc": {
+          "increment": 50,
+          "fixed_time": 0,
+          "time": 5000,
+          "moves": 0,
+          "timemargin": 0
+        },
+        "nodes": 0,
+        "plies": 0
+      },
+      "variant": 0
+    },
+    {
+      "name": "SF-1320",
+      "dir": "",
+      "cmd": "/opt/homebrew/bin/stockfish",
+      "args": "",
+      "restart": false,
+      "options": [
+        ["UCI_LimitStrength", "true"],
+        ["UCI_Elo", "1320"]
+      ],
+      "limit": {
+        "tc": {
+          "increment": 50,
+          "fixed_time": 0,
+          "time": 5000,
+          "moves": 0,
+          "timemargin": 0
+        },
+        "nodes": 0,
+        "plies": 0
+      },
+      "variant": 0
+    }
+  ],
+  "stats": {
+    "ChessAI-D11 vs SF-1320": {
+      "wins": 0,
+      "losses": 0,
+      "draws": 0,
+      "penta_WW": 0,
+      "penta_WD": 0,
+      "penta_WL": 0,
+      "penta_DD": 0,
+      "penta_LD": 0,
+      "penta_LL": 0
+    },
+    "SF-1320 vs ChessAI-D11": {
+      "wins": 2,
+      "losses": 0,
+      "draws": 0,
+      "penta_WW": 1,
+      "penta_WD": 0,
+      "penta_WL": 0,
+      "penta_DD": 0,
+      "penta_LD": 0,
+      "penta_LL": 0
+    }
+  }
+}

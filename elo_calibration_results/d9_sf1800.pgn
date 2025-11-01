@@ -1,0 +1,43 @@
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2025.11.01"]
+[Round "1"]
+[White "ChessAI-D9"]
+[Black "SF-1800"]
+[Result "0-1"]
+[SetUp "1"]
+[FEN "rnbqkb1r/pppppppp/5n2/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2"]
+[GameDuration "00:00:16"]
+[GameStartTime "2025-11-01T14:38:42 +0100"]
+[GameEndTime "2025-11-01T14:38:59 +0100"]
+[PlyCount "4"]
+[Termination "time forfeit"]
+[TimeControl "5+0.05"]
+[ECO "B02"]
+[Opening "Alekhine Defense"]
+
+2. Nc3 {+0.05/9 1.105s} d6 {-0.16/16 0.351s} 3. Nf3 {+0.08/9 3.437s}
+Nbd7 {-0.44/11 0.041s, White loses on time} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2025.11.01"]
+[Round "1"]
+[White "SF-1800"]
+[Black "ChessAI-D9"]
+[Result "1-0"]
+[SetUp "1"]
+[FEN "rnbqkb1r/pppppppp/5n2/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2"]
+[GameDuration "00:00:17"]
+[GameStartTime "2025-11-01T14:38:59 +0100"]
+[GameEndTime "2025-11-01T14:39:17 +0100"]
+[PlyCount "7"]
+[Termination "time forfeit"]
+[TimeControl "5+0.05"]
+[ECO "C26"]
+[Opening "Vienna Game: Falkbeer Variation"]
+
+2. Nc3 {+0.58/13 0.160s} e5 {-0.05/9 2.727s} 3. d4 {+0.26/13 0.175s}
+exd4 {+0.07/9 0.661s} 4. Qxd4 {-0.19/15 0.279s} Nc6 {+0.07/9 0.807s}
+5. Qd3 {-0.17/16 0.670s, Black loses on time} 1-0
+

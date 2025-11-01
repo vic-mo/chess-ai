@@ -1,0 +1,42 @@
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2025.11.01"]
+[Round "1"]
+[White "ChessAI-D9"]
+[Black "SF-1320"]
+[Result "0-1"]
+[GameDuration "00:00:18"]
+[GameStartTime "2025-11-01T14:35:27 +0100"]
+[GameEndTime "2025-11-01T14:35:46 +0100"]
+[PlyCount "16"]
+[Termination "time forfeit"]
+[TimeControl "5+0.05"]
+[ECO "B32"]
+[Opening "Sicilian Defense: Open"]
+
+1. e4 {0.00/0 0.006s} c5 {-0.29/18 0.547s} 2. Nf3 {0.00/0 0.004s}
+Nc6 {-0.33/17 0.550s} 3. d4 {0.00/0 0.004s} Nf6 {-0.37/15 0.120s}
+4. d5 {+0.47/9 1.007s} Nb8 {-1.98/17 0.343s} 5. e5 {+0.44/9 0.677s}
+Ne4 {-3.04/16 0.188s} 6. Bd3 {+1.11/9 1.074s} Qa5+ {-3.37/18 0.342s}
+7. c3 {+1.12/9 0.888s} d6 {-3.52/16 0.128s} 8. Bxe4 {+3.25/9 0.531s}
+Bg4 {-5.70/19 0.595s, White loses on time} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2025.11.01"]
+[Round "1"]
+[White "SF-1320"]
+[Black "ChessAI-D9"]
+[Result "1-0"]
+[GameDuration "00:00:17"]
+[GameStartTime "2025-11-01T14:35:46 +0100"]
+[GameEndTime "2025-11-01T14:36:04 +0100"]
+[PlyCount "5"]
+[Termination "time forfeit"]
+[TimeControl "5+0.05"]
+[ECO "A20"]
+[Opening "English Opening: King's English Variation"]
+
+1. c4 {+0.32/19 0.516s} e5 {-0.03/9 1.948s} 2. d3 {+0.19/14 0.119s}
+Nc6 {0.00/9 2.364s} 3. Nc3 {+0.04/20 0.504s, Black loses on time} 1-0
+

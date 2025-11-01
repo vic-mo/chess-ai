@@ -1,0 +1,42 @@
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2025.11.01"]
+[Round "1"]
+[White "ChessAI-D9"]
+[Black "SF-1700"]
+[Result "0-1"]
+[SetUp "1"]
+[FEN "rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 1 2"]
+[GameDuration "00:00:20"]
+[GameStartTime "2025-11-01T14:38:00 +0100"]
+[GameEndTime "2025-11-01T14:38:21 +0100"]
+[PlyCount "4"]
+[Termination "time forfeit"]
+[TimeControl "5+0.05"]
+[ECO "A45"]
+[Opening "Indian Defense"]
+
+2. Nc3 {+0.04/9 1.121s} d6 {-0.01/14 0.131s} 3. e4 {+0.17/9 3.216s}
+e5 {-0.44/15 0.185s, White loses on time} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2025.11.01"]
+[Round "1"]
+[White "SF-1700"]
+[Black "ChessAI-D9"]
+[Result "1-0"]
+[SetUp "1"]
+[FEN "rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 1 2"]
+[GameDuration "00:00:19"]
+[GameStartTime "2025-11-01T14:38:21 +0100"]
+[GameEndTime "2025-11-01T14:38:40 +0100"]
+[PlyCount "5"]
+[Termination "time forfeit"]
+[TimeControl "5+0.05"]
+[ECO "A45"]
+[Opening "Indian Defense"]
+
+2. e3 {+0.24/19 0.466s} e6 {-0.12/9 2.090s} 3. Be2 {+0.17/15 0.104s}
+Nc6 {-0.03/9 2.377s} 4. c3 {+0.42/14 0.110s, Black loses on time} 1-0
+

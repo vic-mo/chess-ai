@@ -1,0 +1,94 @@
+# Truly Hanging Pieces - No Defense
+# Each position has a piece that is completely undefended
+# Target: 98%+ accuracy at depth 4
+# These are the simplest possible tactical positions
+
+# Undefended queen
+rnbqkbnr/pppppppp/8/8/8/3q4/PPPPPPPP/RNBQKBNR w KQkq - bm Qxd3; id "TH.001";
+
+# Undefended rook
+rnbqkbnr/pppppppp/8/8/4r3/8/PPPPPPPP/RNBQKBNR w KQkq - bm Qxe4; id "TH.002";
+
+# Undefended knight
+rnbqkbnr/pppppppp/8/8/4n3/8/PPPPPPPP/RNBQKBNR w KQkq - bm Qxe4; id "TH.003";
+
+# Undefended bishop
+rnbqkbnr/pppppppp/8/8/4b3/8/PPPPPPPP/RNBQKBNR w KQkq - bm Qxe4; id "TH.004";
+
+# Queen on edge undefended
+rnb1kbnr/pppppppp/8/8/8/7q/PPPPPPPP/RNBQKBNR w KQkq - bm Qxh3; id "TH.005";
+
+# Rook in corner undefended
+rnbqkbn1/pppppppr/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - bm Qxh7; id "TH.006";
+
+# Knight on rim undefended
+rnbqkbnr/pppppppp/8/8/8/7n/PPPPPPPP/RNBQKBNR w KQkq - bm Qxh3; id "TH.007";
+
+# Bishop in center undefended
+rnbqkbnr/pppppppp/8/8/3b4/8/PPPPPPPP/RNBQKBNR w KQkq - bm Qxd4; id "TH.008";
+
+# Queen vs queen trade (both undefended)
+rnb1kbnr/pppppppp/8/8/8/3q4/PPPPPPPP/RNB1KBNR w KQkq - bm Qxd3; id "TH.009";
+
+# Rook hanging after pawn
+rnbqkbnr/ppp1pppp/8/3p4/3Pr3/8/PPP1PPPP/RNBQKBNR w KQkq - bm Qxe4; id "TH.010";
+
+# Black queen hanging
+8/8/8/4q3/8/8/8/4K3 w - - bm Kxe5; id "TH.011";
+
+# Black rook hanging
+8/8/8/4r3/8/8/8/4K3 w - - bm Kxe5; id "TH.012";
+
+# Black knight hanging
+8/8/8/4n3/8/8/8/4K3 w - - bm Kxe5; id "TH.013";
+
+# Black bishop hanging
+8/8/8/4b3/8/8/8/4K3 w - - bm Kxe5; id "TH.014";
+
+# White queen hanging
+8/8/8/4Q3/8/8/8/4k3 b - - bm Kxe5; id "TH.015";
+
+# White rook hanging
+8/8/8/4R3/8/8/8/4k3 b - - bm Kxe5; id "TH.016";
+
+# White knight hanging
+8/8/8/4N3/8/8/8/4k3 b - - bm Kxe5; id "TH.017";
+
+# White bishop hanging
+8/8/8/4B3/8/8/8/4k3 b - - bm Kxe5; id "TH.018";
+
+# Multiple pieces - take queen
+rnbqkbnr/pppppppp/8/8/3qr3/8/PPPPPPPP/RNBQKBNR w KQkq - bm Qxd4; id "TH.019";
+
+# Multiple pieces - take rook
+rnbqkbnr/pppppppp/8/8/3rn3/8/PPPPPPPP/RNBQKBNR w KQkq - bm Qxd4; id "TH.020";
+
+# Queen in corner
+q7/8/8/8/8/8/8/7K w - - bm Kxa8; id "TH.021";
+
+# Rook on back rank
+r7/8/8/8/8/8/8/7K w - - bm Kxa8; id "TH.022";
+
+# Bishop on diagonal
+7b/8/8/8/8/8/8/7K w - - bm Kxh8; id "TH.023";
+
+# Knight on edge
+7n/8/8/8/8/8/8/7K w - - bm Kxh8; id "TH.024";
+
+# Queen on starting square
+rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNB1KBNR w KQkq - bm Qxd8; id "TH.025";
+
+# Free queen in opening
+rnb1kbnr/pppppppp/8/8/8/3q4/PPPPPPPP/RNBQKBNR w KQkq - bm Qxd3; id "TH.026";
+
+# Free rook after exchange
+rnbqkbnr/ppp1pppp/8/3p4/3Pr3/8/PPP1PPPP/RNBQKBNR w KQkq - bm dxe4; id "TH.027";
+
+# Free knight in center
+rnbqkb1r/pppppppp/5n2/8/8/4n3/PPPPPPPP/RNBQKBNR w KQkq - bm Qxe3; id "TH.028";
+
+# Free bishop on rim
+rnbqkbnr/pppppppp/8/8/8/b7/PPPPPPPP/RNBQKBNR w KQkq - bm Qxa3; id "TH.029";
+
+# Queen and rook both hanging - take queen
+rnbqkbnr/pppppppp/8/8/3qr3/8/PPPPPPPP/RNBQKBNR w KQkq - bm Qxd4; id "TH.030";

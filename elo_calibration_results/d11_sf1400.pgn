@@ -1,0 +1,20 @@
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2025.11.01"]
+[Round "1"]
+[White "ChessAI-D11"]
+[Black "SF-1400"]
+[Result "0-1"]
+[SetUp "1"]
+[FEN "rnbqkbnr/pp1ppppp/2p5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"]
+[GameDuration "00:00:20"]
+[GameStartTime "2025-11-01T14:41:16 +0100"]
+[GameEndTime "2025-11-01T14:41:36 +0100"]
+[PlyCount "0"]
+[Termination "time forfeit"]
+[TimeControl "5+0.05"]
+[ECO "B10"]
+[Opening "Caro-Kann Defense"]
+
+ 0-1
+

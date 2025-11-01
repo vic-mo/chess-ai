@@ -1,0 +1,42 @@
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2025.11.01"]
+[Round "1"]
+[White "ChessAI-D9"]
+[Black "SF-1400"]
+[Result "0-1"]
+[SetUp "1"]
+[FEN "rnbqkb1r/pppppppp/5n2/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2"]
+[GameDuration "00:00:18"]
+[GameStartTime "2025-11-01T14:36:05 +0100"]
+[GameEndTime "2025-11-01T14:36:24 +0100"]
+[PlyCount "4"]
+[Termination "time forfeit"]
+[TimeControl "5+0.05"]
+[ECO "B02"]
+[Opening "Alekhine Defense"]
+
+2. Nc3 {+0.05/9 1.100s} d6 {-0.16/16 0.348s} 3. Nf3 {+0.08/9 3.446s}
+e6 {-0.44/11 0.041s, White loses on time} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2025.11.01"]
+[Round "1"]
+[White "SF-1400"]
+[Black "ChessAI-D9"]
+[Result "1-0"]
+[SetUp "1"]
+[FEN "rnbqkb1r/pppppppp/5n2/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2"]
+[GameDuration "00:00:24"]
+[GameStartTime "2025-11-01T14:36:24 +0100"]
+[GameEndTime "2025-11-01T14:36:49 +0100"]
+[PlyCount "3"]
+[Termination "time forfeit"]
+[TimeControl "5+0.05"]
+[ECO "C42"]
+[Opening "Petrov's Defense: Three Knights Game"]
+
+2. Nc3 {+0.58/13 0.160s} e5 {-0.05/9 2.767s}
+3. Nf3 {+0.26/13 0.181s, Black loses on time} 1-0
+

@@ -1,0 +1,3008 @@
+{
+  "total": 300,
+  "passed": 108,
+  "failed": 192,
+  "accuracy": 36.0,
+  "results": [
+    {
+      "id": "WAC.001",
+      "passed": false,
+      "engine_move": "g3g7",
+      "expected_moves": ["Qg6"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 87,
+      "nodes": 44992
+    },
+    {
+      "id": "WAC.002",
+      "passed": false,
+      "engine_move": "b3a3",
+      "expected_moves": ["Rxb2"],
+      "score": 325,
+      "depth": 8,
+      "time_ms": 63,
+      "nodes": 32520
+    },
+    {
+      "id": "WAC.003",
+      "passed": true,
+      "engine_move": "e3g3",
+      "expected_moves": ["Rg3"],
+      "score": -143,
+      "depth": 8,
+      "time_ms": 1578,
+      "nodes": 533750
+    },
+    {
+      "id": "WAC.004",
+      "passed": true,
+      "engine_move": "h6h7",
+      "expected_moves": ["Qxh7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 35,
+      "nodes": 19217
+    },
+    {
+      "id": "WAC.005",
+      "passed": true,
+      "engine_move": "c6c4",
+      "expected_moves": ["Qc4+"],
+      "score": 29997,
+      "depth": 8,
+      "time_ms": 45,
+      "nodes": 25991
+    },
+    {
+      "id": "WAC.006",
+      "passed": false,
+      "engine_move": "b6b8",
+      "expected_moves": ["Rb7"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 5,
+      "nodes": 1649
+    },
+    {
+      "id": "WAC.007",
+      "passed": false,
+      "engine_move": "g4f2",
+      "expected_moves": ["Ne3"],
+      "score": 844,
+      "depth": 8,
+      "time_ms": 54,
+      "nodes": 18826
+    },
+    {
+      "id": "WAC.008",
+      "passed": false,
+      "engine_move": "e7g7",
+      "expected_moves": ["Rf7"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 43,
+      "nodes": 25611
+    },
+    {
+      "id": "WAC.009",
+      "passed": false,
+      "engine_move": "h4h1",
+      "expected_moves": ["Bh2+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 58,
+      "nodes": 31113
+    },
+    {
+      "id": "WAC.010",
+      "passed": true,
+      "engine_move": "h4h7",
+      "expected_moves": ["Rxh7"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 208,
+      "nodes": 81579
+    },
+    {
+      "id": "WAC.011",
+      "passed": true,
+      "engine_move": "f3c6",
+      "expected_moves": ["Bxc6"],
+      "score": 522,
+      "depth": 8,
+      "time_ms": 403,
+      "nodes": 122204
+    },
+    {
+      "id": "WAC.012",
+      "passed": false,
+      "engine_move": "g4g1",
+      "expected_moves": ["Qxf3+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 21,
+      "nodes": 11627
+    },
+    {
+      "id": "WAC.013",
+      "passed": true,
+      "engine_move": "f1f8",
+      "expected_moves": ["Qxf8+"],
+      "score": 732,
+      "depth": 8,
+      "time_ms": 58,
+      "nodes": 22629
+    },
+    {
+      "id": "WAC.014",
+      "passed": true,
+      "engine_move": "h3h7",
+      "expected_moves": ["Qxh7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 433,
+      "nodes": 141296
+    },
+    {
+      "id": "WAC.015",
+      "passed": true,
+      "engine_move": "b8b7",
+      "expected_moves": ["Rxb7"],
+      "score": 1183,
+      "depth": 8,
+      "time_ms": 59,
+      "nodes": 30758
+    },
+    {
+      "id": "WAC.016",
+      "passed": false,
+      "engine_move": "e2f4",
+      "expected_moves": ["Nc3"],
+      "score": -6,
+      "depth": 8,
+      "time_ms": 252,
+      "nodes": 75054
+    },
+    {
+      "id": "WAC.017",
+      "passed": false,
+      "engine_move": "c1g5",
+      "expected_moves": ["Ne5"],
+      "score": 41,
+      "depth": 8,
+      "time_ms": 936,
+      "nodes": 277873
+    },
+    {
+      "id": "WAC.018",
+      "passed": false,
+      "engine_move": "a8f8",
+      "expected_moves": ["Rh8"],
+      "score": 486,
+      "depth": 8,
+      "time_ms": 34,
+      "nodes": 18590
+    },
+    {
+      "id": "WAC.019",
+      "passed": false,
+      "engine_move": "h2h3",
+      "expected_moves": ["c6"],
+      "score": -126,
+      "depth": 8,
+      "time_ms": 1360,
+      "nodes": 393134
+    },
+    {
+      "id": "WAC.020",
+      "passed": true,
+      "engine_move": "d7b5",
+      "expected_moves": ["Bb5"],
+      "score": 1177,
+      "depth": 8,
+      "time_ms": 68,
+      "nodes": 25102
+    },
+    {
+      "id": "WAC.021",
+      "passed": true,
+      "engine_move": "d2h6",
+      "expected_moves": ["Qh6"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 149,
+      "nodes": 67387
+    },
+    {
+      "id": "WAC.022",
+      "passed": true,
+      "engine_move": "g5f7",
+      "expected_moves": ["Ba2", "Nxf7"],
+      "score": 262,
+      "depth": 8,
+      "time_ms": 557,
+      "nodes": 183282
+    },
+    {
+      "id": "WAC.023",
+      "passed": true,
+      "engine_move": "g2g4",
+      "expected_moves": ["g4"],
+      "score": 838,
+      "depth": 8,
+      "time_ms": 341,
+      "nodes": 122208
+    },
+    {
+      "id": "WAC.024",
+      "passed": true,
+      "engine_move": "g7d4",
+      "expected_moves": ["Bd4"],
+      "score": 502,
+      "depth": 8,
+      "time_ms": 127,
+      "nodes": 49961
+    },
+    {
+      "id": "WAC.025",
+      "passed": false,
+      "engine_move": "g4g1",
+      "expected_moves": ["Qh4+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 21,
+      "nodes": 9727
+    },
+    {
+      "id": "WAC.026",
+      "passed": false,
+      "engine_move": "b6b2",
+      "expected_moves": ["Bf5"],
+      "score": -33,
+      "depth": 8,
+      "time_ms": 403,
+      "nodes": 135668
+    },
+    {
+      "id": "WAC.027",
+      "passed": true,
+      "engine_move": "a3f8",
+      "expected_moves": ["Qf8+"],
+      "score": 29997,
+      "depth": 8,
+      "time_ms": 52,
+      "nodes": 26514
+    },
+    {
+      "id": "WAC.028",
+      "passed": true,
+      "engine_move": "b4e1",
+      "expected_moves": ["Qe1+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 32,
+      "nodes": 15993
+    },
+    {
+      "id": "WAC.029",
+      "passed": false,
+      "engine_move": "g2b7",
+      "expected_moves": ["c6"],
+      "score": 464,
+      "depth": 8,
+      "time_ms": 276,
+      "nodes": 83487
+    },
+    {
+      "id": "WAC.030",
+      "passed": false,
+      "engine_move": "c1h6",
+      "expected_moves": ["Nxd6"],
+      "score": 306,
+      "depth": 8,
+      "time_ms": 1243,
+      "nodes": 344818
+    },
+    {
+      "id": "WAC.031",
+      "passed": true,
+      "engine_move": "d5e6",
+      "expected_moves": ["Qxa8", "d6", "dxe6", "g3"],
+      "score": 350,
+      "depth": 8,
+      "time_ms": 261,
+      "nodes": 93198
+    },
+    {
+      "id": "WAC.032",
+      "passed": false,
+      "engine_move": "g3e4",
+      "expected_moves": ["Qd8+"],
+      "score": 315,
+      "depth": 8,
+      "time_ms": 371,
+      "nodes": 141874
+    },
+    {
+      "id": "WAC.033",
+      "passed": false,
+      "engine_move": "c1b1",
+      "expected_moves": ["Qe5+", "Qf4"],
+      "score": 311,
+      "depth": 8,
+      "time_ms": 278,
+      "nodes": 97601
+    },
+    {
+      "id": "WAC.034",
+      "passed": false,
+      "engine_move": "e5h2",
+      "expected_moves": ["Bg1"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 25,
+      "nodes": 13710
+    },
+    {
+      "id": "WAC.035",
+      "passed": true,
+      "engine_move": "h4h7",
+      "expected_moves": ["Rxh7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 113,
+      "nodes": 36847
+    },
+    {
+      "id": "WAC.036",
+      "passed": false,
+      "engine_move": "d6h2",
+      "expected_moves": ["Re1+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 37,
+      "nodes": 22339
+    },
+    {
+      "id": "WAC.037",
+      "passed": false,
+      "engine_move": "a2b4",
+      "expected_moves": ["Nxd4+"],
+      "score": -141,
+      "depth": 8,
+      "time_ms": 1570,
+      "nodes": 534447
+    },
+    {
+      "id": "WAC.038",
+      "passed": true,
+      "engine_move": "d2d8",
+      "expected_moves": ["Qd3", "Rd8+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 99,
+      "nodes": 53610
+    },
+    {
+      "id": "WAC.039",
+      "passed": false,
+      "engine_move": "a1b1",
+      "expected_moves": ["Na4"],
+      "score": 222,
+      "depth": 8,
+      "time_ms": 1633,
+      "nodes": 482041
+    },
+    {
+      "id": "WAC.040",
+      "passed": false,
+      "engine_move": "h3h1",
+      "expected_moves": ["Rc8"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 44,
+      "nodes": 22726
+    },
+    {
+      "id": "WAC.041",
+      "passed": false,
+      "engine_move": "f7f8",
+      "expected_moves": ["Ka5", "Kc5", "b7"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 23,
+      "nodes": 15924
+    },
+    {
+      "id": "WAC.042",
+      "passed": true,
+      "engine_move": "b4a5",
+      "expected_moves": ["Ba5"],
+      "score": 239,
+      "depth": 8,
+      "time_ms": 372,
+      "nodes": 113633
+    },
+    {
+      "id": "WAC.043",
+      "passed": true,
+      "engine_move": "d5a8",
+      "expected_moves": ["Be7", "Qxa8"],
+      "score": 679,
+      "depth": 8,
+      "time_ms": 75,
+      "nodes": 28647
+    },
+    {
+      "id": "WAC.044",
+      "passed": true,
+      "engine_move": "d5c4",
+      "expected_moves": ["dxc4"],
+      "score": 273,
+      "depth": 8,
+      "time_ms": 366,
+      "nodes": 121888
+    },
+    {
+      "id": "WAC.045",
+      "passed": false,
+      "engine_move": "e7f8",
+      "expected_moves": ["Qxa1"],
+      "score": -202,
+      "depth": 8,
+      "time_ms": 499,
+      "nodes": 187665
+    },
+    {
+      "id": "WAC.046",
+      "passed": true,
+      "engine_move": "c3b5",
+      "expected_moves": ["Nb5"],
+      "score": 192,
+      "depth": 8,
+      "time_ms": 909,
+      "nodes": 287257
+    },
+    {
+      "id": "WAC.047",
+      "passed": false,
+      "engine_move": "f6g4",
+      "expected_moves": ["Nxd4"],
+      "score": -79,
+      "depth": 8,
+      "time_ms": 8139,
+      "nodes": 2425804
+    },
+    {
+      "id": "WAC.048",
+      "passed": false,
+      "engine_move": "c8e6",
+      "expected_moves": ["Rb4"],
+      "score": -146,
+      "depth": 8,
+      "time_ms": 1610,
+      "nodes": 424674
+    },
+    {
+      "id": "WAC.049",
+      "passed": true,
+      "engine_move": "h5h7",
+      "expected_moves": ["Qxh7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 159,
+      "nodes": 61084
+    },
+    {
+      "id": "WAC.050",
+      "passed": false,
+      "engine_move": "b7b8",
+      "expected_moves": ["Rxb6+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 148,
+      "nodes": 71131
+    },
+    {
+      "id": "WAC.051",
+      "passed": false,
+      "engine_move": "h5h6",
+      "expected_moves": ["Rg4+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 316,
+      "nodes": 169899
+    },
+    {
+      "id": "WAC.052",
+      "passed": false,
+      "engine_move": "b6d8",
+      "expected_moves": ["Re7", "c4"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 109,
+      "nodes": 64155
+    },
+    {
+      "id": "WAC.053",
+      "passed": false,
+      "engine_move": "g3h2",
+      "expected_moves": ["Re1"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 21,
+      "nodes": 14702
+    },
+    {
+      "id": "WAC.054",
+      "passed": false,
+      "engine_move": "f8f1",
+      "expected_moves": ["Qh1+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 72,
+      "nodes": 40907
+    },
+    {
+      "id": "WAC.055",
+      "passed": true,
+      "engine_move": "d4g7",
+      "expected_moves": ["Qxg7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 38,
+      "nodes": 23690
+    },
+    {
+      "id": "WAC.056",
+      "passed": true,
+      "engine_move": "c5f2",
+      "expected_moves": ["Bxf2+"],
+      "score": 776,
+      "depth": 8,
+      "time_ms": 388,
+      "nodes": 121466
+    },
+    {
+      "id": "WAC.057",
+      "passed": false,
+      "engine_move": "h6h8",
+      "expected_moves": ["Rf8+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 49,
+      "nodes": 28623
+    },
+    {
+      "id": "WAC.058",
+      "passed": false,
+      "engine_move": "d3f3",
+      "expected_moves": ["Qd1+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 90,
+      "nodes": 40393
+    },
+    {
+      "id": "WAC.059",
+      "passed": false,
+      "engine_move": "d4g7",
+      "expected_moves": ["Nd5"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 84,
+      "nodes": 34436
+    },
+    {
+      "id": "WAC.060",
+      "passed": false,
+      "engine_move": "h3h7",
+      "expected_moves": ["Qh8+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 50,
+      "nodes": 26946
+    },
+    {
+      "id": "WAC.061",
+      "passed": true,
+      "engine_move": "f3f7",
+      "expected_moves": ["Qf7+"],
+      "score": 29997,
+      "depth": 8,
+      "time_ms": 101,
+      "nodes": 60570
+    },
+    {
+      "id": "WAC.062",
+      "passed": false,
+      "engine_move": "g8d8",
+      "expected_moves": ["Rxg3+"],
+      "score": -363,
+      "depth": 8,
+      "time_ms": 2074,
+      "nodes": 681838
+    },
+    {
+      "id": "WAC.063",
+      "passed": true,
+      "engine_move": "f3f7",
+      "expected_moves": ["Nxf7"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 326,
+      "nodes": 113725
+    },
+    {
+      "id": "WAC.064",
+      "passed": false,
+      "engine_move": "e3e4",
+      "expected_moves": ["g4+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 35,
+      "nodes": 20278
+    },
+    {
+      "id": "WAC.065",
+      "passed": false,
+      "engine_move": "h6h7",
+      "expected_moves": ["Ne7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 648,
+      "nodes": 278298
+    },
+    {
+      "id": "WAC.066",
+      "passed": true,
+      "engine_move": "c7e5",
+      "expected_moves": ["Qxe5"],
+      "score": 422,
+      "depth": 8,
+      "time_ms": 277,
+      "nodes": 88880
+    },
+    {
+      "id": "WAC.067",
+      "passed": true,
+      "engine_move": "e5d5",
+      "expected_moves": ["Rxd5"],
+      "score": 836,
+      "depth": 8,
+      "time_ms": 81,
+      "nodes": 35259
+    },
+    {
+      "id": "WAC.068",
+      "passed": false,
+      "engine_move": "c3c5",
+      "expected_moves": ["Qxe3"],
+      "score": 510,
+      "depth": 8,
+      "time_ms": 89,
+      "nodes": 34430
+    },
+    {
+      "id": "WAC.069",
+      "passed": false,
+      "engine_move": "e6e8",
+      "expected_moves": ["f3", "h3"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 42,
+      "nodes": 25997
+    },
+    {
+      "id": "WAC.070",
+      "passed": true,
+      "engine_move": "b4a2",
+      "expected_moves": ["Na2+"],
+      "score": 603,
+      "depth": 8,
+      "time_ms": 671,
+      "nodes": 217637
+    },
+    {
+      "id": "WAC.071",
+      "passed": true,
+      "engine_move": "b5a7",
+      "expected_moves": ["Nxa7+"],
+      "score": 103,
+      "depth": 8,
+      "time_ms": 1934,
+      "nodes": 580364
+    },
+    {
+      "id": "WAC.072",
+      "passed": false,
+      "engine_move": "c4f7",
+      "expected_moves": ["e6"],
+      "score": 716,
+      "depth": 8,
+      "time_ms": 144,
+      "nodes": 59689
+    },
+    {
+      "id": "WAC.073",
+      "passed": false,
+      "engine_move": "d1d7",
+      "expected_moves": ["Qd2"],
+      "score": 593,
+      "depth": 8,
+      "time_ms": 336,
+      "nodes": 102926
+    },
+    {
+      "id": "WAC.074",
+      "passed": false,
+      "engine_move": "f4h2",
+      "expected_moves": ["Qf1+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 56,
+      "nodes": 36385
+    },
+    {
+      "id": "WAC.075",
+      "passed": false,
+      "engine_move": "e8e1",
+      "expected_moves": ["Qd6"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 48,
+      "nodes": 24718
+    },
+    {
+      "id": "WAC.076",
+      "passed": true,
+      "engine_move": "g5f6",
+      "expected_moves": ["Bxf6"],
+      "score": 525,
+      "depth": 8,
+      "time_ms": 2327,
+      "nodes": 805495
+    },
+    {
+      "id": "WAC.077",
+      "passed": false,
+      "engine_move": "d4f3",
+      "expected_moves": ["Ng3"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 125,
+      "nodes": 74036
+    },
+    {
+      "id": "WAC.078",
+      "passed": false,
+      "engine_move": "f5e6",
+      "expected_moves": ["Ng5+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 230,
+      "nodes": 128593
+    },
+    {
+      "id": "WAC.079",
+      "passed": true,
+      "engine_move": "h3h2",
+      "expected_moves": ["Qxh2+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 65,
+      "nodes": 37033
+    },
+    {
+      "id": "WAC.080",
+      "passed": true,
+      "engine_move": "d1a1",
+      "expected_moves": ["Ra1"],
+      "score": 292,
+      "depth": 8,
+      "time_ms": 1184,
+      "nodes": 357956
+    },
+    {
+      "id": "WAC.081",
+      "passed": true,
+      "engine_move": "e7d6",
+      "expected_moves": ["Bd6"],
+      "score": 359,
+      "depth": 8,
+      "time_ms": 864,
+      "nodes": 266344
+    },
+    {
+      "id": "WAC.082",
+      "passed": false,
+      "engine_move": "g3g7",
+      "expected_moves": ["Bh7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 45,
+      "nodes": 22484
+    },
+    {
+      "id": "WAC.083",
+      "passed": false,
+      "engine_move": "d4g7",
+      "expected_moves": ["Qxd7"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 98,
+      "nodes": 52575
+    },
+    {
+      "id": "WAC.084",
+      "passed": true,
+      "engine_move": "d5g8",
+      "expected_moves": ["Qg8+"],
+      "score": 29997,
+      "depth": 8,
+      "time_ms": 175,
+      "nodes": 69821
+    },
+    {
+      "id": "WAC.085",
+      "passed": false,
+      "engine_move": "e8b8",
+      "expected_moves": ["Na6"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 32,
+      "nodes": 21269
+    },
+    {
+      "id": "WAC.086",
+      "passed": true,
+      "engine_move": "f6g4",
+      "expected_moves": ["Ng4+"],
+      "score": 107,
+      "depth": 8,
+      "time_ms": 864,
+      "nodes": 501912
+    },
+    {
+      "id": "WAC.087",
+      "passed": false,
+      "engine_move": "f5f4",
+      "expected_moves": ["Rxe5"],
+      "score": 196,
+      "depth": 8,
+      "time_ms": 96,
+      "nodes": 48265
+    },
+    {
+      "id": "WAC.088",
+      "passed": true,
+      "engine_move": "g6g2",
+      "expected_moves": ["Rxg2+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 123,
+      "nodes": 62297
+    },
+    {
+      "id": "WAC.089",
+      "passed": true,
+      "engine_move": "g7g5",
+      "expected_moves": ["g5"],
+      "score": 653,
+      "depth": 8,
+      "time_ms": 628,
+      "nodes": 209696
+    },
+    {
+      "id": "WAC.090",
+      "passed": true,
+      "engine_move": "f5g7",
+      "expected_moves": ["Nxg7"],
+      "score": 442,
+      "depth": 8,
+      "time_ms": 177,
+      "nodes": 66407
+    },
+    {
+      "id": "WAC.091",
+      "passed": false,
+      "engine_move": "c8h3",
+      "expected_moves": ["Be6"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 95,
+      "nodes": 44997
+    },
+    {
+      "id": "WAC.092",
+      "passed": false,
+      "engine_move": "e6c4",
+      "expected_moves": ["Bxg4"],
+      "score": 19,
+      "depth": 8,
+      "time_ms": 2601,
+      "nodes": 791912
+    },
+    {
+      "id": "WAC.093",
+      "passed": false,
+      "engine_move": "g7f8",
+      "expected_moves": ["Bh6"],
+      "score": 527,
+      "depth": 8,
+      "time_ms": 313,
+      "nodes": 100792
+    },
+    {
+      "id": "WAC.094",
+      "passed": false,
+      "engine_move": "a4c5",
+      "expected_moves": ["e4+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 42,
+      "nodes": 25740
+    },
+    {
+      "id": "WAC.095",
+      "passed": false,
+      "engine_move": "e3g5",
+      "expected_moves": ["Ng4+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 17,
+      "nodes": 7769
+    },
+    {
+      "id": "WAC.096",
+      "passed": false,
+      "engine_move": "h4h6",
+      "expected_moves": ["Qd8+", "b3"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 92,
+      "nodes": 41018
+    },
+    {
+      "id": "WAC.097",
+      "passed": true,
+      "engine_move": "g2a8",
+      "expected_moves": ["Qa8+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 78,
+      "nodes": 30752
+    },
+    {
+      "id": "WAC.098",
+      "passed": true,
+      "engine_move": "c5e4",
+      "expected_moves": ["Nxe4"],
+      "score": 800,
+      "depth": 8,
+      "time_ms": 340,
+      "nodes": 111589
+    },
+    {
+      "id": "WAC.099",
+      "passed": false,
+      "engine_move": "h6h7",
+      "expected_moves": ["Rh5"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 36,
+      "nodes": 21066
+    },
+    {
+      "id": "WAC.100",
+      "passed": true,
+      "engine_move": "b5b6",
+      "expected_moves": ["Be3", "b6+"],
+      "score": 1336,
+      "depth": 8,
+      "time_ms": 11,
+      "nodes": 5824
+    },
+    {
+      "id": "WAC.101",
+      "passed": false,
+      "engine_move": "f8f2",
+      "expected_moves": ["Bc3"],
+      "score": 210,
+      "depth": 8,
+      "time_ms": 364,
+      "nodes": 153730
+    },
+    {
+      "id": "WAC.102",
+      "passed": false,
+      "engine_move": "c8e8",
+      "expected_moves": ["Qxf8+"],
+      "score": 90,
+      "depth": 8,
+      "time_ms": 1418,
+      "nodes": 494955
+    },
+    {
+      "id": "WAC.103",
+      "passed": true,
+      "engine_move": "h6g6",
+      "expected_moves": ["Qxg6+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 167,
+      "nodes": 75406
+    },
+    {
+      "id": "WAC.104",
+      "passed": false,
+      "engine_move": "e5f7",
+      "expected_moves": ["Qxh5"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 301,
+      "nodes": 174051
+    },
+    {
+      "id": "WAC.105",
+      "passed": true,
+      "engine_move": "h5h4",
+      "expected_moves": ["Bxg3", "Qxh4"],
+      "score": 29995,
+      "depth": 8,
+      "time_ms": 2049,
+      "nodes": 612274
+    },
+    {
+      "id": "WAC.106",
+      "passed": false,
+      "engine_move": "e4g3",
+      "expected_moves": ["Nf2+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 254,
+      "nodes": 144747
+    },
+    {
+      "id": "WAC.107",
+      "passed": false,
+      "engine_move": "b7c7",
+      "expected_moves": ["Nb5"],
+      "score": 453,
+      "depth": 8,
+      "time_ms": 64,
+      "nodes": 33233
+    },
+    {
+      "id": "WAC.108",
+      "passed": false,
+      "engine_move": "f3f8",
+      "expected_moves": ["Qe5"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 55,
+      "nodes": 33358
+    },
+    {
+      "id": "WAC.109",
+      "passed": false,
+      "engine_move": "d6d2",
+      "expected_moves": ["c3"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 45,
+      "nodes": 23621
+    },
+    {
+      "id": "WAC.110",
+      "passed": true,
+      "engine_move": "a7e3",
+      "expected_moves": ["Be3"],
+      "score": 1148,
+      "depth": 8,
+      "time_ms": 50,
+      "nodes": 20645
+    },
+    {
+      "id": "WAC.111",
+      "passed": false,
+      "engine_move": "g1g2",
+      "expected_moves": ["Qf1+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 67,
+      "nodes": 40497
+    },
+    {
+      "id": "WAC.112",
+      "passed": true,
+      "engine_move": "e1e6",
+      "expected_moves": ["Rxe6"],
+      "score": 83,
+      "depth": 8,
+      "time_ms": 510,
+      "nodes": 172694
+    },
+    {
+      "id": "WAC.113",
+      "passed": true,
+      "engine_move": "d8f6",
+      "expected_moves": ["Qxf6"],
+      "score": 340,
+      "depth": 8,
+      "time_ms": 240,
+      "nodes": 70659
+    },
+    {
+      "id": "WAC.114",
+      "passed": true,
+      "engine_move": "d3h7",
+      "expected_moves": ["Bxh7+"],
+      "score": 29997,
+      "depth": 8,
+      "time_ms": 719,
+      "nodes": 254018
+    },
+    {
+      "id": "WAC.115",
+      "passed": false,
+      "engine_move": "e8f6",
+      "expected_moves": ["Nd6"],
+      "score": -363,
+      "depth": 8,
+      "time_ms": 159,
+      "nodes": 60385
+    },
+    {
+      "id": "WAC.116",
+      "passed": false,
+      "engine_move": "h4h2",
+      "expected_moves": ["Rd2"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 38,
+      "nodes": 20234
+    },
+    {
+      "id": "WAC.117",
+      "passed": false,
+      "engine_move": "a7f2",
+      "expected_moves": ["Ne4"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 23,
+      "nodes": 11613
+    },
+    {
+      "id": "WAC.118",
+      "passed": false,
+      "engine_move": "g3g7",
+      "expected_moves": ["Rh4"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 103,
+      "nodes": 48339
+    },
+    {
+      "id": "WAC.119",
+      "passed": false,
+      "engine_move": "c5f8",
+      "expected_moves": ["Qxd3"],
+      "score": -337,
+      "depth": 8,
+      "time_ms": 949,
+      "nodes": 271741
+    },
+    {
+      "id": "WAC.120",
+      "passed": false,
+      "engine_move": "h6h7",
+      "expected_moves": ["Rhg1", "g6"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 36,
+      "nodes": 19483
+    },
+    {
+      "id": "WAC.121",
+      "passed": false,
+      "engine_move": "b1h1",
+      "expected_moves": ["Bxf3+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 44,
+      "nodes": 25554
+    },
+    {
+      "id": "WAC.122",
+      "passed": true,
+      "engine_move": "d1f1",
+      "expected_moves": ["Rxf1+"],
+      "score": 1556,
+      "depth": 8,
+      "time_ms": 104,
+      "nodes": 46303
+    },
+    {
+      "id": "WAC.123",
+      "passed": false,
+      "engine_move": "f3h1",
+      "expected_moves": ["Bxd5", "Rc7", "Re6"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 80,
+      "nodes": 48690
+    },
+    {
+      "id": "WAC.124",
+      "passed": false,
+      "engine_move": "d7d1",
+      "expected_moves": ["g3"],
+      "score": 9,
+      "depth": 8,
+      "time_ms": 542,
+      "nodes": 234477
+    },
+    {
+      "id": "WAC.125",
+      "passed": true,
+      "engine_move": "b6d4",
+      "expected_moves": ["Bxd4+"],
+      "score": 755,
+      "depth": 8,
+      "time_ms": 580,
+      "nodes": 185610
+    },
+    {
+      "id": "WAC.126",
+      "passed": true,
+      "engine_move": "f6c6",
+      "expected_moves": ["Rxc6+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 55,
+      "nodes": 27745
+    },
+    {
+      "id": "WAC.127",
+      "passed": true,
+      "engine_move": "b2b7",
+      "expected_moves": ["Rxb7"],
+      "score": 410,
+      "depth": 8,
+      "time_ms": 514,
+      "nodes": 174912
+    },
+    {
+      "id": "WAC.128",
+      "passed": false,
+      "engine_move": "f6g7",
+      "expected_moves": ["Qg6"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 43,
+      "nodes": 23454
+    },
+    {
+      "id": "WAC.129",
+      "passed": false,
+      "engine_move": "e7h4",
+      "expected_moves": ["Bf3"],
+      "score": 268,
+      "depth": 8,
+      "time_ms": 640,
+      "nodes": 187220
+    },
+    {
+      "id": "WAC.130",
+      "passed": false,
+      "engine_move": "g8f7",
+      "expected_moves": ["Qh6", "Qh8"],
+      "score": -135,
+      "depth": 8,
+      "time_ms": 1465,
+      "nodes": 513801
+    },
+    {
+      "id": "WAC.131",
+      "passed": true,
+      "engine_move": "e1e8",
+      "expected_moves": ["Re8"],
+      "score": 703,
+      "depth": 8,
+      "time_ms": 189,
+      "nodes": 70579
+    },
+    {
+      "id": "WAC.132",
+      "passed": false,
+      "engine_move": "h3h1",
+      "expected_moves": ["Re1"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 36,
+      "nodes": 19825
+    },
+    {
+      "id": "WAC.133",
+      "passed": false,
+      "engine_move": "d5c6",
+      "expected_moves": ["Bh4"],
+      "score": 794,
+      "depth": 8,
+      "time_ms": 221,
+      "nodes": 84539
+    },
+    {
+      "id": "WAC.134",
+      "passed": false,
+      "engine_move": "e5b2",
+      "expected_moves": ["Rd1+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 75,
+      "nodes": 42368
+    },
+    {
+      "id": "WAC.135",
+      "passed": false,
+      "engine_move": "d7a7",
+      "expected_moves": ["Nd4"],
+      "score": 302,
+      "depth": 8,
+      "time_ms": 487,
+      "nodes": 153265
+    },
+    {
+      "id": "WAC.136",
+      "passed": false,
+      "engine_move": "g6g7",
+      "expected_moves": ["Rc8+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 204,
+      "nodes": 120175
+    },
+    {
+      "id": "WAC.137",
+      "passed": false,
+      "engine_move": "h3h7",
+      "expected_moves": ["Rd7"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 489,
+      "nodes": 215782
+    },
+    {
+      "id": "WAC.138",
+      "passed": false,
+      "engine_move": "d3g6",
+      "expected_moves": ["h5"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 98,
+      "nodes": 53630
+    },
+    {
+      "id": "WAC.139",
+      "passed": false,
+      "engine_move": "a3f8",
+      "expected_moves": ["Nf6+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 58,
+      "nodes": 28952
+    },
+    {
+      "id": "WAC.140",
+      "passed": true,
+      "engine_move": "c3c7",
+      "expected_moves": ["Bc7", "Rc7"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 183,
+      "nodes": 95893
+    },
+    {
+      "id": "WAC.141",
+      "passed": true,
+      "engine_move": "h4f4",
+      "expected_moves": ["Qxf4"],
+      "score": 343,
+      "depth": 8,
+      "time_ms": 509,
+      "nodes": 156077
+    },
+    {
+      "id": "WAC.142",
+      "passed": true,
+      "engine_move": "f5f6",
+      "expected_moves": ["Re8", "f6+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 319,
+      "nodes": 139484
+    },
+    {
+      "id": "WAC.143",
+      "passed": true,
+      "engine_move": "g6h6",
+      "expected_moves": ["Rxh6+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 139,
+      "nodes": 70699
+    },
+    {
+      "id": "WAC.144",
+      "passed": false,
+      "engine_move": "g4e2",
+      "expected_moves": ["d3"],
+      "score": 891,
+      "depth": 8,
+      "time_ms": 76,
+      "nodes": 24652
+    },
+    {
+      "id": "WAC.145",
+      "passed": false,
+      "engine_move": "g5f6",
+      "expected_moves": ["Re8"],
+      "score": 1259,
+      "depth": 8,
+      "time_ms": 163,
+      "nodes": 68231
+    },
+    {
+      "id": "WAC.146",
+      "passed": false,
+      "engine_move": "c6d6",
+      "expected_moves": ["Bc8", "Bd3", "Bh3"],
+      "score": 660,
+      "depth": 8,
+      "time_ms": 26,
+      "nodes": 18766
+    },
+    {
+      "id": "WAC.147",
+      "passed": true,
+      "engine_move": "f6g4",
+      "expected_moves": ["Nxg4"],
+      "score": 139,
+      "depth": 8,
+      "time_ms": 6427,
+      "nodes": 1877630
+    },
+    {
+      "id": "WAC.148",
+      "passed": false,
+      "engine_move": "d6c7",
+      "expected_moves": ["Rxg7"],
+      "score": 287,
+      "depth": 8,
+      "time_ms": 1077,
+      "nodes": 319196
+    },
+    {
+      "id": "WAC.149",
+      "passed": false,
+      "engine_move": "d3h3",
+      "expected_moves": ["Bxg2"],
+      "score": 29995,
+      "depth": 8,
+      "time_ms": 121,
+      "nodes": 57486
+    },
+    {
+      "id": "WAC.150",
+      "passed": false,
+      "engine_move": "b2e2",
+      "expected_moves": ["Ba3", "Be5", "Bf8", "e3"],
+      "score": 641,
+      "depth": 8,
+      "time_ms": 511,
+      "nodes": 161087
+    },
+    {
+      "id": "WAC.151",
+      "passed": false,
+      "engine_move": "a4c5",
+      "expected_moves": ["Nc3"],
+      "score": 155,
+      "depth": 8,
+      "time_ms": 244,
+      "nodes": 99967
+    },
+    {
+      "id": "WAC.152",
+      "passed": false,
+      "engine_move": "d1d7",
+      "expected_moves": ["Ne4"],
+      "score": 711,
+      "depth": 8,
+      "time_ms": 507,
+      "nodes": 172594
+    },
+    {
+      "id": "WAC.153",
+      "passed": true,
+      "engine_move": "b5d4",
+      "expected_moves": ["Nxd4"],
+      "score": 828,
+      "depth": 8,
+      "time_ms": 102,
+      "nodes": 33915
+    },
+    {
+      "id": "WAC.154",
+      "passed": true,
+      "engine_move": "f2f7",
+      "expected_moves": ["Qxf7+"],
+      "score": 29997,
+      "depth": 8,
+      "time_ms": 50,
+      "nodes": 19538
+    },
+    {
+      "id": "WAC.155",
+      "passed": false,
+      "engine_move": "g1h2",
+      "expected_moves": ["d6"],
+      "score": -531,
+      "depth": 8,
+      "time_ms": 239,
+      "nodes": 85448
+    },
+    {
+      "id": "WAC.156",
+      "passed": false,
+      "engine_move": "f8g6",
+      "expected_moves": ["Qxh6+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 49,
+      "nodes": 26128
+    },
+    {
+      "id": "WAC.157",
+      "passed": false,
+      "engine_move": "g3e5",
+      "expected_moves": ["Ne7+"],
+      "score": -433,
+      "depth": 8,
+      "time_ms": 638,
+      "nodes": 217241
+    },
+    {
+      "id": "WAC.158",
+      "passed": false,
+      "engine_move": "f5h7",
+      "expected_moves": ["Rxg7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 55,
+      "nodes": 30226
+    },
+    {
+      "id": "WAC.159",
+      "passed": false,
+      "engine_move": "g5h7",
+      "expected_moves": ["Ne6+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 175,
+      "nodes": 59535
+    },
+    {
+      "id": "WAC.160",
+      "passed": false,
+      "engine_move": "c7c8",
+      "expected_moves": ["Qxd7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 194,
+      "nodes": 118873
+    },
+    {
+      "id": "WAC.161",
+      "passed": false,
+      "engine_move": "h4h7",
+      "expected_moves": ["Qxd8+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 108,
+      "nodes": 68339
+    },
+    {
+      "id": "WAC.162",
+      "passed": false,
+      "engine_move": "h1g1",
+      "expected_moves": ["Bd5"],
+      "score": 191,
+      "depth": 8,
+      "time_ms": 332,
+      "nodes": 94900
+    },
+    {
+      "id": "WAC.163",
+      "passed": true,
+      "engine_move": "f3g2",
+      "expected_moves": ["Qg2+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 53,
+      "nodes": 26739
+    },
+    {
+      "id": "WAC.164",
+      "passed": false,
+      "engine_move": "c2d2",
+      "expected_moves": ["Rxc4+"],
+      "score": 578,
+      "depth": 8,
+      "time_ms": 154,
+      "nodes": 71524
+    },
+    {
+      "id": "WAC.165",
+      "passed": false,
+      "engine_move": "d2f2",
+      "expected_moves": ["Re2"],
+      "score": -213,
+      "depth": 8,
+      "time_ms": 225,
+      "nodes": 76934
+    },
+    {
+      "id": "WAC.166",
+      "passed": false,
+      "engine_move": "g7g6",
+      "expected_moves": ["d4"],
+      "score": -110,
+      "depth": 8,
+      "time_ms": 990,
+      "nodes": 314228
+    },
+    {
+      "id": "WAC.167",
+      "passed": true,
+      "engine_move": "f2g2",
+      "expected_moves": ["Rxg2+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 49,
+      "nodes": 24185
+    },
+    {
+      "id": "WAC.168",
+      "passed": true,
+      "engine_move": "d7d2",
+      "expected_moves": ["Qd2+"],
+      "score": 1783,
+      "depth": 8,
+      "time_ms": 81,
+      "nodes": 27574
+    },
+    {
+      "id": "WAC.169",
+      "passed": false,
+      "engine_move": "e2g2",
+      "expected_moves": ["Bh6"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 47,
+      "nodes": 27404
+    },
+    {
+      "id": "WAC.170",
+      "passed": false,
+      "engine_move": "g7g8",
+      "expected_moves": ["Qxc4"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 64,
+      "nodes": 37230
+    },
+    {
+      "id": "WAC.171",
+      "passed": false,
+      "engine_move": "e5g6",
+      "expected_moves": ["Bh6+"],
+      "score": 127,
+      "depth": 8,
+      "time_ms": 690,
+      "nodes": 213179
+    },
+    {
+      "id": "WAC.172",
+      "passed": true,
+      "engine_move": "e5e1",
+      "expected_moves": ["Qe1+"],
+      "score": 29995,
+      "depth": 8,
+      "time_ms": 84,
+      "nodes": 42973
+    },
+    {
+      "id": "WAC.173",
+      "passed": true,
+      "engine_move": "e3h6",
+      "expected_moves": ["Qh6+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 373,
+      "nodes": 189719
+    },
+    {
+      "id": "WAC.174",
+      "passed": true,
+      "engine_move": "f4g2",
+      "expected_moves": ["Nxg2"],
+      "score": 297,
+      "depth": 8,
+      "time_ms": 624,
+      "nodes": 202929
+    },
+    {
+      "id": "WAC.175",
+      "passed": false,
+      "engine_move": "d3e4",
+      "expected_moves": ["Nh5"],
+      "score": -109,
+      "depth": 8,
+      "time_ms": 991,
+      "nodes": 284495
+    },
+    {
+      "id": "WAC.176",
+      "passed": true,
+      "engine_move": "h8h2",
+      "expected_moves": ["Rxh2+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 47,
+      "nodes": 21977
+    },
+    {
+      "id": "WAC.177",
+      "passed": true,
+      "engine_move": "e7a3",
+      "expected_moves": ["Qa3+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 349,
+      "nodes": 125632
+    },
+    {
+      "id": "WAC.178",
+      "passed": false,
+      "engine_move": "e4h7",
+      "expected_moves": ["Nxe6"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 81,
+      "nodes": 43725
+    },
+    {
+      "id": "WAC.179",
+      "passed": false,
+      "engine_move": "f2h2",
+      "expected_moves": ["Qg1+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 61,
+      "nodes": 37159
+    },
+    {
+      "id": "WAC.180",
+      "passed": false,
+      "engine_move": "c5e4",
+      "expected_moves": ["Nxd5"],
+      "score": 227,
+      "depth": 8,
+      "time_ms": 12796,
+      "nodes": 4012557
+    },
+    {
+      "id": "WAC.181",
+      "passed": false,
+      "engine_move": "h3h2",
+      "expected_moves": ["Ng4"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 25,
+      "nodes": 12858
+    },
+    {
+      "id": "WAC.182",
+      "passed": false,
+      "engine_move": "g5f7",
+      "expected_moves": ["Qh5"],
+      "score": 288,
+      "depth": 8,
+      "time_ms": 5345,
+      "nodes": 1594677
+    },
+    {
+      "id": "WAC.183",
+      "passed": false,
+      "engine_move": "g5e7",
+      "expected_moves": ["Bf6"],
+      "score": -34,
+      "depth": 8,
+      "time_ms": 1089,
+      "nodes": 361577
+    },
+    {
+      "id": "WAC.184",
+      "passed": false,
+      "engine_move": "d5c7",
+      "expected_moves": ["Qe7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 182,
+      "nodes": 104270
+    },
+    {
+      "id": "WAC.185",
+      "passed": true,
+      "engine_move": "h5h7",
+      "expected_moves": ["Qxh7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 30,
+      "nodes": 13905
+    },
+    {
+      "id": "WAC.186",
+      "passed": false,
+      "engine_move": "h6g7",
+      "expected_moves": ["Bf8+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 140,
+      "nodes": 66404
+    },
+    {
+      "id": "WAC.187",
+      "passed": false,
+      "engine_move": "f5e4",
+      "expected_moves": ["Nh3+"],
+      "score": 323,
+      "depth": 8,
+      "time_ms": 161,
+      "nodes": 68273
+    },
+    {
+      "id": "WAC.188",
+      "passed": false,
+      "engine_move": "f6h8",
+      "expected_moves": ["Qg7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 47,
+      "nodes": 26484
+    },
+    {
+      "id": "WAC.189",
+      "passed": true,
+      "engine_move": "e7e8",
+      "expected_moves": ["Re8+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 75,
+      "nodes": 37813
+    },
+    {
+      "id": "WAC.190",
+      "passed": false,
+      "engine_move": "b6g1",
+      "expected_moves": ["Bh3"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 42,
+      "nodes": 24045
+    },
+    {
+      "id": "WAC.191",
+      "passed": false,
+      "engine_move": "e8c8",
+      "expected_moves": ["Qc4"],
+      "score": 898,
+      "depth": 8,
+      "time_ms": 95,
+      "nodes": 39032
+    },
+    {
+      "id": "WAC.192",
+      "passed": true,
+      "engine_move": "b4d3",
+      "expected_moves": ["Nd3+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 512,
+      "nodes": 267731
+    },
+    {
+      "id": "WAC.193",
+      "passed": false,
+      "engine_move": "d2f2",
+      "expected_moves": ["Qxe3"],
+      "score": 212,
+      "depth": 8,
+      "time_ms": 1090,
+      "nodes": 332667
+    },
+    {
+      "id": "WAC.194",
+      "passed": false,
+      "engine_move": "f2f4",
+      "expected_moves": ["Nh6+"],
+      "score": 430,
+      "depth": 8,
+      "time_ms": 216,
+      "nodes": 84678
+    },
+    {
+      "id": "WAC.195",
+      "passed": true,
+      "engine_move": "g2g3",
+      "expected_moves": ["g3"],
+      "score": -111,
+      "depth": 8,
+      "time_ms": 1521,
+      "nodes": 469751
+    },
+    {
+      "id": "WAC.196",
+      "passed": false,
+      "engine_move": "d5e4",
+      "expected_moves": ["Nb4"],
+      "score": 263,
+      "depth": 8,
+      "time_ms": 1214,
+      "nodes": 378551
+    },
+    {
+      "id": "WAC.197",
+      "passed": false,
+      "engine_move": "f2g2",
+      "expected_moves": ["Qf1+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 12,
+      "nodes": 6256
+    },
+    {
+      "id": "WAC.198",
+      "passed": false,
+      "engine_move": "h5h2",
+      "expected_moves": ["Rd3"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 50,
+      "nodes": 28906
+    },
+    {
+      "id": "WAC.199",
+      "passed": false,
+      "engine_move": "c1c5",
+      "expected_moves": ["Bxc6", "Rcd1", "Rfd1"],
+      "score": 290,
+      "depth": 8,
+      "time_ms": 469,
+      "nodes": 140683
+    },
+    {
+      "id": "WAC.200",
+      "passed": false,
+      "engine_move": "g4e5",
+      "expected_moves": ["Bxf6"],
+      "score": 1505,
+      "depth": 8,
+      "time_ms": 761,
+      "nodes": 239894
+    },
+    {
+      "id": "WAC.201",
+      "passed": false,
+      "engine_move": "d5f7",
+      "expected_moves": ["Ra7"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 82,
+      "nodes": 42786
+    },
+    {
+      "id": "WAC.202",
+      "passed": false,
+      "engine_move": "c2g2",
+      "expected_moves": ["Rxa2"],
+      "score": 249,
+      "depth": 8,
+      "time_ms": 104,
+      "nodes": 36710
+    },
+    {
+      "id": "WAC.203",
+      "passed": false,
+      "engine_move": "b2g7",
+      "expected_moves": ["Qh6"],
+      "score": 180,
+      "depth": 8,
+      "time_ms": 195,
+      "nodes": 62786
+    },
+    {
+      "id": "WAC.204",
+      "passed": false,
+      "engine_move": "h2h7",
+      "expected_moves": ["Rxe5"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 29,
+      "nodes": 15366
+    },
+    {
+      "id": "WAC.205",
+      "passed": false,
+      "engine_move": "h3h8",
+      "expected_moves": ["Qxg5"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 115,
+      "nodes": 54586
+    },
+    {
+      "id": "WAC.206",
+      "passed": false,
+      "engine_move": "c8b8",
+      "expected_moves": ["Rc6"],
+      "score": -587,
+      "depth": 8,
+      "time_ms": 337,
+      "nodes": 146218
+    },
+    {
+      "id": "WAC.207",
+      "passed": true,
+      "engine_move": "g4g7",
+      "expected_moves": ["Qxg7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 35,
+      "nodes": 18605
+    },
+    {
+      "id": "WAC.208",
+      "passed": false,
+      "engine_move": "f5h7",
+      "expected_moves": ["Bf7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 28,
+      "nodes": 18743
+    },
+    {
+      "id": "WAC.209",
+      "passed": false,
+      "engine_move": "d5c6",
+      "expected_moves": ["Rxe5+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 204,
+      "nodes": 105925
+    },
+    {
+      "id": "WAC.210",
+      "passed": false,
+      "engine_move": "h3h7",
+      "expected_moves": ["Rh1"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 45,
+      "nodes": 26817
+    },
+    {
+      "id": "WAC.211",
+      "passed": true,
+      "engine_move": "h5f7",
+      "expected_moves": ["Qxf7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 194,
+      "nodes": 93701
+    },
+    {
+      "id": "WAC.212",
+      "passed": true,
+      "engine_move": "h8g7",
+      "expected_moves": ["Qxg7+"],
+      "score": 29991,
+      "depth": 8,
+      "time_ms": 210,
+      "nodes": 93931
+    },
+    {
+      "id": "WAC.213",
+      "passed": true,
+      "engine_move": "h5h7",
+      "expected_moves": ["Rxh7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 133,
+      "nodes": 46011
+    },
+    {
+      "id": "WAC.214",
+      "passed": false,
+      "engine_move": "h3h8",
+      "expected_moves": ["Ng5"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 85,
+      "nodes": 45659
+    },
+    {
+      "id": "WAC.215",
+      "passed": true,
+      "engine_move": "d3h7",
+      "expected_moves": ["Qh7+"],
+      "score": 29993,
+      "depth": 8,
+      "time_ms": 147,
+      "nodes": 54626
+    },
+    {
+      "id": "WAC.216",
+      "passed": true,
+      "engine_move": "e5f7",
+      "expected_moves": ["Nxf7", "a4"],
+      "score": 475,
+      "depth": 8,
+      "time_ms": 1822,
+      "nodes": 558536
+    },
+    {
+      "id": "WAC.217",
+      "passed": true,
+      "engine_move": "d4d7",
+      "expected_moves": ["Qd7+"],
+      "score": 29991,
+      "depth": 8,
+      "time_ms": 2341,
+      "nodes": 797607
+    },
+    {
+      "id": "WAC.218",
+      "passed": false,
+      "engine_move": "f2f8",
+      "expected_moves": ["Bh6"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 62,
+      "nodes": 34230
+    },
+    {
+      "id": "WAC.219",
+      "passed": true,
+      "engine_move": "f7f1",
+      "expected_moves": ["Qf1+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 28,
+      "nodes": 16514
+    },
+    {
+      "id": "WAC.220",
+      "passed": true,
+      "engine_move": "e2f1",
+      "expected_moves": ["Qxf1+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 54,
+      "nodes": 26412
+    },
+    {
+      "id": "WAC.221",
+      "passed": true,
+      "engine_move": "d1d8",
+      "expected_moves": ["Rd8+"],
+      "score": 512,
+      "depth": 8,
+      "time_ms": 759,
+      "nodes": 286664
+    },
+    {
+      "id": "WAC.222",
+      "passed": false,
+      "engine_move": "g4g7",
+      "expected_moves": ["Bf6"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 41,
+      "nodes": 24759
+    },
+    {
+      "id": "WAC.223",
+      "passed": false,
+      "engine_move": "f4e3",
+      "expected_moves": ["Nxe4"],
+      "score": -291,
+      "depth": 8,
+      "time_ms": 4550,
+      "nodes": 1199640
+    },
+    {
+      "id": "WAC.224",
+      "passed": true,
+      "engine_move": "d6h6",
+      "expected_moves": ["Rh6", "e4"],
+      "score": 386,
+      "depth": 8,
+      "time_ms": 224,
+      "nodes": 75415
+    },
+    {
+      "id": "WAC.225",
+      "passed": true,
+      "engine_move": "e7h4",
+      "expected_moves": ["Qh4+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 104,
+      "nodes": 44407
+    },
+    {
+      "id": "WAC.226",
+      "passed": true,
+      "engine_move": "e5f7",
+      "expected_moves": ["Nf7"],
+      "score": -197,
+      "depth": 8,
+      "time_ms": 1874,
+      "nodes": 542989
+    },
+    {
+      "id": "WAC.227",
+      "passed": false,
+      "engine_move": "f5g4",
+      "expected_moves": ["d5"],
+      "score": 489,
+      "depth": 8,
+      "time_ms": 481,
+      "nodes": 136049
+    },
+    {
+      "id": "WAC.228",
+      "passed": false,
+      "engine_move": "h3h7",
+      "expected_moves": ["Bxe4"],
+      "score": 410,
+      "depth": 8,
+      "time_ms": 723,
+      "nodes": 199655
+    },
+    {
+      "id": "WAC.229",
+      "passed": true,
+      "engine_move": "h5h4",
+      "expected_moves": ["Rxh4", "b4"],
+      "score": 763,
+      "depth": 8,
+      "time_ms": 53,
+      "nodes": 26727
+    },
+    {
+      "id": "WAC.230",
+      "passed": false,
+      "engine_move": "a5a4",
+      "expected_moves": ["Rb4"],
+      "score": 335,
+      "depth": 8,
+      "time_ms": 128,
+      "nodes": 53422
+    },
+    {
+      "id": "WAC.231",
+      "passed": false,
+      "engine_move": "d1d7",
+      "expected_moves": ["Bg5"],
+      "score": 204,
+      "depth": 8,
+      "time_ms": 829,
+      "nodes": 256353
+    },
+    {
+      "id": "WAC.232",
+      "passed": true,
+      "engine_move": "b8e8",
+      "expected_moves": ["Qb5", "Rxe8"],
+      "score": 298,
+      "depth": 8,
+      "time_ms": 92,
+      "nodes": 33824
+    },
+    {
+      "id": "WAC.233",
+      "passed": false,
+      "engine_move": "f7f2",
+      "expected_moves": ["Nb3"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 198,
+      "nodes": 114492
+    },
+    {
+      "id": "WAC.234",
+      "passed": false,
+      "engine_move": "f4c7",
+      "expected_moves": ["Rb3"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 153,
+      "nodes": 81162
+    },
+    {
+      "id": "WAC.235",
+      "passed": true,
+      "engine_move": "e7f7",
+      "expected_moves": ["Qe4", "Qxf7+", "Rxf7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 135,
+      "nodes": 69012
+    },
+    {
+      "id": "WAC.236",
+      "passed": false,
+      "engine_move": "g3h2",
+      "expected_moves": ["Rc1"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 170,
+      "nodes": 86178
+    },
+    {
+      "id": "WAC.237",
+      "passed": true,
+      "engine_move": "c2c1",
+      "expected_moves": ["Rc1+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 98,
+      "nodes": 57438
+    },
+    {
+      "id": "WAC.238",
+      "passed": true,
+      "engine_move": "g2b7",
+      "expected_moves": ["Bxb7"],
+      "score": 625,
+      "depth": 8,
+      "time_ms": 207,
+      "nodes": 77266
+    },
+    {
+      "id": "WAC.239",
+      "passed": false,
+      "engine_move": "f2h2",
+      "expected_moves": ["Qf1+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 20,
+      "nodes": 14740
+    },
+    {
+      "id": "WAC.240",
+      "passed": false,
+      "engine_move": "g5f7",
+      "expected_moves": ["Qxc6"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 62,
+      "nodes": 23269
+    },
+    {
+      "id": "WAC.241",
+      "passed": true,
+      "engine_move": "h3h7",
+      "expected_moves": ["Qxh7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 49,
+      "nodes": 28160
+    },
+    {
+      "id": "WAC.242",
+      "passed": false,
+      "engine_move": "c3g7",
+      "expected_moves": ["Rxd7"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 58,
+      "nodes": 29820
+    },
+    {
+      "id": "WAC.243",
+      "passed": false,
+      "engine_move": "g6h6",
+      "expected_moves": ["Qe2"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 96,
+      "nodes": 52175
+    },
+    {
+      "id": "WAC.244",
+      "passed": true,
+      "engine_move": "e3c5",
+      "expected_moves": ["Qxc5+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 184,
+      "nodes": 79919
+    },
+    {
+      "id": "WAC.245",
+      "passed": true,
+      "engine_move": "d3g6",
+      "expected_moves": ["Qxg6+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 118,
+      "nodes": 53016
+    },
+    {
+      "id": "WAC.246",
+      "passed": false,
+      "engine_move": "g4g5",
+      "expected_moves": ["Qh5+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 110,
+      "nodes": 69084
+    },
+    {
+      "id": "WAC.247",
+      "passed": false,
+      "engine_move": "d6c7",
+      "expected_moves": ["Rxb5"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 49,
+      "nodes": 32176
+    },
+    {
+      "id": "WAC.248",
+      "passed": false,
+      "engine_move": "f8f1",
+      "expected_moves": ["Qc5+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 27,
+      "nodes": 16557
+    },
+    {
+      "id": "WAC.249",
+      "passed": false,
+      "engine_move": "g1h1",
+      "expected_moves": ["c5", "d5"],
+      "score": -6,
+      "depth": 8,
+      "time_ms": 17890,
+      "nodes": 5048846
+    },
+    {
+      "id": "WAC.250",
+      "passed": false,
+      "engine_move": "e3e1",
+      "expected_moves": ["Re8+"],
+      "score": -342,
+      "depth": 8,
+      "time_ms": 253,
+      "nodes": 87414
+    },
+    {
+      "id": "WAC.251",
+      "passed": false,
+      "engine_move": "d4a7",
+      "expected_moves": ["Qe5", "Qf4"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 23,
+      "nodes": 14700
+    },
+    {
+      "id": "WAC.252",
+      "passed": false,
+      "engine_move": "b8b2",
+      "expected_moves": ["Bg4", "Re2"],
+      "score": 818,
+      "depth": 8,
+      "time_ms": 554,
+      "nodes": 165145
+    },
+    {
+      "id": "WAC.253",
+      "passed": false,
+      "engine_move": "c6c7",
+      "expected_moves": ["Qe8+"],
+      "score": 29997,
+      "depth": 8,
+      "time_ms": 48,
+      "nodes": 22783
+    },
+    {
+      "id": "WAC.254",
+      "passed": false,
+      "engine_move": "g4g3",
+      "expected_moves": ["Nxh3"],
+      "score": 10,
+      "depth": 8,
+      "time_ms": 1062,
+      "nodes": 358439
+    },
+    {
+      "id": "WAC.255",
+      "passed": false,
+      "engine_move": "f6f7",
+      "expected_moves": ["Rfxg6+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 204,
+      "nodes": 111606
+    },
+    {
+      "id": "WAC.256",
+      "passed": false,
+      "engine_move": "h4h7",
+      "expected_moves": ["Nf5"],
+      "score": 510,
+      "depth": 8,
+      "time_ms": 446,
+      "nodes": 125960
+    },
+    {
+      "id": "WAC.257",
+      "passed": true,
+      "engine_move": "d1d4",
+      "expected_moves": ["Rxd4"],
+      "score": 462,
+      "depth": 8,
+      "time_ms": 473,
+      "nodes": 162199
+    },
+    {
+      "id": "WAC.258",
+      "passed": false,
+      "engine_move": "f6f7",
+      "expected_moves": ["Bxg6"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 89,
+      "nodes": 46792
+    },
+    {
+      "id": "WAC.259",
+      "passed": false,
+      "engine_move": "g5f7",
+      "expected_moves": ["Qh5"],
+      "score": -116,
+      "depth": 8,
+      "time_ms": 3173,
+      "nodes": 967137
+    },
+    {
+      "id": "WAC.260",
+      "passed": true,
+      "engine_move": "d5e6",
+      "expected_moves": ["Qe6+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 240,
+      "nodes": 120868
+    },
+    {
+      "id": "WAC.261",
+      "passed": false,
+      "engine_move": "g3g2",
+      "expected_moves": ["Nd4"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 83,
+      "nodes": 43873
+    },
+    {
+      "id": "WAC.262",
+      "passed": false,
+      "engine_move": "h3h1",
+      "expected_moves": ["Rh6"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 111,
+      "nodes": 65466
+    },
+    {
+      "id": "WAC.263",
+      "passed": false,
+      "engine_move": "f7g7",
+      "expected_moves": ["Qg8+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 172,
+      "nodes": 93131
+    },
+    {
+      "id": "WAC.264",
+      "passed": false,
+      "engine_move": "d8d4",
+      "expected_moves": ["Qe5", "Rab8"],
+      "score": 206,
+      "depth": 8,
+      "time_ms": 614,
+      "nodes": 177058
+    },
+    {
+      "id": "WAC.265",
+      "passed": false,
+      "engine_move": "c2e4",
+      "expected_moves": ["exf6"],
+      "score": 72,
+      "depth": 8,
+      "time_ms": 295,
+      "nodes": 90707
+    },
+    {
+      "id": "WAC.266",
+      "passed": false,
+      "engine_move": "g6g5",
+      "expected_moves": ["Rxh2+"],
+      "score": 44,
+      "depth": 8,
+      "time_ms": 2484,
+      "nodes": 689867
+    },
+    {
+      "id": "WAC.267",
+      "passed": true,
+      "engine_move": "d5c7",
+      "expected_moves": ["Nc7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 65,
+      "nodes": 36117
+    },
+    {
+      "id": "WAC.268",
+      "passed": false,
+      "engine_move": "h5f6",
+      "expected_moves": ["Re8+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 48,
+      "nodes": 26309
+    },
+    {
+      "id": "WAC.269",
+      "passed": false,
+      "engine_move": "f3c6",
+      "expected_moves": ["axb4"],
+      "score": 29997,
+      "depth": 8,
+      "time_ms": 63,
+      "nodes": 33125
+    },
+    {
+      "id": "WAC.270",
+      "passed": true,
+      "engine_move": "d4g4",
+      "expected_moves": ["Qg4"],
+      "score": 431,
+      "depth": 8,
+      "time_ms": 175,
+      "nodes": 61255
+    },
+    {
+      "id": "WAC.271",
+      "passed": true,
+      "engine_move": "e6d6",
+      "expected_moves": ["Rd6"],
+      "score": -1703,
+      "depth": 8,
+      "time_ms": 130,
+      "nodes": 44629
+    },
+    {
+      "id": "WAC.272",
+      "passed": false,
+      "engine_move": "b5a5",
+      "expected_moves": ["Bxc5"],
+      "score": 210,
+      "depth": 8,
+      "time_ms": 2996,
+      "nodes": 1013848
+    },
+    {
+      "id": "WAC.273",
+      "passed": false,
+      "engine_move": "e4f2",
+      "expected_moves": ["Ng3+", "g3"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 139,
+      "nodes": 74650
+    },
+    {
+      "id": "WAC.274",
+      "passed": false,
+      "engine_move": "b2c4",
+      "expected_moves": ["Rb6", "Rg5+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 7,
+      "nodes": 3744
+    },
+    {
+      "id": "WAC.275",
+      "passed": true,
+      "engine_move": "d7c5",
+      "expected_moves": ["Nc5", "Nxg2", "b5"],
+      "score": 53,
+      "depth": 8,
+      "time_ms": 2227,
+      "nodes": 690654
+    },
+    {
+      "id": "WAC.276",
+      "passed": false,
+      "engine_move": "e7g7",
+      "expected_moves": ["Qd5+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 306,
+      "nodes": 105538
+    },
+    {
+      "id": "WAC.277",
+      "passed": false,
+      "engine_move": "a6d3",
+      "expected_moves": ["Rg3", "Rxg2"],
+      "score": 922,
+      "depth": 8,
+      "time_ms": 319,
+      "nodes": 94685
+    },
+    {
+      "id": "WAC.278",
+      "passed": true,
+      "engine_move": "c4f7",
+      "expected_moves": ["Bf7+"],
+      "score": 29995,
+      "depth": 8,
+      "time_ms": 132,
+      "nodes": 50546
+    },
+    {
+      "id": "WAC.279",
+      "passed": true,
+      "engine_move": "e3f5",
+      "expected_moves": ["Nxf5", "Rc3"],
+      "score": 531,
+      "depth": 8,
+      "time_ms": 188,
+      "nodes": 68785
+    },
+    {
+      "id": "WAC.280",
+      "passed": false,
+      "engine_move": "c2e2",
+      "expected_moves": ["Bxa3"],
+      "score": 444,
+      "depth": 8,
+      "time_ms": 537,
+      "nodes": 163148
+    },
+    {
+      "id": "WAC.281",
+      "passed": true,
+      "engine_move": "c7h7",
+      "expected_moves": ["Rxh7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 118,
+      "nodes": 67058
+    },
+    {
+      "id": "WAC.282",
+      "passed": true,
+      "engine_move": "h1h8",
+      "expected_moves": ["Rh8+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 22,
+      "nodes": 11764
+    },
+    {
+      "id": "WAC.283",
+      "passed": false,
+      "engine_move": "e6f7",
+      "expected_moves": ["Ng5"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 64,
+      "nodes": 34815
+    },
+    {
+      "id": "WAC.284",
+      "passed": false,
+      "engine_move": "d2e1",
+      "expected_moves": ["Nf5"],
+      "score": -434,
+      "depth": 8,
+      "time_ms": 260,
+      "nodes": 90162
+    },
+    {
+      "id": "WAC.285",
+      "passed": true,
+      "engine_move": "g2g7",
+      "expected_moves": ["Qxg7+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 37,
+      "nodes": 19216
+    },
+    {
+      "id": "WAC.286",
+      "passed": false,
+      "engine_move": "h5g6",
+      "expected_moves": ["Rxd5+"],
+      "score": 29995,
+      "depth": 8,
+      "time_ms": 601,
+      "nodes": 247838
+    },
+    {
+      "id": "WAC.287",
+      "passed": false,
+      "engine_move": "g5e6",
+      "expected_moves": ["Qg4", "Qh5"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 198,
+      "nodes": 112206
+    },
+    {
+      "id": "WAC.288",
+      "passed": false,
+      "engine_move": "d6f8",
+      "expected_moves": ["Nf6+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 31,
+      "nodes": 19409
+    },
+    {
+      "id": "WAC.289",
+      "passed": false,
+      "engine_move": "c5d3",
+      "expected_moves": ["Qe5"],
+      "score": 29997,
+      "depth": 8,
+      "time_ms": 35,
+      "nodes": 18923
+    },
+    {
+      "id": "WAC.290",
+      "passed": true,
+      "engine_move": "f4e2",
+      "expected_moves": ["Ne2+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 575,
+      "nodes": 250403
+    },
+    {
+      "id": "WAC.291",
+      "passed": false,
+      "engine_move": "c5d5",
+      "expected_moves": ["h3"],
+      "score": 347,
+      "depth": 8,
+      "time_ms": 326,
+      "nodes": 104063
+    },
+    {
+      "id": "WAC.292",
+      "passed": false,
+      "engine_move": "b7d7",
+      "expected_moves": ["d6+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 40,
+      "nodes": 22355
+    },
+    {
+      "id": "WAC.293",
+      "passed": false,
+      "engine_move": "h6h7",
+      "expected_moves": ["Nfg5"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 40,
+      "nodes": 22113
+    },
+    {
+      "id": "WAC.294",
+      "passed": false,
+      "engine_move": "g4g7",
+      "expected_moves": ["Bf8", "Nf5", "Qf4"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 38,
+      "nodes": 20465
+    },
+    {
+      "id": "WAC.295",
+      "passed": true,
+      "engine_move": "d1d5",
+      "expected_moves": ["Rxd5+"],
+      "score": 29995,
+      "depth": 8,
+      "time_ms": 56,
+      "nodes": 31588
+    },
+    {
+      "id": "WAC.296",
+      "passed": false,
+      "engine_move": "c6f3",
+      "expected_moves": ["Rd4+", "Rf8"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 215,
+      "nodes": 111823
+    },
+    {
+      "id": "WAC.297",
+      "passed": true,
+      "engine_move": "d6h2",
+      "expected_moves": ["Bxg2", "Bxh2+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 80,
+      "nodes": 38491
+    },
+    {
+      "id": "WAC.298",
+      "passed": false,
+      "engine_move": "d8g8",
+      "expected_moves": ["Qh8+"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 15,
+      "nodes": 6866
+    },
+    {
+      "id": "WAC.299",
+      "passed": false,
+      "engine_move": "c5e6",
+      "expected_moves": ["Nca4"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 240,
+      "nodes": 145854
+    },
+    {
+      "id": "WAC.300",
+      "passed": false,
+      "engine_move": "h5h7",
+      "expected_moves": ["g6"],
+      "score": 32000,
+      "depth": 8,
+      "time_ms": 28,
+      "nodes": 16866
+    }
+  ]
+}

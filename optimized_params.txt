@@ -1,0 +1,22 @@
+// Optimized evaluation parameters from Texel tuning
+
+PST scale: 8
+
+Pawn structure:
+  doubled_pawn: [-54, -6]
+  isolated_pawn: [9, 4]
+  backward_pawn: [0, -2]
+  protected_pawn: [7, 12]
+  pawn_island: [-5, -6]
+
+Passed pawns (by rank):
+  rank 2: [105, 90]
+  rank 3: [-82, 16]
+  rank 4: [66, 82]
+  rank 5: [147, 184]
+  rank 6: [176, 138]
+  rank 7: [0, 0]
+
+Mobility scale: 8
+Pawn structure divisor: 1
+Mobility divisor: 10

@@ -1,0 +1,43 @@
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2025.11.01"]
+[Round "1"]
+[White "ChessAI-D9"]
+[Black "SF-1600"]
+[Result "0-1"]
+[SetUp "1"]
+[FEN "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"]
+[GameDuration "00:00:21"]
+[GameStartTime "2025-11-01T14:37:20 +0100"]
+[GameEndTime "2025-11-01T14:37:42 +0100"]
+[PlyCount "8"]
+[Termination "time forfeit"]
+[TimeControl "5+0.05"]
+[ECO "B01"]
+[Opening "Scandinavian Defense: Valencian Variation, Ilundain Variation"]
+
+2. exd5 {+0.13/9 1.102s} Qxd5 {-0.76/17 0.456s} 3. Nc3 {+0.13/9 0.629s}
+Qd8 {-0.61/17 0.609s} 4. Nf3 {+0.21/9 1.234s} Nf6 {-0.60/15 0.187s}
+5. d4 {+0.15/9 1.950s} c6 {-0.73/14 0.165s, White loses on time} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2025.11.01"]
+[Round "1"]
+[White "SF-1600"]
+[Black "ChessAI-D9"]
+[Result "1-0"]
+[SetUp "1"]
+[FEN "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"]
+[GameDuration "00:00:16"]
+[GameStartTime "2025-11-01T14:37:42 +0100"]
+[GameEndTime "2025-11-01T14:37:58 +0100"]
+[PlyCount "5"]
+[Termination "time forfeit"]
+[TimeControl "5+0.05"]
+[ECO "B01"]
+[Opening "Scandinavian Defense"]
+
+2. e5 {+0.75/16 0.232s} Nc6 {0.00/9 1.134s} 3. Nf3 {+0.44/13 0.070s}
+Bg4 {+0.01/9 2.055s} 4. Bb5 {+0.24/18 0.380s, Black loses on time} 1-0
+

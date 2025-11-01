@@ -1,0 +1,45 @@
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2025.11.01"]
+[Round "1"]
+[White "ChessAI-D9"]
+[Black "SF-1500"]
+[Result "0-1"]
+[SetUp "1"]
+[FEN "r1bqkbnr/pppppppp/2n5/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 1 2"]
+[GameDuration "00:00:21"]
+[GameStartTime "2025-11-01T14:36:51 +0100"]
+[GameEndTime "2025-11-01T14:37:12 +0100"]
+[PlyCount "10"]
+[Termination "time forfeit"]
+[TimeControl "5+0.05"]
+[ECO "A40"]
+[Opening "Mikenas Defense"]
+
+2. d5 {+0.13/9 0.726s} Nb4 {-0.71/17 0.610s} 3. e4 {+0.29/9 1.583s}
+Nf6 {-1.33/14 0.175s} 4. a3 {+0.38/9 0.626s} Na6 {-2.56/16 0.142s}
+5. e5 {+0.40/9 0.860s} c6 {-2.54/17 0.233s} 6. exf6 {+2.45/9 1.342s}
+h5 {-4.80/19 0.566s, White loses on time} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2025.11.01"]
+[Round "1"]
+[White "SF-1500"]
+[Black "ChessAI-D9"]
+[Result "1-0"]
+[SetUp "1"]
+[FEN "r1bqkbnr/pppppppp/2n5/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 1 2"]
+[GameDuration "00:00:06"]
+[GameStartTime "2025-11-01T14:37:12 +0100"]
+[GameEndTime "2025-11-01T14:37:18 +0100"]
+[PlyCount "6"]
+[Termination "time forfeit"]
+[TimeControl "5+0.05"]
+[ECO "A40"]
+[Opening "Mikenas Defense"]
+
+2. Nc3 {+0.78/16 0.324s} d5 {-0.10/9 1.110s} 3. Nf3 {+0.27/15 0.308s}
+Bg4 {-0.04/9 2.203s} 4. e3 {+0.24/18 0.251s}
+a6 {-0.05/9 1.894s, Black loses on time} 1-0
+

@@ -1,0 +1,154 @@
+# Hanging Pieces Test Suite
+# These positions feature undefended pieces that should be captured
+# Target: 98%+ accuracy at depth 6
+# A 1900+ ELO engine should not miss these
+
+# Simple hanging queen
+r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - bm Qxf6; id "HP.001";
+
+# Hanging rook
+r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - bm Nxe5; id "HP.002";
+
+# Hanging knight
+rnbqkb1r/pppp1ppp/5n2/4p3/4P3/3P4/PPP2PPP/RNBQKBNR w KQkq - bm exf6; id "HP.003";
+
+# Hanging bishop
+rnbqk2r/pppp1ppp/5n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - bm Bxc5; id "HP.004";
+
+# Hanging pawn with piece behind
+r1bqkbnr/ppp2ppp/2np4/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - bm Bxd6; id "HP.005";
+
+# Simple hanging knight in center
+rnbqkb1r/pppp1ppp/8/4p3/3Pn3/5N2/PPP1PPPP/RNBQKB1R w KQkq - bm Nxe4; id "HP.006";
+
+# Undefended queen on back rank
+r1b1kbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPqPPPP/RNBQKB1R w KQkq - bm Nxd2; id "HP.007";
+
+# Hanging rook in corner
+4k3/8/8/8/8/8/8/R3K2R b KQ - bm Kd7; id "HP.008"; c0 "No hanging piece, king should centralize";
+
+# Actually hanging rook
+r3k3/8/8/8/8/8/8/4K2R b Kq - bm Rxa1; id "HP.009";
+
+# Hanging bishop on long diagonal
+rnbqk2r/pppp1ppp/5n2/2b1p3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R b KQkq - bm Nxe4; id "HP.010";
+
+# Double hanging pieces - take the more valuable
+r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R b KQkq - bm Nxe4; id "HP.011";
+
+# Hanging piece after exchange
+rnbqkb1r/ppp2ppp/3p1n2/4p3/4P3/3P1N2/PPP2PPP/RNBQKB1R w KQkq - bm Nxe5; id "HP.012";
+
+# Queen hanging after check
+rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - bm Qxh4; id "HP.013";
+
+# Undefended knight on rim
+rnbqkb1r/pppppppp/8/8/8/7n/PPPPPPPP/RNBQKBNR w KQkq - bm Qxh3; id "HP.014";
+
+# Rook hanging in middle game
+r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/2NP1N2/PPP2PPP/R1BQK2R b KQkq - bm Nxd3; id "HP.015";
+
+# Bishop hanging after castling
+r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - bm Nxe4; id "HP.016";
+
+# Hanging queen in opening
+rnb1kbnr/pppp1ppp/8/4p3/5PPq/8/PPPPP2P/RNBQKBNR w KQkq - bm Qxh4; id "HP.017";
+
+# Knight hanging after pin
+rnbqkb1r/ppp2ppp/3p1n2/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R w KQkq - bm dxe5; id "HP.018";
+
+# Hanging rook on open file
+r1bqkb1r/pppp1ppp/2n2n2/4p3/4P3/2N2N2/PPPP1PPP/R1BQR1K1 b kq - bm Nxe4; id "HP.019";
+
+# Bishop hanging on edge
+rnbqk2r/pppp1ppp/5n2/2b1p3/1PB1P3/5N2/P1PP1PPP/RNBQK2R b KQkq - bm Bxb4; id "HP.020";
+
+# Pawn hanging with piece behind it
+rnbqkb1r/pppp1ppp/5n2/4p3/3PP3/8/PPP2PPP/RNBQKBNR b KQkq - bm exd4; id "HP.021";
+
+# Queen hanging after trade offer
+rnbqkb1r/ppp2ppp/3p1n2/4p3/4P3/3P1N2/PPP1QPPP/RNB1KB1R b KQkq - bm Nxe4; id "HP.022";
+
+# Rook hanging in endgame
+4k3/8/8/8/4r3/8/8/4K2R w K - bm Rxe4; id "HP.023";
+
+# Knight hanging in middle
+rnbqkb1r/pppp1ppp/5n2/4p3/3P4/5N2/PPP1PPPP/RNBQKB1R b KQkq - bm Nxd4; id "HP.024";
+
+# Bishop hanging after development
+rnbqk2r/pppp1ppp/5n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R b KQkq - bm Bxd3; id "HP.025";
+
+# Queen hanging in middlegame
+r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/2NP1Q2/PPP2PPP/R1B1K2R b KQkq - bm Nxd3; id "HP.026";
+
+# Rook hanging after exchange
+r1bqkb1r/pppp1ppp/2n2n2/4p3/4P3/2N2N2/PPPP1PPP/R1BQR1K1 b kq - bm Nxe4; id "HP.027";
+
+# Knight hanging on edge board
+rnbqkb1r/pppp1ppp/8/4p3/4P2n/5N2/PPPP1PPP/RNBQKB1R w KQkq - bm Nxh4; id "HP.028";
+
+# Bishop hanging in fianchetto
+rnbqk2r/ppp1bppp/3p1n2/4p3/4P3/3P1N2/PPP1BPPP/RNBQK2R b KQkq - bm Nxe4; id "HP.029";
+
+# Hanging piece after pawn push
+rnbqkb1r/pppp1ppp/5n2/4p3/3PP3/5N2/PPP2PPP/RNBQKB1R b KQkq - bm Nxd4; id "HP.030";
+
+# Queen hanging in open position
+r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/2N2N2/PPPP1PPP/R1BQ1RK1 b kq - bm Nxe4; id "HP.031";
+
+# Rook hanging after castling
+r1bqkb1r/pppp1ppp/2n2n2/4p3/4P3/2N2N2/PPPP1PPP/R1BQR1K1 b kq - bm Nxe4; id "HP.032";
+
+# Knight hanging in center
+rnbqkb1r/pppp1ppp/8/4p3/3Pn3/5N2/PPP1PPPP/RNBQKB1R w KQkq - bm Nxe4; id "HP.033";
+
+# Bishop hanging on diagonal
+rnbqk2r/pppp1ppp/5n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - bm Nxe5; id "HP.034";
+
+# Pawn hanging in opening
+rnbqkbnr/pppp1ppp/8/4p3/3PP3/8/PPP2PPP/RNBQKBNR b KQkq - bm exd4; id "HP.035";
+
+# Queen hanging after development
+rnb1kb1r/pppp1ppp/5n2/4p3/4P2q/3P1N2/PPP2PPP/RNBQKB1R w KQkq - bm Nxh4; id "HP.036";
+
+# Rook hanging on back rank
+r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - bm Nxe5; id "HP.037";
+
+# Knight hanging after exchange
+rnbqkb1r/ppp2ppp/3p1n2/4p3/4P3/3P1N2/PPP2PPP/RNBQKB1R w KQkq - bm Nxe5; id "HP.038";
+
+# Bishop hanging in development
+rnbqk2r/pppp1ppp/5n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQK2R w KQkq - bm d4; id "HP.039";
+
+# Hanging piece simple capture
+rnbqkb1r/pppp1ppp/5n2/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - bm Nxe5; id "HP.040";
+
+# Queen hanging in corner
+rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNq w Qkq - bm Qxh1; id "HP.041";
+
+# Rook hanging middlegame
+r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/2NP1N2/PPP2PPP/R1BQ1RK1 b kq - bm Nxd3; id "HP.042";
+
+# Knight hanging on rim
+rnbqkb1r/pppppppp/8/8/8/7n/PPPPPPPP/RNBQKB1R w KQkq - bm Qxh3; id "HP.043";
+
+# Bishop hanging center
+rnbqk2r/pppp1ppp/5n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - bm Bxc5; id "HP.044";
+
+# Hanging queen simple
+r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5Q2/PPPP1PPP/RNB1K1NR w KQkq - bm Qxf6; id "HP.045";
+
+# Rook hanging simple
+r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - bm Nxe5; id "HP.046";
+
+# Knight hanging simple
+rnbqkb1r/pppp1ppp/5n2/4p3/4P3/3P4/PPP2PPP/RNBQKBNR w KQkq - bm exf6; id "HP.047";
+
+# Bishop hanging simple
+rnbqk2r/pppp1ppp/5n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - bm Bxc5; id "HP.048";
+
+# Multiple hanging - take best
+r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R b KQkq - bm Nxe4; id "HP.049";
+
+# Free queen
+rnb1kbnr/pppp1ppp/8/4p3/5PPq/8/PPPPP2P/RNBQKBNR w KQkq - bm Qxh4; id "HP.050";

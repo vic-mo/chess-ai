@@ -1,0 +1,508 @@
+{
+  "total": 50,
+  "passed": 8,
+  "failed": 42,
+  "accuracy": 16.0,
+  "results": [
+    {
+      "id": "HP.001",
+      "passed": false,
+      "engine_move": "c4f7",
+      "expected_moves": ["Qxf6"],
+      "score": 53,
+      "depth": 6,
+      "time_ms": 271,
+      "nodes": 66492
+    },
+    {
+      "id": "HP.002",
+      "passed": false,
+      "engine_move": "b1c3",
+      "expected_moves": ["Nxe5"],
+      "score": 82,
+      "depth": 6,
+      "time_ms": 213,
+      "nodes": 51839
+    },
+    {
+      "id": "HP.003",
+      "passed": false,
+      "engine_move": "b1c3",
+      "expected_moves": ["exf6"],
+      "score": -31,
+      "depth": 6,
+      "time_ms": 220,
+      "nodes": 55255
+    },
+    {
+      "id": "HP.004",
+      "passed": false,
+      "engine_move": "c4f7",
+      "expected_moves": ["Bxc5"],
+      "score": 145,
+      "depth": 6,
+      "time_ms": 92,
+      "nodes": 21200
+    },
+    {
+      "id": "HP.005",
+      "passed": false,
+      "engine_move": "c4f7",
+      "expected_moves": ["Bxd6"],
+      "score": 407,
+      "depth": 6,
+      "time_ms": 26,
+      "nodes": 7078
+    },
+    {
+      "id": "HP.006",
+      "passed": false,
+      "engine_move": "f3e5",
+      "expected_moves": ["Nxe4"],
+      "score": 128,
+      "depth": 6,
+      "time_ms": 161,
+      "nodes": 40829
+    },
+    {
+      "id": "HP.007",
+      "passed": true,
+      "engine_move": "c1d2",
+      "expected_moves": ["Nxd2"],
+      "score": 833,
+      "depth": 6,
+      "time_ms": 60,
+      "nodes": 14958
+    },
+    {
+      "id": "HP.008",
+      "passed": true,
+      "engine_move": "e8d7",
+      "expected_moves": ["Kd7"],
+      "score": -1064,
+      "depth": 6,
+      "time_ms": 10,
+      "nodes": 3962
+    },
+    {
+      "id": "HP.009",
+      "passed": true,
+      "engine_move": "a8a1",
+      "expected_moves": ["Rxa1"],
+      "score": 446,
+      "depth": 6,
+      "time_ms": 6,
+      "nodes": 1905
+    },
+    {
+      "id": "HP.010",
+      "passed": false,
+      "engine_move": "c5f2",
+      "expected_moves": ["Nxe4"],
+      "score": 32,
+      "depth": 6,
+      "time_ms": 446,
+      "nodes": 108186
+    },
+    {
+      "id": "HP.011",
+      "passed": false,
+      "engine_move": "f8c5",
+      "expected_moves": ["Nxe4"],
+      "score": -95,
+      "depth": 6,
+      "time_ms": 220,
+      "nodes": 56592
+    },
+    {
+      "id": "HP.012",
+      "passed": false,
+      "engine_move": "b1c3",
+      "expected_moves": ["Nxe5"],
+      "score": 32,
+      "depth": 6,
+      "time_ms": 588,
+      "nodes": 152879
+    },
+    {
+      "id": "HP.013",
+      "passed": false,
+      "engine_move": "a1a1",
+      "expected_moves": ["Qxh4"],
+      "score": -30000,
+      "depth": 6,
+      "time_ms": 4,
+      "nodes": 0
+    },
+    {
+      "id": "HP.014",
+      "passed": true,
+      "engine_move": "g1h3",
+      "expected_moves": ["Qxh3"],
+      "score": 287,
+      "depth": 6,
+      "time_ms": 27,
+      "nodes": 7379
+    },
+    {
+      "id": "HP.015",
+      "passed": false,
+      "engine_move": "c5f2",
+      "expected_moves": ["Nxd3"],
+      "score": 31,
+      "depth": 6,
+      "time_ms": 222,
+      "nodes": 53143
+    },
+    {
+      "id": "HP.016",
+      "passed": false,
+      "engine_move": "d7d5",
+      "expected_moves": ["Nxe4"],
+      "score": 67,
+      "depth": 6,
+      "time_ms": 363,
+      "nodes": 90399
+    },
+    {
+      "id": "HP.017",
+      "passed": false,
+      "engine_move": "a1a1",
+      "expected_moves": ["Qxh4"],
+      "score": -30000,
+      "depth": 6,
+      "time_ms": 4,
+      "nodes": 0
+    },
+    {
+      "id": "HP.018",
+      "passed": true,
+      "engine_move": "d4e5",
+      "expected_moves": ["dxe5"],
+      "score": 144,
+      "depth": 6,
+      "time_ms": 462,
+      "nodes": 113774
+    },
+    {
+      "id": "HP.019",
+      "passed": false,
+      "engine_move": "f8c5",
+      "expected_moves": ["Nxe4"],
+      "score": 395,
+      "depth": 6,
+      "time_ms": 63,
+      "nodes": 16697
+    },
+    {
+      "id": "HP.020",
+      "passed": false,
+      "engine_move": "c5f2",
+      "expected_moves": ["Bxb4"],
+      "score": 311,
+      "depth": 6,
+      "time_ms": 27,
+      "nodes": 6295
+    },
+    {
+      "id": "HP.021",
+      "passed": false,
+      "engine_move": "f6e4",
+      "expected_moves": ["exd4"],
+      "score": 191,
+      "depth": 6,
+      "time_ms": 239,
+      "nodes": 58318
+    },
+    {
+      "id": "HP.022",
+      "passed": false,
+      "engine_move": "f6g4",
+      "expected_moves": ["Nxe4"],
+      "score": 7,
+      "depth": 6,
+      "time_ms": 185,
+      "nodes": 46735
+    },
+    {
+      "id": "HP.023",
+      "passed": false,
+      "engine_move": "e1d2",
+      "expected_moves": ["Rxe4"],
+      "score": 0,
+      "depth": 6,
+      "time_ms": 14,
+      "nodes": 5636
+    },
+    {
+      "id": "HP.024",
+      "passed": false,
+      "engine_move": "f6g4",
+      "expected_moves": ["Nxd4"],
+      "score": 131,
+      "depth": 6,
+      "time_ms": 61,
+      "nodes": 16298
+    },
+    {
+      "id": "HP.025",
+      "passed": false,
+      "engine_move": "d7d5",
+      "expected_moves": ["Bxd3"],
+      "score": 144,
+      "depth": 6,
+      "time_ms": 161,
+      "nodes": 37455
+    },
+    {
+      "id": "HP.026",
+      "passed": false,
+      "engine_move": "c5f2",
+      "expected_moves": ["Nxd3"],
+      "score": 417,
+      "depth": 6,
+      "time_ms": 580,
+      "nodes": 140213
+    },
+    {
+      "id": "HP.027",
+      "passed": false,
+      "engine_move": "f8c5",
+      "expected_moves": ["Nxe4"],
+      "score": 395,
+      "depth": 6,
+      "time_ms": 5,
+      "nodes": 713
+    },
+    {
+      "id": "HP.028",
+      "passed": false,
+      "engine_move": "f3e5",
+      "expected_moves": ["Nxh4"],
+      "score": 373,
+      "depth": 6,
+      "time_ms": 241,
+      "nodes": 61408
+    },
+    {
+      "id": "HP.029",
+      "passed": false,
+      "engine_move": "h7h6",
+      "expected_moves": ["Nxe4"],
+      "score": 73,
+      "depth": 6,
+      "time_ms": 404,
+      "nodes": 104839
+    },
+    {
+      "id": "HP.030",
+      "passed": false,
+      "engine_move": "f6e4",
+      "expected_moves": ["Nxd4"],
+      "score": 158,
+      "depth": 6,
+      "time_ms": 111,
+      "nodes": 30138
+    },
+    {
+      "id": "HP.031",
+      "passed": false,
+      "engine_move": "e8g8",
+      "expected_moves": ["Nxe4"],
+      "score": -9,
+      "depth": 6,
+      "time_ms": 248,
+      "nodes": 64360
+    },
+    {
+      "id": "HP.032",
+      "passed": false,
+      "engine_move": "f8c5",
+      "expected_moves": ["Nxe4"],
+      "score": 395,
+      "depth": 6,
+      "time_ms": 4,
+      "nodes": 240
+    },
+    {
+      "id": "HP.033",
+      "passed": false,
+      "engine_move": "f3e5",
+      "expected_moves": ["Nxe4"],
+      "score": 128,
+      "depth": 6,
+      "time_ms": 4,
+      "nodes": 211
+    },
+    {
+      "id": "HP.034",
+      "passed": false,
+      "engine_move": "c4f7",
+      "expected_moves": ["Nxe5"],
+      "score": 145,
+      "depth": 6,
+      "time_ms": 5,
+      "nodes": 575
+    },
+    {
+      "id": "HP.035",
+      "passed": false,
+      "engine_move": "d7d5",
+      "expected_moves": ["exd4"],
+      "score": -46,
+      "depth": 6,
+      "time_ms": 417,
+      "nodes": 100338
+    },
+    {
+      "id": "HP.036",
+      "passed": true,
+      "engine_move": "f3h4",
+      "expected_moves": ["Nxh4"],
+      "score": 745,
+      "depth": 6,
+      "time_ms": 170,
+      "nodes": 45732
+    },
+    {
+      "id": "HP.037",
+      "passed": false,
+      "engine_move": "b1c3",
+      "expected_moves": ["Nxe5"],
+      "score": 80,
+      "depth": 6,
+      "time_ms": 23,
+      "nodes": 5688
+    },
+    {
+      "id": "HP.038",
+      "passed": false,
+      "engine_move": "b1c3",
+      "expected_moves": ["Nxe5"],
+      "score": 32,
+      "depth": 6,
+      "time_ms": 16,
+      "nodes": 3204
+    },
+    {
+      "id": "HP.039",
+      "passed": false,
+      "engine_move": "c4f7",
+      "expected_moves": ["d4"],
+      "score": 218,
+      "depth": 6,
+      "time_ms": 77,
+      "nodes": 18576
+    },
+    {
+      "id": "HP.040",
+      "passed": true,
+      "engine_move": "f3e5",
+      "expected_moves": ["Nxe5"],
+      "score": 279,
+      "depth": 6,
+      "time_ms": 19,
+      "nodes": 4025
+    },
+    {
+      "id": "HP.041",
+      "passed": false,
+      "engine_move": "f1c4",
+      "expected_moves": ["Qxh1"],
+      "score": -1385,
+      "depth": 6,
+      "time_ms": 248,
+      "nodes": 59330
+    },
+    {
+      "id": "HP.042",
+      "passed": false,
+      "engine_move": "e8g8",
+      "expected_moves": ["Nxd3"],
+      "score": -92,
+      "depth": 6,
+      "time_ms": 904,
+      "nodes": 228930
+    },
+    {
+      "id": "HP.043",
+      "passed": true,
+      "engine_move": "g2h3",
+      "expected_moves": ["Qxh3"],
+      "score": -96,
+      "depth": 6,
+      "time_ms": 18,
+      "nodes": 4458
+    },
+    {
+      "id": "HP.044",
+      "passed": false,
+      "engine_move": "c4f7",
+      "expected_moves": ["Bxc5"],
+      "score": 145,
+      "depth": 6,
+      "time_ms": 4,
+      "nodes": 271
+    },
+    {
+      "id": "HP.045",
+      "passed": false,
+      "engine_move": "c4f7",
+      "expected_moves": ["Qxf6"],
+      "score": 53,
+      "depth": 6,
+      "time_ms": 5,
+      "nodes": 531
+    },
+    {
+      "id": "HP.046",
+      "passed": false,
+      "engine_move": "b1c3",
+      "expected_moves": ["Nxe5"],
+      "score": 80,
+      "depth": 6,
+      "time_ms": 4,
+      "nodes": 222
+    },
+    {
+      "id": "HP.047",
+      "passed": false,
+      "engine_move": "b1c3",
+      "expected_moves": ["exf6"],
+      "score": -45,
+      "depth": 6,
+      "time_ms": 95,
+      "nodes": 22741
+    },
+    {
+      "id": "HP.048",
+      "passed": false,
+      "engine_move": "c4f7",
+      "expected_moves": ["Bxc5"],
+      "score": 145,
+      "depth": 6,
+      "time_ms": 4,
+      "nodes": 271
+    },
+    {
+      "id": "HP.049",
+      "passed": false,
+      "engine_move": "f8c5",
+      "expected_moves": ["Nxe4"],
+      "score": -95,
+      "depth": 6,
+      "time_ms": 5,
+      "nodes": 440
+    },
+    {
+      "id": "HP.050",
+      "passed": false,
+      "engine_move": "a1a1",
+      "expected_moves": ["Qxh4"],
+      "score": -30000,
+      "depth": 6,
+      "time_ms": 4,
+      "nodes": 0
+    }
+  ]
+}

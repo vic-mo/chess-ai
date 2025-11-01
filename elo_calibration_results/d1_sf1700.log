@@ -1,0 +1,51 @@
+Indexing opening suite...
+Started game 1 of 20 (ChessAI-D1 vs SF-1700)
+Finished game 1 (ChessAI-D1 vs SF-1700): 0-1 {Black mates}
+Started game 2 of 20 (SF-1700 vs ChessAI-D1)
+Finished game 2 (SF-1700 vs ChessAI-D1): 1-0 {White mates}
+Started game 3 of 20 (ChessAI-D1 vs SF-1700)
+Finished game 3 (ChessAI-D1 vs SF-1700): 0-1 {Black mates}
+Started game 4 of 20 (SF-1700 vs ChessAI-D1)
+Finished game 4 (SF-1700 vs ChessAI-D1): 1-0 {White mates}
+Started game 5 of 20 (ChessAI-D1 vs SF-1700)
+Finished game 5 (ChessAI-D1 vs SF-1700): 0-1 {Black mates}
+Started game 6 of 20 (SF-1700 vs ChessAI-D1)
+Finished game 6 (SF-1700 vs ChessAI-D1): 1/2-1/2 {Draw by stalemate}
+Started game 7 of 20 (ChessAI-D1 vs SF-1700)
+Finished game 7 (ChessAI-D1 vs SF-1700): 0-1 {Black mates}
+Started game 8 of 20 (SF-1700 vs ChessAI-D1)
+Finished game 8 (SF-1700 vs ChessAI-D1): 1-0 {White mates}
+Started game 9 of 20 (ChessAI-D1 vs SF-1700)
+Finished game 9 (ChessAI-D1 vs SF-1700): 1-0 {White mates}
+Started game 10 of 20 (SF-1700 vs ChessAI-D1)
+Finished game 10 (SF-1700 vs ChessAI-D1): 1-0 {White mates}
+Started game 11 of 20 (ChessAI-D1 vs SF-1700)
+Finished game 11 (ChessAI-D1 vs SF-1700): 1-0 {White mates}
+Started game 12 of 20 (SF-1700 vs ChessAI-D1)
+Finished game 12 (SF-1700 vs ChessAI-D1): 1-0 {White mates}
+Started game 13 of 20 (ChessAI-D1 vs SF-1700)
+Finished game 13 (ChessAI-D1 vs SF-1700): 0-1 {Black mates}
+Started game 14 of 20 (SF-1700 vs ChessAI-D1)
+Finished game 14 (SF-1700 vs ChessAI-D1): 0-1 {Black mates}
+Started game 15 of 20 (ChessAI-D1 vs SF-1700)
+Finished game 15 (ChessAI-D1 vs SF-1700): 1/2-1/2 {Draw by stalemate}
+Started game 16 of 20 (SF-1700 vs ChessAI-D1)
+Finished game 16 (SF-1700 vs ChessAI-D1): 1-0 {White mates}
+Started game 17 of 20 (ChessAI-D1 vs SF-1700)
+Finished game 17 (ChessAI-D1 vs SF-1700): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 18 of 20 (SF-1700 vs ChessAI-D1)
+Finished game 18 (SF-1700 vs ChessAI-D1): 1-0 {White mates}
+Started game 19 of 20 (ChessAI-D1 vs SF-1700)
+Finished game 19 (ChessAI-D1 vs SF-1700): 0-1 {Black mates}
+Started game 20 of 20 (SF-1700 vs ChessAI-D1)
+Finished game 20 (SF-1700 vs ChessAI-D1): 1-0 {White mates}
+--------------------------------------------------
+Results of ChessAI-D1 vs SF-1700 (5+0.05, NULL - 1t, NULL - 16MB, opening_suite.epd):
+Elo: -214.85 +/- 142.13, nElo: -325.33 +/- 152.27
+LOS: 0.00 %, DrawRatio: 30.00 %, PairsRatio: 0.00
+Games: 20, Wins: 3, Losses: 14, Draws: 3, Points: 4.5 (22.50 %)
+Ptnml(0-2): [4, 3, 3, 0, 0], WL/DD Ratio: inf
+--------------------------------------------------
+Finished match
+Total Time: 00:02:11 (hours:minutes:seconds)
+

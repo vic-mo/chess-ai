@@ -1,0 +1,59 @@
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2025.11.01"]
+[Round "1"]
+[White "ChessAI-D7"]
+[Black "SF-2000"]
+[Result "0-1"]
+[SetUp "1"]
+[FEN "rnbqkbnr/pp1ppppp/2p5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"]
+[GameDuration "00:00:07"]
+[GameStartTime "2025-11-01T14:34:57 +0100"]
+[GameEndTime "2025-11-01T14:35:04 +0100"]
+[PlyCount "30"]
+[Termination "normal"]
+[TimeControl "5+0.05"]
+[ECO "B10"]
+[Opening "Caro-Kann Defense"]
+
+2. Nc3 {+0.12/7 0.278s} g6 {-0.40/13 0.130s} 3. Nf3 {+0.28/7 0.326s}
+d5 {-0.41/15 0.132s} 4. exd5 {+0.32/7 0.181s} cxd5 {-0.25/15 0.131s}
+5. d4 {+0.27/7 0.187s} a6 {-0.30/16 0.256s} 6. Bg5 {+0.16/7 0.452s}
+h6 {-0.11/15 0.125s} 7. Be3 {+0.10/7 0.187s} Nc6 {-0.22/18 0.538s}
+8. Qe2 {+0.11/7 0.613s} Bg7 {+0.17/13 0.106s} 9. O-O-O {+0.04/7 0.525s}
+Qa5 {+0.20/16 0.352s} 10. h3 {+0.07/7 0.548s} b5 {-0.19/14 0.413s}
+11. Nxd5 {+0.25/7 0.215s} Nf6 {+0.45/15 0.427s} 12. Nxf6+ {+1.37/7 0.153s}
+Bxf6 {+0.25/14 0.152s} 13. d5 {+1.28/7 0.057s} Qxa2 {+3.08/15 0.155s}
+14. dxc6 {+2.17/7 0.161s} Bxb2+ {+M5/19 0.157s} 15. Kd2 {+1.26/7 0.066s}
+Qa5+ {+M3/17 0.213s} 16. c3 {+1.28/7 0.040s} Qxc3# {+M1/16 0.384s, Black mates} 0-1
+
+[Event "Fastchess Tournament"]
+[Site "?"]
+[Date "2025.11.01"]
+[Round "1"]
+[White "SF-2000"]
+[Black "ChessAI-D7"]
+[Result "1-0"]
+[SetUp "1"]
+[FEN "rnbqkbnr/pp1ppppp/2p5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"]
+[GameDuration "00:00:20"]
+[GameStartTime "2025-11-01T14:35:04 +0100"]
+[GameEndTime "2025-11-01T14:35:25 +0100"]
+[PlyCount "31"]
+[Termination "time forfeit"]
+[TimeControl "5+0.05"]
+[ECO "B15"]
+[Opening "Caro-Kann Defense"]
+
+2. Nc3 {+0.47/17 0.419s} d5 {-0.21/7 0.210s} 3. d4 {+0.39/15 0.190s}
+e6 {-0.14/7 0.300s} 4. h3 {+0.83/19 0.589s} dxe4 {-0.12/7 0.977s}
+5. Nxe4 {+0.75/13 0.126s} h6 {-0.18/7 0.714s} 6. h4 {+1.08/17 0.618s}
+Nf6 {0.00/7 0.314s} 7. Nxf6+ {+0.65/13 0.111s} Qxf6 {0.00/7 0.004s}
+8. Be3 {+0.64/15 0.312s} Nd7 {-0.01/7 0.624s} 9. Bd3 {+0.59/16 0.275s}
+c5 {+0.14/7 0.169s} 10. Nf3 {+1.45/13 0.107s} Bd6 {+0.09/7 0.299s}
+11. Qe2 {+1.21/17 0.598s} O-O {+0.17/7 0.350s} 12. O-O-O {+4.85/13 0.112s}
+cxd4 {+0.10/7 0.539s} 13. Bxd4 {+3.07/17 0.226s} e5 {-0.06/7 0.080s}
+14. Be3 {+1.43/16 0.526s} Qe7 {-0.12/7 0.676s} 15. Kb1 {+1.29/12 0.083s}
+e4 {+2.24/7 0.084s} 16. Bxe4 {+1.01/13 0.091s} Qxe4 {-1.00/7 0.344s}
+17. Rxd6 {+1.04/14 0.125s, Black loses on time} 1-0
+
