@@ -12,7 +12,7 @@ use crate::connection::ServerMessage;
 pub struct EngineManager {
     engine: Arc<Mutex<EngineImpl>>,
     stop_flag: Arc<AtomicBool>,
-    tx: mpsc::UnboundedSender<ServerMessage>,
+    _tx: mpsc::UnboundedSender<ServerMessage>,
     current_id: Option<String>,
 }
 
@@ -34,7 +34,7 @@ impl EngineManager {
         Self {
             engine,
             stop_flag,
-            tx,
+            _tx: tx,
             current_id: None,
         }
     }
