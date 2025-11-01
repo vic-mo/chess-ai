@@ -1,0 +1,68 @@
+# Build artifacts
+target/
+**/target/
+
+# Node modules
+node_modules/
+**/node_modules/
+apps/web/node_modules/
+apps/web/dist/
+
+# WASM build outputs
+apps/web/public/wasm/
+apps/web/dist/wasm/
+
+# Git
+.git/
+.github/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Documentation and tests
+docs/
+docs2/
+*.md
+README.md
+ROADMAP.md
+archive/
+
+# Test files
+test*.js
+test*.py
+test*.html
+test*.rs
+test*.pgn
+test*.txt
+test*.sh
+**/tests/
+**/e2e/
+
+# Development files
+.env
+.env.*
+*.log
+*.tmp
+
+# Training data and analysis
+data/
+*.json
+*.epd
+extraction_log.txt
+venv/
+scripts/
+
+# Package manager
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Husky and tooling
+.husky/
+.prettierrc
+.eslintrc.cjs
+.editorconfig
