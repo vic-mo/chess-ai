@@ -25,3 +25,19 @@ apps/web/public/wasm/
 test-results/
 playwright-report/
 blob-report/
+
+# Temp/backup files
+*.backup
+*.tmp
+*_old.rs
+*_new.rs
+
+# Debug artifacts
+debug_tactical
+debug_tactical.rs
+*.o
+*.d
+
+# Large data files
+data/
+extraction_log.txt
