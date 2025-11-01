@@ -17,8 +17,10 @@ async fn main() -> Result<()> {
         .with_level(true)
         .init();
 
-    let addr = "127.0.0.1:8080";
-    let listener = TcpListener::bind(addr).await?;
+    // Google Cloud Run requires binding to 0.0.0.0 and reading PORT from env
+    let port = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string());
+    let addr = format!("0.0.0.0:{}", port);
+    let listener = TcpListener::bind(&addr).await?;
     info!("🚀 WebSocket server listening on ws://{}", addr);
 
     loop {

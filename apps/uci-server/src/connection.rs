@@ -6,7 +6,7 @@ use tokio::sync::mpsc;
 use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 use tracing::{debug, error, info, warn};
 
-use engine::types::{SearchInfo, SearchLimit};
+use engine::types::SearchLimit;
 
 use crate::engine::EngineManager;
 
@@ -56,10 +56,11 @@ pub async fn handle_connection(ws_stream: WebSocketStream<TcpStream>) -> Result<
     while let Some(msg) = ws_receiver.next().await {
         match msg {
             Ok(Message::Text(text)) => {
-                debug!("Received message: {}", text);
+                info!("📨 Received message: {}", text);
 
                 match serde_json::from_str::<ClientMessage>(&text) {
                     Ok(client_msg) => {
+                        info!("✅ Parsed message type: {}", client_msg.msg_type);
                         if let Err(e) = handle_client_message(&mut engine, client_msg, tx.clone()).await {
                             error!("Error handling message: {}", e);
                         }
@@ -73,7 +74,7 @@ pub async fn handle_connection(ws_stream: WebSocketStream<TcpStream>) -> Result<
                 info!("Client closed connection");
                 break;
             }
-            Ok(Message::Ping(data)) => {
+            Ok(Message::Ping(_)) => {
                 debug!("Received ping, sending pong");
                 // Pong is handled automatically by tokio-tungstenite
             }
@@ -116,7 +117,9 @@ async fn handle_client_message(
             engine.stop();
         }
         "validateMove" => {
+            info!("🔍 Validating move: {} on {}", msg.uci_move, msg.fen);
             let is_legal = engine.is_move_legal(&msg.fen, &msg.uci_move);
+            info!("✓ Move valid: {}", is_legal);
             let response = ServerMessage {
                 msg_type: "moveValidation".to_string(),
                 id: msg.id,
@@ -125,8 +128,10 @@ async fn handle_client_message(
             tx.send(response)?;
         }
         "makeMove" => {
+            info!("♟️ Making move: {} on {}", msg.uci_move, msg.fen);
             match engine.make_move(&msg.fen, &msg.uci_move) {
                 Ok(new_fen) => {
+                    info!("✓ Move applied, new FEN: {}", new_fen);
                     let response = ServerMessage {
                         msg_type: "newPosition".to_string(),
                         id: msg.id,
@@ -135,6 +140,7 @@ async fn handle_client_message(
                     tx.send(response)?;
                 }
                 Err(e) => {
+                    error!("✗ Move failed: {}", e);
                     let response = ServerMessage {
                         msg_type: "error".to_string(),
                         id: msg.id,
@@ -145,7 +151,9 @@ async fn handle_client_message(
             }
         }
         "legalMoves" => {
+            info!("📋 Getting legal moves for: {}", msg.fen);
             let moves = engine.legal_moves(&msg.fen);
+            info!("✓ Found {} legal moves", moves.len());
             let response = ServerMessage {
                 msg_type: "legalMoves".to_string(),
                 id: msg.id,
@@ -154,7 +162,9 @@ async fn handle_client_message(
             tx.send(response)?;
         }
         "gameStatus" => {
+            info!("🎮 Checking game status for: {}", msg.fen);
             let (is_over, status) = engine.is_game_over(&msg.fen);
+            info!("✓ Game over: {}, status: {:?}", is_over, status);
             let response = ServerMessage {
                 msg_type: "gameStatus".to_string(),
                 id: msg.id,
