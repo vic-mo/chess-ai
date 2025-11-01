@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+target/
+dist/
+
+# Large data files
+data/
+*.pgn.zst
+*.zst
+
+# Build artifacts
+*.wasm
+*.js.map
+
+# Git
+.git/

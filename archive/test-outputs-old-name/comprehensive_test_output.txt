@@ -1,0 +1,316 @@
+   Compiling zerocopy-derive v0.8.27
+   Compiling serde v1.0.228
+   Compiling tinytemplate v1.2.1
+   Compiling engine v0.1.0 (/Users/victormorel/LocalDocs/docs-grafit/Tech/chess-ai/crates/engine)
+   Compiling zerocopy v0.8.27
+   Compiling half v2.7.1
+   Compiling ciborium-ll v0.2.2
+   Compiling ciborium v0.2.2
+   Compiling criterion v0.5.1
+    Finished `dev` profile [optimized + debuginfo] target(s) in 4.47s
+     Running `target/debug/examples/comprehensive_test`
+╔════════════════════════════════════════════════════════════╗
+║      COMPREHENSIVE CHESS ENGINE TACTICAL TEST SUITE       ║
+╚════════════════════════════════════════════════════════════╝
+
+╔═══════════════════════════════════════════════════════════
+║ Test 1/18: Hanging Piece #1
+╠═══════════════════════════════════════════════════════════
+║ Description: Black should capture the free knight on d4
+║ FEN: rnbqkb1r/pppppppp/5n2/8/3N4/8/PPPPPPPP/RNBQKB1R b KQkq - 0 1
+║ Expected: f6d4 at depth 6
+╚═══════════════════════════════════════════════════════════
+ENGINE RESULT:
+  Best move: c7c5
+  Score: 209 cp
+  PV: c7c5 d4f5 d7d5 f5g7 f8g7 a2a3
+  Nodes: 10463
+❌ FAIL - Expected f6d4 but got c7c5
+
+╔═══════════════════════════════════════════════════════════
+║ Test 2/18: Hanging Queen
+╠═══════════════════════════════════════════════════════════
+║ Description: Black should capture the free queen
+║ FEN: rnbqkb1r/pppppppp/5n2/8/4Q3/8/PPPPPPPP/RNB1KBNR b KQkq - 0 1
+║ Expected: f6e4 at depth 6
+╚═══════════════════════════════════════════════════════════
+ENGINE RESULT:
+  Best move: f6e4
+  Score: 961 cp
+  PV: f6e4 e1d1 d7d6 d2d3 a7a6 d3e4
+  Nodes: 14393
+✅ PASS
+
+╔═══════════════════════════════════════════════════════════
+║ Test 3/18: Back Rank Mate #1
+╠═══════════════════════════════════════════════════════════
+║ Description: White delivers back rank mate
+║ FEN: 6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1
+║ Expected: a1a8 at depth 4
+╚═══════════════════════════════════════════════════════════
+ENGINE RESULT:
+  Best move: a1a8
+  Score: 29999 cp
+  PV: a1a8
+  Nodes: 470
+✅ PASS
+
+╔═══════════════════════════════════════════════════════════
+║ Test 4/18: Scholar's Mate
+╠═══════════════════════════════════════════════════════════
+║ Description: Qxf7# is checkmate
+║ FEN: r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 0 1
+║ Expected: h5f7 at depth 4
+╚═══════════════════════════════════════════════════════════
+ENGINE RESULT:
+  Best move: h5f7
+  Score: 29999 cp
+  PV: h5f7
+  Nodes: 1816
+✅ PASS
+
+╔═══════════════════════════════════════════════════════════
+║ Test 5/18: Simple Fork
+╠═══════════════════════════════════════════════════════════
+║ Description: Knight fork opportunity
+║ FEN: rnbqkb1r/pppppppp/8/8/8/2N5/PPPPPPPP/R1BQKBNR w KQkq - 0 1
+║ Expected: c3d5 at depth 6
+╚═══════════════════════════════════════════════════════════
+ENGINE RESULT:
+  Best move: c3b5
+  Score: 699 cp
+  PV: c3b5 b8a6 a2a3 c7c6 d2d3
+  Nodes: 4492
+❌ FAIL - Expected c3d5 but got c3b5
+
+╔═══════════════════════════════════════════════════════════
+║ Test 6/18: King Safety - Don't expose king
+╠═══════════════════════════════════════════════════════════
+║ Description: Develop pieces, don't weaken king
+║ FEN: rnbqkb1r/pppp1ppp/5n2/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1
+║ Expected: f1d3 at depth 6
+╚═══════════════════════════════════════════════════════════
+ENGINE RESULT:
+  Best move: f3e5
+  Score: 279 cp
+  PV: f3e5 f8c5 f2f3 a7a5 e5f7 f6e4
+  Nodes: 4075
+❌ FAIL - Expected f1d3 but got f3e5
+
+╔═══════════════════════════════════════════════════════════
+║ Test 7/18: Win Pawn Cleanly
+╠═══════════════════════════════════════════════════════════
+║ Description: Nxe5 wins a pawn cleanly
+║ FEN: rnbqkb1r/pppp1ppp/5n2/4p3/4P3/3P1N2/PPP2PPP/RNBQKB1R w KQkq - 0 1
+║ Expected: f3e5 at depth 6
+╚═══════════════════════════════════════════════════════════
+ENGINE RESULT:
+  Best move: f3e5
+  Score: 162 cp
+  PV: f3e5 f6e4 c1e3 f7f6 e5d7 b8d7
+  Nodes: 11639
+✅ PASS
+
+╔═══════════════════════════════════════════════════════════
+║ Test 8/18: Don't Sacrifice Knight for Pawn
+╠═══════════════════════════════════════════════════════════
+║ Description: Take the free pawn, don't sacrifice knight
+║ FEN: rnbqkb1r/pppp1ppp/5n2/4p3/4P3/3P1N2/PPP2PPP/RNBQKB1R w KQkq - 0 1
+║ Expected: f3e5 at depth 6
+╚═══════════════════════════════════════════════════════════
+ENGINE RESULT:
+  Best move: f3e5
+  Score: 162 cp
+  PV: f3e5 f6e4 c1e3 f7f6 e5d7 b8d7
+  Nodes: 11639
+✅ PASS
+
+╔═══════════════════════════════════════════════════════════
+║ Test 9/18: Free Piece - Don't Miss It
+╠═══════════════════════════════════════════════════════════
+║ Description: Black should attack or capture
+║ FEN: r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 1
+║ Expected: c6d4 at depth 6
+╚═══════════════════════════════════════════════════════════
+ENGINE RESULT:
+  Best move: g8h6
+  Score: -19 cp
+  PV: g8h6 d2d3 c6a5 c4b5 a7a6 b5a6
+  Nodes: 33059
+❌ FAIL - Expected c6d4 but got g8h6
+
+╔═══════════════════════════════════════════════════════════
+║ Test 10/18: Develop Pieces
+╠═══════════════════════════════════════════════════════════
+║ Description: Develop knights toward center
+║ FEN: rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1
+║ Expected: b8c6 at depth 6
+╚═══════════════════════════════════════════════════════════
+ENGINE RESULT:
+  Best move: e7e5
+  Score: 40 cp
+  PV: e7e5 g1h3 g8f6 b1c3 b8c6 d2d3
+  Nodes: 15285
+✅ PASS
+
+╔═══════════════════════════════════════════════════════════
+║ Test 11/18: Don't Move Same Piece Twice in Opening
+╠═══════════════════════════════════════════════════════════
+║ Description: Develop new pieces in opening
+║ FEN: r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1
+║ Expected: f1c4 at depth 6
+╚═══════════════════════════════════════════════════════════
+ENGINE RESULT:
+  Best move: b1c3
+  Score: 82 cp
+  PV: b1c3 c6b4 d1e2 a7a6 a2a3 g8f6
+  Nodes: 51839
+❌ FAIL - Expected f1c4 but got b1c3
+
+╔═══════════════════════════════════════════════════════════
+║ Test 12/18: Mate in 2 - Back Rank
+╠═══════════════════════════════════════════════════════════
+║ Description: Rb8+ leads to mate in 2
+║ FEN: 6k1/5ppp/8/8/8/8/5PPP/1R4K1 w - - 0 1
+║ Expected: b1b8 at depth 6
+╚═══════════════════════════════════════════════════════════
+ENGINE RESULT:
+  Best move: b1b8
+  Score: 29999 cp
+  PV: b1b8
+  Nodes: 1509
+✅ PASS
+
+╔═══════════════════════════════════════════════════════════
+║ Test 13/18: Smothered Mate Setup
+╠═══════════════════════════════════════════════════════════
+║ Description: Find strong tactical moves
+║ FEN: r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/3P1N2/PPP2PPP/RNBQ1RK1 b kq - 0 1
+║ Expected: c6d4 at depth 6
+╚═══════════════════════════════════════════════════════════
+ENGINE RESULT:
+  Best move: d7d5
+  Score: 35 cp
+  PV: d7d5 e4d5 c5f2 g1h1 c6a5 b1d2
+  Nodes: 62265
+❌ FAIL - Expected c6d4 but got d7d5
+
+╔═══════════════════════════════════════════════════════════
+║ Test 14/18: Coordinate Attack
+╠═══════════════════════════════════════════════════════════
+║ Description: Create threats with coordinated pieces
+║ FEN: r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/2NP1N2/PPP2PPP/R1BQK2R w KQkq - 0 1
+║ Expected: c3d5 at depth 6
+╚═══════════════════════════════════════════════════════════
+ENGINE RESULT:
+  Best move: e1d2
+  Score: 119 cp
+  PV: e1d2 c6b4 c4f7 e8e7 c3a4 b4c2
+  Nodes: 136720
+❌ FAIL - Expected c3d5 but got e1d2
+
+╔═══════════════════════════════════════════════════════════
+║ Test 15/18: KPK - Push Passed Pawn
+╠═══════════════════════════════════════════════════════════
+║ Description: In KPK, push the pawn and activate king
+║ FEN: 8/8/8/4k3/8/8/4P3/4K3 w - - 0 1
+║ Expected: e2e4 at depth 8
+╚═══════════════════════════════════════════════════════════
+ENGINE RESULT:
+  Best move: e2e4
+  Score: 230 cp
+  PV: e2e4 e5d6 e4e5 d6e6 e1e2 e6d7 e5e6 d7e7
+  Nodes: 4180
+✅ PASS
+
+╔═══════════════════════════════════════════════════════════
+║ Test 16/18: Rook Endgame - Cut Off King
+╠═══════════════════════════════════════════════════════════
+║ Description: Use rook to cut off opponent king
+║ FEN: 8/8/8/4k3/8/8/4P3/R3K3 w - - 0 1
+║ Expected: a1a5 at depth 8
+╚═══════════════════════════════════════════════════════════
+ENGINE RESULT:
+  Best move: e2e4
+  Score: 819 cp
+  PV: e2e4 e5d6 e4e5 d6e6 a1a6 e6d7 e5e6 d7e7
+  Nodes: 18444
+❌ FAIL - Expected a1a5 but got e2e4
+
+╔═══════════════════════════════════════════════════════════
+║ Test 17/18: Don't Hang Bishop
+╠═══════════════════════════════════════════════════════════
+║ Description: Don't allow pieces to be trapped
+║ FEN: rnbqkbnr/pppp1ppp/8/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR b KQkq - 0 1
+║ Expected: d8g5 at depth 6
+╚═══════════════════════════════════════════════════════════
+ENGINE RESULT:
+  Best move: d7d5
+  Score: -46 cp
+  PV: d7d5 e4d5 f8c5 d2d4 e5d4 d1f3
+  Nodes: 22568
+❌ FAIL - Expected d8g5 but got d7d5
+
+╔═══════════════════════════════════════════════════════════
+║ Test 18/18: Don't Walk Into Pin
+╠═══════════════════════════════════════════════════════════
+║ Description: Be aware of pins and tactical threats
+║ FEN: r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 1
+║ Expected: e1g1 at depth 6
+╚═══════════════════════════════════════════════════════════
+ENGINE RESULT:
+  Best move: c4f7
+  Score: 130 cp
+  PV: c4f7 e8e7 e1g1 f6g4 b1c3 g4f2
+  Nodes: 105516
+✅ PASS
+
+╔════════════════════════════════════════════════════════════╗
+║                      FINAL RESULTS                         ║
+╠════════════════════════════════════════════════════════════╣
+║ Total Tests: 18
+║ Passed: 9 (50%)
+║ Failed: 9 (50%)
+╚════════════════════════════════════════════════════════════╝
+
+╔════════════════════════════════════════════════════════════╗
+║                      FAILED TESTS                          ║
+╚════════════════════════════════════════════════════════════╝
+❌ Hanging Piece #1
+   Expected: f6d4
+   Got: c7c5 (score: 209 cp)
+
+❌ Simple Fork
+   Expected: c3d5
+   Got: c3b5 (score: 699 cp)
+
+❌ King Safety - Don't expose king
+   Expected: f1d3
+   Got: f3e5 (score: 279 cp)
+
+❌ Free Piece - Don't Miss It
+   Expected: c6d4
+   Got: g8h6 (score: -19 cp)
+
+❌ Don't Move Same Piece Twice in Opening
+   Expected: f1c4
+   Got: b1c3 (score: 82 cp)
+
+❌ Smothered Mate Setup
+   Expected: c6d4
+   Got: d7d5 (score: 35 cp)
+
+❌ Coordinate Attack
+   Expected: c3d5
+   Got: e1d2 (score: 119 cp)
+
+❌ Rook Endgame - Cut Off King
+   Expected: a1a5
+   Got: e2e4 (score: 819 cp)
+
+❌ Don't Hang Bishop
+   Expected: d8g5
+   Got: d7d5 (score: -46 cp)
+
+
+❌ Engine has significant tactical problems - needs investigation

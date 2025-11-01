@@ -1,0 +1,57 @@
+Warning: No opening book specified! Consider using one, otherwise all games will be played from the starting position.
+Warning: Unknown opening format, 2. All games will be played from the starting position.
+Started game 1 of 20 (GrafitAI vs Stockfish1800)
+Started game 3 of 20 (GrafitAI vs Stockfish1800)
+Started game 2 of 20 (Stockfish1800 vs GrafitAI)
+Started game 4 of 20 (Stockfish1800 vs GrafitAI)
+Finished game 2 (Stockfish1800 vs GrafitAI): 0-1 {Black mates}
+Started game 5 of 20 (GrafitAI vs Stockfish1800)
+Finished game 3 (GrafitAI vs Stockfish1800): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 6 of 20 (Stockfish1800 vs GrafitAI)
+Finished game 1 (GrafitAI vs Stockfish1800): 0-1 {Black mates}
+Started game 7 of 20 (GrafitAI vs Stockfish1800)
+Finished game 4 (Stockfish1800 vs GrafitAI): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 8 of 20 (Stockfish1800 vs GrafitAI)
+Finished game 6 (Stockfish1800 vs GrafitAI): 1-0 {White mates}
+Started game 9 of 20 (GrafitAI vs Stockfish1800)
+Finished game 7 (GrafitAI vs Stockfish1800): 0-1 {Black mates}
+Started game 10 of 20 (Stockfish1800 vs GrafitAI)
+Finished game 8 (Stockfish1800 vs GrafitAI): 1-0 {White mates}
+Started game 11 of 20 (GrafitAI vs Stockfish1800)
+Finished game 5 (GrafitAI vs Stockfish1800): 1-0 {White mates}
+Started game 12 of 20 (Stockfish1800 vs GrafitAI)
+Finished game 10 (Stockfish1800 vs GrafitAI): 1-0 {White mates}
+Started game 13 of 20 (GrafitAI vs Stockfish1800)
+Finished game 9 (GrafitAI vs Stockfish1800): 1-0 {White mates}
+Started game 14 of 20 (Stockfish1800 vs GrafitAI)
+Finished game 11 (GrafitAI vs Stockfish1800): 0-1 {Black mates}
+Started game 15 of 20 (GrafitAI vs Stockfish1800)
+Finished game 12 (Stockfish1800 vs GrafitAI): 0-1 {Black mates}
+Started game 16 of 20 (Stockfish1800 vs GrafitAI)
+Finished game 13 (GrafitAI vs Stockfish1800): 1-0 {White mates}
+Started game 17 of 20 (GrafitAI vs Stockfish1800)
+Finished game 14 (Stockfish1800 vs GrafitAI): 1-0 {White mates}
+Started game 18 of 20 (Stockfish1800 vs GrafitAI)
+Finished game 15 (GrafitAI vs Stockfish1800): 1-0 {Black loses on time}
+Started game 19 of 20 (GrafitAI vs Stockfish1800)
+Finished game 16 (Stockfish1800 vs GrafitAI): 0-1 {Black mates}
+Started game 20 of 20 (Stockfish1800 vs GrafitAI)
+Finished game 17 (GrafitAI vs Stockfish1800): 1-0 {White mates}
+Finished game 19 (GrafitAI vs Stockfish1800): 1-0 {White mates}
+Finished game 18 (Stockfish1800 vs GrafitAI): 0-1 {Black mates}
+Finished game 20 (Stockfish1800 vs GrafitAI): 1-0 {White mates}
+--------------------------------------------------
+Results of GrafitAI vs Stockfish1800 (40/10+0.1, NULL - 1t, NULL - 16MB):
+Elo: 34.86 +/- 122.07, nElo: 45.62 +/- 152.27
+LOS: 72.15 %, DrawRatio: 70.00 %, PairsRatio: 2.00
+Games: 20, Wins: 10, Losses: 8, Draws: 2, Points: 11.0 (55.00 %)
+Ptnml(0-2): [1, 0, 7, 0, 2], WL/DD Ratio: 6.00
+--------------------------------------------------
+
+Player: Stockfish1800
+  Timeouts: 1
+  Crashed: 0
+
+Finished match
+Total Time: 00:01:41 (hours:minutes:seconds)
+

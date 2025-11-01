@@ -1,0 +1,135 @@
+Warning: No opening book specified! Consider using one, otherwise all games will be played from the starting position.
+Warning: Unknown opening format, 2. All games will be played from the starting position.
+Started game 1 of 50 (GrafitAI_Full vs Stockfish1800)
+Started game 2 of 50 (Stockfish1800 vs GrafitAI_Full)
+Started game 4 of 50 (Stockfish1800 vs GrafitAI_Full)
+Started game 3 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 2 (Stockfish1800 vs GrafitAI_Full): 1-0 {White mates}
+Started game 5 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 3 (GrafitAI_Full vs Stockfish1800): 0-1 {Black mates}
+Started game 6 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 4 (Stockfish1800 vs GrafitAI_Full): 1-0 {White mates}
+Started game 7 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 1 (GrafitAI_Full vs Stockfish1800): 1-0 {White mates}
+Started game 8 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 5 (GrafitAI_Full vs Stockfish1800): 1-0 {White mates}
+Started game 9 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 6 (Stockfish1800 vs GrafitAI_Full): 0-1 {Black mates}
+Started game 10 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 7 (GrafitAI_Full vs Stockfish1800): 0-1 {Black mates}
+Started game 11 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 9 (GrafitAI_Full vs Stockfish1800): 0-1 {Black mates}
+Started game 12 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 8 (Stockfish1800 vs GrafitAI_Full): 0-1 {Black mates}
+Started game 13 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 10 (Stockfish1800 vs GrafitAI_Full): 0-1 {Black mates}
+Started game 14 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 12 (Stockfish1800 vs GrafitAI_Full): 1-0 {White mates}
+Started game 15 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 11 (GrafitAI_Full vs Stockfish1800): 1-0 {White mates}
+Started game 16 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 14 (Stockfish1800 vs GrafitAI_Full): 0-1 {Black mates}
+Started game 17 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 15 (GrafitAI_Full vs Stockfish1800): 0-1 {Black mates}
+Started game 18 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 13 (GrafitAI_Full vs Stockfish1800): 0-1 {Black mates}
+Started game 19 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 16 (Stockfish1800 vs GrafitAI_Full): 0-1 {Black mates}
+Started game 20 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 18 (Stockfish1800 vs GrafitAI_Full): 1-0 {White mates}
+Started game 21 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 17 (GrafitAI_Full vs Stockfish1800): 0-1 {Black mates}
+Started game 22 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 20 (Stockfish1800 vs GrafitAI_Full): 0-1 {Black mates}
+Started game 23 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 19 (GrafitAI_Full vs Stockfish1800): 0-1 {Black mates}
+--------------------------------------------------
+Results of GrafitAI_Full vs Stockfish1800 (40/10+0.1, NULL - 1t, NULL - 16MB):
+Elo: -34.86 +/- 122.07, nElo: -45.62 +/- 152.27
+LOS: 27.85 %, DrawRatio: 70.00 %, PairsRatio: 0.50
+Games: 20, Wins: 9, Losses: 11, Draws: 0, Points: 9.0 (45.00 %)
+Ptnml(0-2): [2, 0, 7, 0, 1], WL/DD Ratio: inf
+--------------------------------------------------
+Started game 24 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 21 (GrafitAI_Full vs Stockfish1800): 1-0 {Black loses on time}
+Started game 25 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 23 (GrafitAI_Full vs Stockfish1800): 1-0 {Black loses on time}
+Started game 26 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 22 (Stockfish1800 vs GrafitAI_Full): 1-0 {White mates}
+Started game 27 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 24 (Stockfish1800 vs GrafitAI_Full): 1-0 {White mates}
+Started game 28 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 25 (GrafitAI_Full vs Stockfish1800): 1-0 {White mates}
+Started game 29 of 50 (GrafitAI_Full vs Stockfish1800)
+Warning; No output from GrafitAI_Full
+Finished game 26 (Stockfish1800 vs GrafitAI_Full): 1-0 {Black loses on time}
+Started game 30 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 29 (GrafitAI_Full vs Stockfish1800): 1-0 {White mates}
+Started game 31 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 27 (GrafitAI_Full vs Stockfish1800): 0-1 {Black mates}
+Started game 32 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 28 (Stockfish1800 vs GrafitAI_Full): 1/2-1/2 {Draw by insufficient mating material}
+Started game 33 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 31 (GrafitAI_Full vs Stockfish1800): 0-1 {Black mates}
+Started game 34 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 30 (Stockfish1800 vs GrafitAI_Full): 1-0 {White mates}
+Started game 35 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 32 (Stockfish1800 vs GrafitAI_Full): 0-1 {Black mates}
+Started game 36 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 34 (Stockfish1800 vs GrafitAI_Full): 1-0 {White mates}
+Started game 37 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 33 (GrafitAI_Full vs Stockfish1800): 1-0 {White mates}
+Started game 38 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 35 (GrafitAI_Full vs Stockfish1800): 0-1 {Black mates}
+Started game 39 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 36 (Stockfish1800 vs GrafitAI_Full): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 40 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 37 (GrafitAI_Full vs Stockfish1800): 1-0 {White mates}
+Started game 41 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 38 (Stockfish1800 vs GrafitAI_Full): 1-0 {White mates}
+Started game 42 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 39 (GrafitAI_Full vs Stockfish1800): 1/2-1/2 {Draw by 3-fold repetition}
+Started game 43 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 40 (Stockfish1800 vs GrafitAI_Full): 0-1 {Black mates}
+--------------------------------------------------
+Results of GrafitAI_Full vs Stockfish1800 (40/10+0.1, NULL - 1t, NULL - 16MB):
+Elo: -26.11 +/- 66.10, nElo: -43.21 +/- 107.67
+LOS: 21.58 %, DrawRatio: 70.00 %, PairsRatio: 0.50
+Games: 40, Wins: 17, Losses: 20, Draws: 3, Points: 18.5 (46.25 %)
+Ptnml(0-2): [2, 2, 14, 1, 1], WL/DD Ratio: inf
+--------------------------------------------------
+Started game 44 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 43 (GrafitAI_Full vs Stockfish1800): 0-1 {Black mates}
+Started game 45 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 44 (Stockfish1800 vs GrafitAI_Full): 1-0 {White mates}
+Started game 46 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 41 (GrafitAI_Full vs Stockfish1800): 0-1 {Black mates}
+Started game 47 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 42 (Stockfish1800 vs GrafitAI_Full): 1-0 {Black loses on time}
+Started game 48 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 48 (Stockfish1800 vs GrafitAI_Full): 1-0 {White mates}
+Started game 49 of 50 (GrafitAI_Full vs Stockfish1800)
+Finished game 47 (GrafitAI_Full vs Stockfish1800): 0-1 {Black mates}
+Started game 50 of 50 (Stockfish1800 vs GrafitAI_Full)
+Finished game 46 (Stockfish1800 vs GrafitAI_Full): 0-1 {Black mates}
+Finished game 45 (GrafitAI_Full vs Stockfish1800): 1-0 {White mates}
+Finished game 50 (Stockfish1800 vs GrafitAI_Full): 1-0 {White mates}
+Finished game 49 (GrafitAI_Full vs Stockfish1800): 1-0 {White mates}
+--------------------------------------------------
+Results of GrafitAI_Full vs Stockfish1800 (40/10+0.1, NULL - 1t, NULL - 16MB):
+Elo: -48.96 +/- 76.13, nElo: -63.82 +/- 96.30
+LOS: 9.70 %, DrawRatio: 60.00 %, PairsRatio: 0.43
+Games: 50, Wins: 20, Losses: 27, Draws: 3, Points: 21.5 (43.00 %)
+Ptnml(0-2): [5, 2, 15, 1, 2], WL/DD Ratio: inf
+--------------------------------------------------
+
+Player: GrafitAI_Full
+  Timeouts: 2
+  Crashed: 0
+Player: Stockfish1800
+  Timeouts: 2
+  Crashed: 0
+
+Finished match
+Total Time: 00:04:31 (hours:minutes:seconds)
+
