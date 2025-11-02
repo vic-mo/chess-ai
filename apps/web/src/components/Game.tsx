@@ -17,7 +17,9 @@ export function Game() {
   // Determine if it's the player's turn
   const isPlayerTurn = () => {
     const turn = fen.split(' ')[1]; // 'w' or 'b'
-    return (playerColor === 'white' && turn === 'w') || (playerColor === 'black' && turn === 'b');
+    const result = (playerColor === 'white' && turn === 'w') || (playerColor === 'black' && turn === 'b');
+    logger.log('[Game] 🔍 isPlayerTurn check:', { playerColor, turn, result, fen });
+    return result;
   };
 
   // Fetch legal moves when position changes
@@ -85,10 +87,10 @@ export function Game() {
 
   // Handle piece drop
   const onDrop = async (sourceSquare: string, targetSquare: string): Promise<boolean> => {
-    logger.log('[Game] onDrop called:', { sourceSquare, targetSquare });
+    logger.log('[Game] 📱 onDrop called:', { sourceSquare, targetSquare });
 
     if (!isPlayerTurn() || isEngineThinking || isGameOver) {
-      logger.log('[Game] Drop rejected:', {
+      logger.log('[Game] ❌ Drop rejected:', {
         isPlayerTurn: isPlayerTurn(),
         isEngineThinking,
         isGameOver,
@@ -96,18 +98,28 @@ export function Game() {
       return false;
     }
 
-    // Convert king-to-rook moves to proper UCI castling notation
-    const uciMove = convertCastlingMove(sourceSquare, targetSquare);
+    try {
+      // Convert king-to-rook moves to proper UCI castling notation
+      const uciMove = convertCastlingMove(sourceSquare, targetSquare);
 
-    // Log castling detection
-    if (isCastlingMove(sourceSquare, targetSquare)) {
-      logger.log('[Game] 🏰 Castling move detected!', uciMove);
+      // Log castling detection
+      if (isCastlingMove(sourceSquare, targetSquare)) {
+        logger.log('[Game] 🏰 Castling move detected!', uciMove);
+      }
+
+      logger.log('[Game] 🎯 Attempting move:', uciMove);
+      const success = await makeMove(uciMove);
+      logger.log('[Game] ✅ Move result:', success);
+
+      if (!success) {
+        logger.log('[Game] ⚠️ Move validation failed - returning false to prevent visual update');
+      }
+
+      return success;
+    } catch (error) {
+      logger.error('[Game] 💥 Exception in onDrop:', error);
+      return false;
     }
-
-    logger.log('[Game] Attempting move:', uciMove);
-    const success = await makeMove(uciMove);
-    logger.log('[Game] Move result:', success);
-    return success;
   };
 
   // Handle square clicks for castling and move selection
@@ -147,7 +159,24 @@ export function Game() {
     customSquareStyles[to] = { backgroundColor: 'rgba(255, 255, 0, 0.4)' };
   }
   if (selectedSquare) {
-    customSquareStyles[selectedSquare] = { backgroundColor: 'rgba(0, 255, 0, 0.6)' };
+    customSquareStyles[selectedSquare] = {
+      backgroundColor: 'rgba(34, 197, 94, 0.7)',
+      boxShadow: 'inset 0 0 0 3px rgb(34, 197, 94)'
+    };
+  }
+
+  // Highlight possible moves from selected square
+  if (selectedSquare && isPlayerTurn() && !isEngineThinking && !isGameOver) {
+    const possibleMoves = legalMoves.filter(move => move.startsWith(selectedSquare));
+    possibleMoves.forEach(move => {
+      const targetSquare = move.substring(2, 4);
+      if (!customSquareStyles[targetSquare]) {
+        customSquareStyles[targetSquare] = {
+          backgroundColor: 'rgba(34, 197, 94, 0.3)',
+          cursor: 'pointer'
+        };
+      }
+    });
   }
 
   // Debug: log FEN changes
