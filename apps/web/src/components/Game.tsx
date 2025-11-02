@@ -17,7 +17,8 @@ export function Game() {
   // Determine if it's the player's turn
   const isPlayerTurn = () => {
     const turn = fen.split(' ')[1]; // 'w' or 'b'
-    const result = (playerColor === 'white' && turn === 'w') || (playerColor === 'black' && turn === 'b');
+    const result =
+      (playerColor === 'white' && turn === 'w') || (playerColor === 'black' && turn === 'b');
     logger.log('[Game] 🔍 isPlayerTurn check:', { playerColor, turn, result, fen });
     return result;
   };
@@ -161,19 +162,19 @@ export function Game() {
   if (selectedSquare) {
     customSquareStyles[selectedSquare] = {
       backgroundColor: 'rgba(34, 197, 94, 0.7)',
-      boxShadow: 'inset 0 0 0 3px rgb(34, 197, 94)'
+      boxShadow: 'inset 0 0 0 3px rgb(34, 197, 94)',
     };
   }
 
   // Highlight possible moves from selected square
   if (selectedSquare && isPlayerTurn() && !isEngineThinking && !isGameOver) {
-    const possibleMoves = legalMoves.filter(move => move.startsWith(selectedSquare));
-    possibleMoves.forEach(move => {
+    const possibleMoves = legalMoves.filter((move) => move.startsWith(selectedSquare));
+    possibleMoves.forEach((move) => {
       const targetSquare = move.substring(2, 4);
       if (!customSquareStyles[targetSquare]) {
         customSquareStyles[targetSquare] = {
           backgroundColor: 'rgba(34, 197, 94, 0.3)',
-          cursor: 'pointer'
+          cursor: 'pointer',
         };
       }
     });
@@ -209,7 +210,13 @@ export function Game() {
         arePiecesDraggable={isPlayerTurn() && !isEngineThinking && !isGameOver}
         customSquareStyles={customSquareStyles}
         boardWidth={boardWidth}
-        animationDuration={200}
+        animationDuration={0}
+        isDraggablePiece={({ piece }) => {
+          // Only allow dragging pieces that match the current turn
+          const turn = fen.split(' ')[1];
+          const isWhitePiece = piece[0] === 'w';
+          return (turn === 'w' && isWhitePiece) || (turn === 'b' && !isWhitePiece);
+        }}
       />
     </div>
   );
