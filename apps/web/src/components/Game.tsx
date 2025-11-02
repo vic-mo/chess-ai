@@ -12,6 +12,7 @@ export function Game() {
   const gameEngine = useGameEngine();
   const [legalMoves, setLegalMoves] = useState<string[]>([]);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
+  const [boardWidth, setBoardWidth] = useState(600);
 
   // Determine if it's the player's turn
   const isPlayerTurn = () => {
@@ -154,6 +155,21 @@ export function Game() {
     logger.log('[Game] 🔄 Board position updated:', fen);
   }, [fen]);
 
+  // Calculate responsive board width
+  useEffect(() => {
+    const updateBoardWidth = () => {
+      const padding = 32; // 2rem padding on each side
+      const maxWidth = 600;
+      const availableWidth = window.innerWidth - padding * 2;
+      const newWidth = Math.min(maxWidth, availableWidth);
+      setBoardWidth(newWidth);
+    };
+
+    updateBoardWidth();
+    window.addEventListener('resize', updateBoardWidth);
+    return () => window.removeEventListener('resize', updateBoardWidth);
+  }, []);
+
   return (
     <div className="game">
       <ChessboardComponent
@@ -163,7 +179,7 @@ export function Game() {
         boardOrientation={playerColor}
         arePiecesDraggable={isPlayerTurn() && !isEngineThinking && !isGameOver}
         customSquareStyles={customSquareStyles}
-        boardWidth={600}
+        boardWidth={boardWidth}
         animationDuration={200}
       />
     </div>
