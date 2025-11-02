@@ -13,6 +13,7 @@ export function Game() {
   const [legalMoves, setLegalMoves] = useState<string[]>([]);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [boardWidth, setBoardWidth] = useState(600);
+  const [displayFen, setDisplayFen] = useState(fen);
 
   // Determine if it's the player's turn
   const isPlayerTurn = () => {
@@ -109,16 +110,33 @@ export function Game() {
       }
 
       logger.log('[Game] 🎯 Attempting move:', uciMove);
+
+      // Validate move first
+      const isValid = await gameEngine.validateMove(fen, uciMove);
+      if (!isValid) {
+        logger.log('[Game] ⚠️ Move validation failed');
+        return false;
+      }
+
+      // Optimistically update display position BEFORE making the move
+      // This prevents the flicker caused by network latency
+      const optimisticFen = await gameEngine.makeMove(fen, uciMove);
+      setDisplayFen(optimisticFen);
+
+      // Now make the actual move (this updates the store)
       const success = await makeMove(uciMove);
       logger.log('[Game] ✅ Move result:', success);
 
       if (!success) {
-        logger.log('[Game] ⚠️ Move validation failed - returning false to prevent visual update');
+        // Revert on failure
+        logger.log('[Game] ⚠️ Move failed - reverting display');
+        setDisplayFen(fen);
       }
 
       return success;
     } catch (error) {
       logger.error('[Game] 💥 Exception in onDrop:', error);
+      setDisplayFen(fen);
       return false;
     }
   };
@@ -180,9 +198,10 @@ export function Game() {
     });
   }
 
-  // Debug: log FEN changes
+  // Sync display FEN with actual FEN from store
   useEffect(() => {
     logger.log('[Game] 🔄 Board position updated:', fen);
+    setDisplayFen(fen);
   }, [fen]);
 
   // Calculate responsive board width
@@ -203,17 +222,17 @@ export function Game() {
   return (
     <div className="game">
       <ChessboardComponent
-        position={fen}
+        position={displayFen}
         onPieceDrop={onDrop}
         onSquareClick={onSquareClick}
         boardOrientation={playerColor}
         arePiecesDraggable={isPlayerTurn() && !isEngineThinking && !isGameOver}
         customSquareStyles={customSquareStyles}
         boardWidth={boardWidth}
-        animationDuration={0}
+        animationDuration={200}
         isDraggablePiece={({ piece }) => {
           // Only allow dragging pieces that match the current turn
-          const turn = fen.split(' ')[1];
+          const turn = displayFen.split(' ')[1];
           const isWhitePiece = piece[0] === 'w';
           return (turn === 'w' && isWhitePiece) || (turn === 'b' && !isWhitePiece);
         }}
