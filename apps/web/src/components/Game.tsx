@@ -100,6 +100,8 @@ export function Game() {
       return false;
     }
 
+    // Don't return true immediately - this prevents react-chessboard from updating
+    // We'll update the position ourselves through state
     try {
       // Convert king-to-rook moves to proper UCI castling notation
       const uciMove = convertCastlingMove(sourceSquare, targetSquare);
@@ -111,32 +113,14 @@ export function Game() {
 
       logger.log('[Game] 🎯 Attempting move:', uciMove);
 
-      // Validate move first
-      const isValid = await gameEngine.validateMove(fen, uciMove);
-      if (!isValid) {
-        logger.log('[Game] ⚠️ Move validation failed');
-        return false;
-      }
-
-      // Optimistically update display position BEFORE making the move
-      // This prevents the flicker caused by network latency
-      const optimisticFen = await gameEngine.makeMove(fen, uciMove);
-      setDisplayFen(optimisticFen);
-
-      // Now make the actual move (this updates the store)
       const success = await makeMove(uciMove);
       logger.log('[Game] ✅ Move result:', success);
 
-      if (!success) {
-        // Revert on failure
-        logger.log('[Game] ⚠️ Move failed - reverting display');
-        setDisplayFen(fen);
-      }
-
-      return success;
+      // Return false always to prevent react-chessboard from updating its internal state
+      // The position will update through our displayFen state instead
+      return false;
     } catch (error) {
       logger.error('[Game] 💥 Exception in onDrop:', error);
-      setDisplayFen(fen);
       return false;
     }
   };
