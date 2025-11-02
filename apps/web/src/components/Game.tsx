@@ -3,6 +3,7 @@ import { useGameStore } from '../store/gameStore';
 import { useGameEngine } from '../engine/engineClient';
 import { useEffect, useState } from 'react';
 import { logger } from '../utils/logger';
+import { Chess } from 'chess.js';
 
 // Type assertion for Chessboard to work around type definition issues
 const ChessboardComponent = Chessboard as any;
@@ -100,8 +101,6 @@ export function Game() {
       return false;
     }
 
-    // Don't return true immediately - this prevents react-chessboard from updating
-    // We'll update the position ourselves through state
     try {
       // Convert king-to-rook moves to proper UCI castling notation
       const uciMove = convertCastlingMove(sourceSquare, targetSquare);
@@ -113,12 +112,36 @@ export function Game() {
 
       logger.log('[Game] 🎯 Attempting move:', uciMove);
 
-      const success = await makeMove(uciMove);
-      logger.log('[Game] ✅ Move result:', success);
+      // Validate and compute new position locally using chess.js
+      const chess = new Chess(fen);
+      const move = chess.move({
+        from: uciMove.substring(0, 2),
+        to: uciMove.substring(2, 4),
+        promotion: uciMove.length > 4 ? uciMove[4] : undefined,
+      });
 
-      // Return false always to prevent react-chessboard from updating its internal state
-      // The position will update through our displayFen state instead
-      return false;
+      if (!move) {
+        logger.log('[Game] ⚠️ Invalid move');
+        return false;
+      }
+
+      // Immediately update display position to prevent flicker
+      const newFen = chess.fen();
+      setDisplayFen(newFen);
+      logger.log('[Game] 🎨 Optimistically updated displayFen:', newFen);
+
+      // Now make the actual move in the background (updates store)
+      makeMove(uciMove).then((success) => {
+        logger.log('[Game] ✅ Move result:', success);
+        if (!success) {
+          // Revert on failure
+          logger.log('[Game] ⚠️ Move failed - reverting display');
+          setDisplayFen(fen);
+        }
+      });
+
+      // Return true to accept the move visually
+      return true;
     } catch (error) {
       logger.error('[Game] 💥 Exception in onDrop:', error);
       return false;
@@ -143,8 +166,31 @@ export function Game() {
         logger.log('[Game] 🏰 Castling via click!');
       }
 
-      const success = await makeMove(uciMove);
-      logger.log('[Game] Click move result:', success);
+      // Validate and compute new position locally using chess.js
+      const chess = new Chess(fen);
+      const move = chess.move({
+        from: uciMove.substring(0, 2),
+        to: uciMove.substring(2, 4),
+        promotion: uciMove.length > 4 ? uciMove[4] : undefined,
+      });
+
+      if (move) {
+        // Immediately update display position to prevent flicker
+        const newFen = chess.fen();
+        setDisplayFen(newFen);
+        logger.log('[Game] 🎨 Optimistically updated displayFen from click:', newFen);
+
+        // Now make the actual move in the background
+        makeMove(uciMove).then((success) => {
+          logger.log('[Game] Click move result:', success);
+          if (!success) {
+            // Revert on failure
+            logger.log('[Game] ⚠️ Click move failed - reverting display');
+            setDisplayFen(fen);
+          }
+        });
+      }
+
       setSelectedSquare(null); // Clear selection after move attempt
     } else {
       // Select this square
