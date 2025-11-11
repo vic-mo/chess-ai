@@ -2,6 +2,8 @@ import type { AnalyzeRequest, EngineEvent, SearchInfo, BestMove } from '@chess-a
 import { Schema } from '@chess-ai/protocol';
 import { performanceMonitor } from '../utils/performance';
 import { logger } from '../utils/logger';
+import { WebSocketConnectionManager } from './connectionManager';
+import { retry } from '../utils/retryHelper';
 
 type EngineMode = 'remote' | 'wasm';
 interface EngineGlobals {
@@ -48,87 +50,96 @@ function fakeAnalyze(req: AnalyzeRequest, onEvent: EventHandler): StopHandler {
   };
 }
 
-let remoteWs: WebSocket | null = null;
-let remoteLastId: string | null = null;
+// Remote connection manager
+let remoteConnectionManager: WebSocketConnectionManager | null = null;
+const remoteEventHandlers = new Map<string, EventHandler>();
+
+function getRemoteConnectionManager(): WebSocketConnectionManager {
+  if (!remoteConnectionManager) {
+    const base = import.meta.env.VITE_ENGINE_SERVER_URL || 'ws://127.0.0.1:8080';
+    const wsUrl = base.replace(/^http/, 'ws');
+    remoteConnectionManager = new WebSocketConnectionManager(wsUrl);
+
+    // Set up global message handler for all analyze requests
+    remoteConnectionManager.onMessage((data) => {
+      try {
+        logger.log('[RemoteAnalyze] Raw message:', data);
+        const result = Schema.EngineEvent.safeParse(data);
+        logger.log('[RemoteAnalyze] Schema validation:', result);
+
+        if (result.success) {
+          const event = result.data;
+          logger.log('[RemoteAnalyze] Valid event:', event);
+
+          // Find handler by ID
+          const payload = event.payload as { id: string };
+          const handler = remoteEventHandlers.get(payload.id);
+
+          if (handler) {
+            logger.log('[RemoteAnalyze] Calling handler for ID:', payload.id);
+            handler(event);
+
+            // Clean up handler on bestMove or error
+            if (event.type === 'bestMove' || event.type === 'error') {
+              remoteEventHandlers.delete(payload.id);
+            }
+          } else {
+            logger.warn('[RemoteAnalyze] No handler for ID:', payload.id);
+          }
+        } else {
+          logger.error('[RemoteAnalyze] Schema validation failed:', result.error);
+        }
+      } catch (e) {
+        logger.error('[RemoteAnalyze] Failed to handle message:', e);
+      }
+    });
+
+    // Auto-connect
+    remoteConnectionManager.connect().catch((error) => {
+      logger.error('[RemoteAnalyze] Initial connection failed:', error);
+    });
+  }
+
+  return remoteConnectionManager;
+}
 
 function remoteAnalyze(req: AnalyzeRequest, onEvent: EventHandler): StopHandler {
-  const base = import.meta.env.VITE_ENGINE_SERVER_URL || 'ws://127.0.0.1:8080';
-  const wsUrl = base.replace(/^http/, 'ws');
-  remoteLastId = req.id;
+  const connectionManager = getRemoteConnectionManager();
 
-  const ws = new WebSocket(wsUrl);
-  let requestSent = false;
-  let bestMoveSent = false;
+  // Register event handler
+  remoteEventHandlers.set(req.id, onEvent);
 
-  ws.onopen = () => {
-    // Send analyze request over WebSocket
-    ws.send(
-      JSON.stringify({
-        type: 'analyze',
-        id: req.id,
-        fen: req.fen,
-        limit: req.limit,
-      }),
-    );
-    requestSent = true;
-  };
-
-  ws.onmessage = (ev) => {
-    try {
-      logger.log('[RemoteAnalyze] Raw message:', ev.data);
-      const parsed: unknown = JSON.parse(ev.data);
-      logger.log('[RemoteAnalyze] Parsed message:', parsed);
-      const result = Schema.EngineEvent.safeParse(parsed);
-      logger.log('[RemoteAnalyze] Schema validation:', result);
-      if (result.success) {
-        logger.log('[RemoteAnalyze] Calling onEvent with:', result.data);
-        if (result.data.type === 'bestMove') {
-          bestMoveSent = true;
-        }
-        onEvent(result.data);
-      } else {
-        logger.error('[RemoteAnalyze] Schema validation failed:', result.error);
-      }
-    } catch (e) {
-      logger.error('Failed to parse WebSocket message:', e);
-    }
-  };
-
-  ws.onerror = (error) => {
-    logger.error('WebSocket error:', error);
-    if (!bestMoveSent) {
+  // Set up timeout for this request
+  const timeoutId = setTimeout(() => {
+    if (remoteEventHandlers.has(req.id)) {
+      logger.error('[RemoteAnalyze] Request timeout for ID:', req.id);
+      remoteEventHandlers.delete(req.id);
       onEvent({
         type: 'error',
-        payload: { id: req.id, message: 'WebSocket connection failed' },
+        payload: { id: req.id, message: 'Request timeout' },
       });
     }
-  };
+  }, 30000); // 30s timeout
 
-  ws.onclose = (event) => {
-    // If connection closes before sending request or receiving bestMove, report error
-    if (!requestSent || !bestMoveSent) {
-      logger.error('WebSocket closed prematurely:', event.code, event.reason);
-      if (!bestMoveSent) {
-        onEvent({
-          type: 'error',
-          payload: {
-            id: req.id,
-            message: `WebSocket closed before completion: ${event.reason || 'Unknown reason'}`,
-          },
-        });
-      }
-    }
-    if (remoteWs === ws) {
-      remoteWs = null;
-    }
-  };
+  // Send analyze request
+  connectionManager.send({
+    type: 'analyze',
+    id: req.id,
+    fen: req.fen,
+    limit: req.limit,
+  });
 
-  remoteWs = ws;
-
+  // Return cleanup function
   const cleanup: StopHandler = () => {
-    if (remoteWs === ws) {
-      ws.close();
-      remoteWs = null;
+    clearTimeout(timeoutId);
+    remoteEventHandlers.delete(req.id);
+
+    // Send stop message if still connected
+    if (connectionManager.isConnected()) {
+      connectionManager.send({
+        type: 'stop',
+        id: req.id,
+      });
     }
   };
 
@@ -281,19 +292,14 @@ function wasmAnalyze(req: AnalyzeRequest, onEvent: EventHandler): StopHandler {
 }
 
 function stopRemote(id: string) {
-  if (remoteWs && remoteWs.readyState === WebSocket.OPEN) {
-    // Send stop message over WebSocket
-    remoteWs.send(
-      JSON.stringify({
-        type: 'stop',
-        id: remoteLastId ?? id,
-      }),
-    );
+  const connectionManager = remoteConnectionManager;
+  if (connectionManager?.isConnected()) {
+    connectionManager.send({
+      type: 'stop',
+      id,
+    });
   }
-  if (remoteWs) {
-    remoteWs.close();
-    remoteWs = null;
-  }
+  remoteEventHandlers.delete(id);
 }
 
 export function getEngineMode(): EngineMode {
@@ -321,10 +327,11 @@ export function setEngineMode(mode: EngineMode): void {
     wasmEventHandlers.clear();
   }
 
-  // Reset remote WebSocket when switching modes
-  if (mode !== 'remote' && remoteWs) {
-    remoteWs.close();
-    remoteWs = null;
+  // Reset remote connection manager when switching modes
+  if (mode !== 'remote' && remoteConnectionManager) {
+    remoteConnectionManager.disconnect();
+    remoteConnectionManager = null;
+    remoteEventHandlers.clear();
   }
 }
 
@@ -466,68 +473,65 @@ const wasmGameClient: GameEngineClient = {
   },
 };
 
-// Remote mode: Use WebSocket server
-let remoteGameWs: WebSocket | null = null;
-let remotePendingRequests = new Map<string, (value: any) => void>();
+// Remote mode: Use WebSocket server via connection manager
+let remotePendingGameRequests = new Map<
+  string,
+  { resolve: (value: any) => void; reject: (error: any) => void; timeoutId: NodeJS.Timeout }
+>();
+let gameMessageHandlerRegistered = false;
 
-function getRemoteGameWs(): Promise<WebSocket> {
-  if (remoteGameWs?.readyState === WebSocket.OPEN) {
-    return Promise.resolve(remoteGameWs);
+function setupGameMessageHandler(): void {
+  if (gameMessageHandlerRegistered) {
+    return;
   }
 
-  return new Promise((resolve, reject) => {
-    const base = import.meta.env.VITE_ENGINE_SERVER_URL || 'ws://127.0.0.1:8080';
-    const ws = new WebSocket(base.replace(/^http/, 'ws'));
+  const connectionManager = getRemoteConnectionManager();
 
-    ws.onopen = () => {
-      remoteGameWs = ws;
-      resolve(ws);
-    };
+  // Register handler for game-specific messages (not engine events)
+  const unsubscribe = connectionManager.onMessage((msg) => {
+    // Skip if this is an engine event (handled elsewhere)
+    if (msg.type === 'searchInfo' || msg.type === 'bestMove' || msg.type === 'error') {
+      return;
+    }
 
-    ws.onerror = (error) => {
-      reject(error);
-    };
-
-    ws.onmessage = (ev) => {
-      try {
-        const msg = JSON.parse(ev.data);
-        const resolver = remotePendingRequests.get(msg.id);
-        if (resolver) {
-          resolver(msg.payload);
-          remotePendingRequests.delete(msg.id);
-        }
-      } catch (e) {
-        logger.error('Failed to parse remote game message:', e);
+    // Handle game method responses
+    if (msg.id && remotePendingGameRequests.has(msg.id)) {
+      const request = remotePendingGameRequests.get(msg.id);
+      if (request) {
+        clearTimeout(request.timeoutId);
+        remotePendingGameRequests.delete(msg.id);
+        request.resolve(msg.payload);
       }
-    };
+    }
   });
+
+  gameMessageHandlerRegistered = true;
 }
 
 function sendRemoteGameRequest(type: string, payload: any): Promise<any> {
+  setupGameMessageHandler();
+
+  const connectionManager = getRemoteConnectionManager();
   const id = Math.random().toString(36).substring(7);
-  return new Promise(async (resolve, reject) => {
-    try {
-      const ws = await getRemoteGameWs();
-      remotePendingRequests.set(id, resolve);
 
-      ws.send(
-        JSON.stringify({
-          type,
-          id,
-          ...payload,
-        }),
-      );
+  return new Promise((resolve, reject) => {
+    // Set up timeout
+    const timeoutId = setTimeout(() => {
+      if (remotePendingGameRequests.has(id)) {
+        remotePendingGameRequests.delete(id);
+        reject(new Error('Remote game request timeout'));
+      }
+    }, 5000);
 
-      // Timeout after 5 seconds
-      setTimeout(() => {
-        if (remotePendingRequests.has(id)) {
-          remotePendingRequests.delete(id);
-          reject(new Error('Remote game request timeout'));
-        }
-      }, 5000);
-    } catch (e) {
-      reject(e);
-    }
+    // Register pending request
+    remotePendingGameRequests.set(id, { resolve, reject, timeoutId });
+
+    // Send request
+    connectionManager.send({
+      type,
+      id,
+      ...payload,
+    });
   });
 }
 
@@ -535,7 +539,10 @@ const remoteGameClient: GameEngineClient = {
   async validateMove(fen: string, uciMove: string): Promise<boolean> {
     logger.log('[RemoteGameClient] validateMove:', { fen, uciMove });
     try {
-      const result = await sendRemoteGameRequest('validateMove', { fen, uci_move: uciMove });
+      const result = await retry(
+        () => sendRemoteGameRequest('validateMove', { fen, uci_move: uciMove }),
+        { maxAttempts: 3, initialDelay: 500, maxDelay: 2000 },
+      );
       logger.log('[RemoteGameClient] validateMove result:', result);
       return result.valid;
     } catch (e) {
@@ -547,7 +554,10 @@ const remoteGameClient: GameEngineClient = {
   async makeMove(fen: string, uciMove: string): Promise<string> {
     logger.log('[RemoteGameClient] makeMove:', { fen, uciMove });
     try {
-      const result = await sendRemoteGameRequest('makeMove', { fen, uci_move: uciMove });
+      const result = await retry(
+        () => sendRemoteGameRequest('makeMove', { fen, uci_move: uciMove }),
+        { maxAttempts: 3, initialDelay: 500, maxDelay: 2000 },
+      );
       logger.log('[RemoteGameClient] makeMove result:', result);
       if (result.error) {
         throw new Error(result.error);
@@ -562,7 +572,11 @@ const remoteGameClient: GameEngineClient = {
   async legalMoves(fen: string): Promise<string[]> {
     logger.log('[RemoteGameClient] legalMoves:', fen);
     try {
-      const result = await sendRemoteGameRequest('legalMoves', { fen });
+      const result = await retry(() => sendRemoteGameRequest('legalMoves', { fen }), {
+        maxAttempts: 3,
+        initialDelay: 500,
+        maxDelay: 2000,
+      });
       logger.log('[RemoteGameClient] legalMoves result:', result);
       return result.moves;
     } catch (e) {
@@ -574,7 +588,11 @@ const remoteGameClient: GameEngineClient = {
   async checkGameOver(fen: string): Promise<{ isOver: boolean; status?: string }> {
     logger.log('[RemoteGameClient] checkGameOver:', fen);
     try {
-      const result = await sendRemoteGameRequest('gameStatus', { fen });
+      const result = await retry(() => sendRemoteGameRequest('gameStatus', { fen }), {
+        maxAttempts: 3,
+        initialDelay: 500,
+        maxDelay: 2000,
+      });
       logger.log('[RemoteGameClient] checkGameOver result:', result);
       return { isOver: result.isOver, status: result.status };
     } catch (e) {
@@ -593,4 +611,11 @@ export function useGameEngine(): GameEngineClient {
   if (mode === 'wasm') return wasmGameClient;
   // Default to remote if somehow invalid
   return remoteGameClient;
+}
+
+/**
+ * Get remote connection manager (for status monitoring)
+ */
+export function getConnectionManager(): WebSocketConnectionManager | null {
+  return remoteConnectionManager;
 }
