@@ -74,16 +74,17 @@ export class WebSocketConnectionManager {
         };
 
         this.ws.onmessage = (ev) => {
-          // Check if this is a pong response
-          if (ev.data === 'pong') {
-            logger.debug('[ConnectionManager] Received pong');
-            this.awaitingPong = false;
-            return;
-          }
-
           // Handle regular messages
           try {
             const data = JSON.parse(ev.data);
+
+            // Check if this is a pong response
+            if (data.type === 'pong') {
+              logger.debug('[ConnectionManager] Received pong');
+              this.awaitingPong = false;
+              return;
+            }
+
             this.notifyMessageHandlers(data);
           } catch (e) {
             logger.error('[ConnectionManager] Failed to parse message:', e);
@@ -262,10 +263,10 @@ export class WebSocketConnectionManager {
         return;
       }
 
-      // Send ping
+      // Send ping as JSON
       logger.debug('[ConnectionManager] Sending ping');
       this.awaitingPong = true;
-      this.ws?.send('ping');
+      this.ws?.send(JSON.stringify({ type: 'ping' }));
 
       // Set timeout for pong response
       setTimeout(() => {

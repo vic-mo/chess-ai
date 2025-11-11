@@ -14,6 +14,7 @@ use crate::engine::EngineManager;
 struct ClientMessage {
     #[serde(rename = "type")]
     msg_type: String,
+    #[serde(default)]
     id: String,
     #[serde(default)]
     fen: String,
@@ -172,6 +173,15 @@ async fn handle_client_message(
                     "isOver": is_over,
                     "status": status,
                 }),
+            };
+            tx.send(response)?;
+        }
+        "ping" => {
+            debug!("Received ping, sending pong");
+            let response = ServerMessage {
+                msg_type: "pong".to_string(),
+                id: msg.id,
+                payload: serde_json::json!({}),
             };
             tx.send(response)?;
         }

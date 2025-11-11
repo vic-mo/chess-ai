@@ -158,6 +158,13 @@ export function Game() {
 
     // If a square is already selected, try to make a move
     if (selectedSquare) {
+      // If clicking the same square, deselect it
+      if (selectedSquare === square) {
+        logger.log('[Game] Deselecting square:', square);
+        setSelectedSquare(null);
+        return;
+      }
+
       // Convert king-to-rook moves to proper UCI castling notation
       const uciMove = convertCastlingMove(selectedSquare, square);
       logger.log('[Game] Attempting move via click:', uciMove);
@@ -167,33 +174,40 @@ export function Game() {
       }
 
       // Validate and compute new position locally using chess.js
-      const chess = new Chess(fen);
-      const move = chess.move({
-        from: uciMove.substring(0, 2),
-        to: uciMove.substring(2, 4),
-        promotion: uciMove.length > 4 ? uciMove[4] : undefined,
-      });
-
-      if (move) {
-        // Immediately update display position to prevent flicker
-        const newFen = chess.fen();
-        setDisplayFen(newFen);
-        logger.log('[Game] 🎨 Optimistically updated displayFen from click:', newFen);
-
-        // Now make the actual move in the background
-        makeMove(uciMove).then((success) => {
-          logger.log('[Game] Click move result:', success);
-          if (!success) {
-            // Revert on failure
-            logger.log('[Game] ⚠️ Click move failed - reverting display');
-            setDisplayFen(fen);
-          }
+      try {
+        const chess = new Chess(fen);
+        const move = chess.move({
+          from: uciMove.substring(0, 2),
+          to: uciMove.substring(2, 4),
+          promotion: uciMove.length > 4 ? uciMove[4] : undefined,
         });
+
+        if (move) {
+          // Immediately update display position to prevent flicker
+          const newFen = chess.fen();
+          setDisplayFen(newFen);
+          logger.log('[Game] 🎨 Optimistically updated displayFen from click:', newFen);
+
+          // Now make the actual move in the background
+          makeMove(uciMove).then((success) => {
+            logger.log('[Game] Click move result:', success);
+            if (!success) {
+              // Revert on failure
+              logger.log('[Game] ⚠️ Click move failed - reverting display');
+              setDisplayFen(fen);
+            }
+          });
+        } else {
+          logger.log('[Game] Invalid move, clearing selection');
+        }
+      } catch (error) {
+        logger.log('[Game] Move validation error:', error);
+        // Invalid move, just clear selection
       }
 
       setSelectedSquare(null); // Clear selection after move attempt
     } else {
-      // Select this square
+      // Select this square (only if it has a piece)
       setSelectedSquare(square);
       logger.log('[Game] Square selected:', square);
     }
